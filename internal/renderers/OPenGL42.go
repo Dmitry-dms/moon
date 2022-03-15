@@ -62,7 +62,7 @@ func (renderer *OpenGL42) PreRender(clearColor [3]float32) {
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 }
 
-// Render translates the ImGui draw data to OpenGL3 commands.
+// Render translates the ImGui draw data to OpenGL42 commands.
 func (renderer *OpenGL42) Render(displaySize [2]float32, framebufferSize [2]float32, drawData imgui.DrawData) {
 	// Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
 	displayWidth, displayHeight := displaySize[0], displaySize[1]

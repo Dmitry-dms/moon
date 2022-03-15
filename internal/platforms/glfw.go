@@ -3,7 +3,6 @@ package platforms
 import (
 	"fmt"
 	"math"
-	"runtime"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/inkyblackness/imgui-go/v4"
@@ -14,7 +13,6 @@ type GLFWClientAPI string
 
 // This is a list of GLFWClientAPI constants.
 const (
-	GLFWClientAPIOpenGL2 GLFWClientAPI = "OpenGL2"
 	GLFWClientAPIOpenGL3 GLFWClientAPI = "OpenGL3"
 	GLFWClientAPIOpenGL42 GLFWClientAPI = "OpenGL42"
 )
@@ -29,19 +27,18 @@ type GLFW struct {
 	mouseJustPressed [3]bool
 }
 
+func (g *GLFW) GetWindow() *glfw.Window{
+	return g.window
+}
+
 // NewGLFW attempts to initialize a GLFW context.
 func NewGLFW(io imgui.IO, clientAPI GLFWClientAPI) (*GLFW, error) {
-	runtime.LockOSThread()
 
 	err := glfw.Init()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize glfw: %w", err)
 	}
-
 	switch clientAPI {
-	case GLFWClientAPIOpenGL2:
-		glfw.WindowHint(glfw.ContextVersionMajor, 2)
-		glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	case GLFWClientAPIOpenGL3:
 		glfw.WindowHint(glfw.ContextVersionMajor, 3)
 		glfw.WindowHint(glfw.ContextVersionMinor, 2)
