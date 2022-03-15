@@ -1,2 +1,1 @@
-# moon
-Moon is a 2D Game engine written by Go.
+# Moon is a 2D Game engine written by Go.
