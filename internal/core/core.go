@@ -5,6 +5,7 @@ import (
 	"github.com/Dmitry-dms/moon/internal/renderers"
 	"github.com/Dmitry-dms/moon/internal/scenes"
 
+//	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	//imgui "github.com/inkyblackness/imgui-go/v4"
 	"github.com/pkg/errors"
@@ -62,7 +63,7 @@ func NewCore(width, height int, glVersion platforms.GLFWClientAPI, scene int) (*
 
 	switch scene {
 	case 0:
-		c.currentScene = scenes.NewEditorScene(renderer)
+		c.currentScene = scenes.NewEditorScene(renderer,platform.GetWindow())
 		c.currentScene.Init()
 	}
 
@@ -83,16 +84,18 @@ func (c *Core) Run() {
 	for !c.platform.ShouldStop() {
 		c.platform.ProcessEvents()
 
+	//	gl.ClearColor(0, 0, 0, 0)
+		//gl.Clear(gl.COLOR_BUFFER_BIT)
 		// Signal start of a new frame
 		c.platform.NewFrame(&dt)
 
-		if dt >= 0 {
-			c.currentScene.Update(dt)
-		}
-		c.currentScene.Render()
+		//if dt >= 0 {
+			//c.currentScene.Update(dt)
+		//}
 		c.imGui.Update(c.platform.DisplaySize(), c.platform.FramebufferSize(), dt, c.currentScene)
-
+		
 		// A this point, the application could perform its own rendering...
+		c.currentScene.Render()
 		// app.RenderScene()
 		c.platform.PostRender()
 

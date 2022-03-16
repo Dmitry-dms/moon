@@ -16,6 +16,7 @@ func init() {
 	runtime.LockOSThread()
 }
 
+
 func main() {
 	core, err := core.NewCore(1200, 720, platforms.GLFWClientAPIOpenGL42, 0)
 	if err != nil {
