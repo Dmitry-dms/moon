@@ -8,7 +8,6 @@ import (
 	"github.com/Dmitry-dms/moon/internal/core"
 	"github.com/Dmitry-dms/moon/internal/platforms"
 	"github.com/pkg/errors"
-
 )
 
 func init() {
@@ -18,7 +17,7 @@ func init() {
 }
 
 func main() {
-	core, err := core.NewCore(1200, 720, platforms.GLFWClientAPIOpenGL42)
+	core, err := core.NewCore(1200, 720, platforms.GLFWClientAPIOpenGL42, 0)
 	if err != nil {
 		fmt.Println(errors.Unwrap(err))
 		os.Exit(1)
