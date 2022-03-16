@@ -100,7 +100,7 @@ func (platform *GLFW) FramebufferSize() [2]float32 {
 }
 
 // NewFrame marks the begin of a render pass. It forwards all current state to imgui IO.
-func (platform *GLFW) NewFrame() {
+func (platform *GLFW) NewFrame(dt *float32) {
 	// Setup display size (every frame to accommodate for window resizing)
 	displaySize := platform.DisplaySize()
 	platform.imguiIO.SetDisplaySize(imgui.Vec2{X: displaySize[0], Y: displaySize[1]})
@@ -108,7 +108,8 @@ func (platform *GLFW) NewFrame() {
 	// Setup time step
 	currentTime := glfw.GetTime()
 	if platform.time > 0 {
-		platform.imguiIO.SetDeltaTime(float32(currentTime - platform.time))
+		*dt = float32(currentTime - platform.time)
+		platform.imguiIO.SetDeltaTime(*dt)
 	}
 	platform.time = currentTime
 

@@ -2,6 +2,8 @@ package renderers
 
 import (
 	_ "embed" // using embed for the shader sources
+	"fmt"
+	"strings"
 
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
@@ -20,9 +22,9 @@ type OpenGL42 struct {
 
 	glslVersion            string
 	fontTexture            uint32
-	shaderHandle           uint32
-	vertHandle             uint32
-	fragHandle             uint32
+	shaderProgramId        uint32
+	vertexShaderId         uint32
+	fragmentShaderId       uint32
 	attribLocationTex      int32
 	attribLocationProjMtx  int32
 	attribLocationPosition int32
@@ -34,19 +36,19 @@ type OpenGL42 struct {
 
 // NewOpenGL3 attempts to initialize a renderer.
 // An OpenGL context has to be established before calling this function.
-func NewOpenGL42(io imgui.IO) (*OpenGL42, error) {
+func NewOpenGL42(imguiIO imgui.IO) (*OpenGL42, error) {
 	err := gl.Init()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to initialize OpenGL 4.2-core")
 	}
 
 	renderer := &OpenGL42{
-		imguiIO:     io,
+		imguiIO:     imguiIO,
 		glslVersion: "#version 420",
 	}
 	renderer.createDeviceObjects()
 
-	io.SetBackendFlags(io.GetBackendFlags() | imgui.BackendFlagsRendererHasVtxOffset)
+	imguiIO.SetBackendFlags(imguiIO.GetBackendFlags() | imgui.BackendFlagsRendererHasVtxOffset)
 
 	return renderer, nil
 }
@@ -133,7 +135,7 @@ func (renderer *OpenGL42) Render(displaySize [2]float32, framebufferSize [2]floa
 		{0.0, 0.0, -1.0, 0.0},
 		{-1.0, 1.0, 0.0, 1.0},
 	}
-	gl.UseProgram(renderer.shaderHandle)
+	gl.UseProgram(renderer.shaderProgramId)
 	gl.Uniform1i(renderer.attribLocationTex, 0)
 	gl.UniformMatrix4fv(renderer.attribLocationProjMtx, 1, false, &orthoProjection[0][0])
 	gl.BindSampler(0, 0) // Rely on combined texture/sampler state.
@@ -230,9 +232,9 @@ func (renderer *OpenGL42) createDeviceObjects() {
 	vertexShader := renderer.glslVersion + "\n" + unversionedVertexShader
 	fragmentShader := renderer.glslVersion + "\n" + unversionedFragmentShader
 
-	renderer.shaderHandle = gl.CreateProgram()
-	renderer.vertHandle = gl.CreateShader(gl.VERTEX_SHADER)
-	renderer.fragHandle = gl.CreateShader(gl.FRAGMENT_SHADER)
+	renderer.shaderProgramId = gl.CreateProgram()
+	renderer.vertexShaderId = gl.CreateShader(gl.VERTEX_SHADER)
+	renderer.fragmentShaderId = gl.CreateShader(gl.FRAGMENT_SHADER)
 
 	glShaderSource := func(handle uint32, source string) {
 		csource, free := gl.Strs(source + "\x00")
@@ -241,19 +243,43 @@ func (renderer *OpenGL42) createDeviceObjects() {
 		gl.ShaderSource(handle, 1, csource, nil)
 	}
 
-	glShaderSource(renderer.vertHandle, vertexShader)
-	glShaderSource(renderer.fragHandle, fragmentShader)
-	gl.CompileShader(renderer.vertHandle)
-	gl.CompileShader(renderer.fragHandle)
-	gl.AttachShader(renderer.shaderHandle, renderer.vertHandle)
-	gl.AttachShader(renderer.shaderHandle, renderer.fragHandle)
-	gl.LinkProgram(renderer.shaderHandle)
+	glShaderSource(renderer.vertexShaderId, vertexShader)
+	glShaderSource(renderer.fragmentShaderId, fragmentShader)
 
-	renderer.attribLocationTex = gl.GetUniformLocation(renderer.shaderHandle, gl.Str("Texture"+"\x00"))
-	renderer.attribLocationProjMtx = gl.GetUniformLocation(renderer.shaderHandle, gl.Str("ProjMtx"+"\x00"))
-	renderer.attribLocationPosition = gl.GetAttribLocation(renderer.shaderHandle, gl.Str("Position"+"\x00"))
-	renderer.attribLocationUV = gl.GetAttribLocation(renderer.shaderHandle, gl.Str("UV"+"\x00"))
-	renderer.attribLocationColor = gl.GetAttribLocation(renderer.shaderHandle, gl.Str("Color"+"\x00"))
+	gl.CompileShader(renderer.vertexShaderId)
+	var s string
+	compileError(renderer.vertexShaderId, &s)
+	if s != "" {
+		fmt.Println(s)
+	}
+	gl.CompileShader(renderer.fragmentShaderId)
+	compileError(renderer.fragmentShaderId, &s)
+	if s != "" {
+		fmt.Println(s)
+	}
+
+	gl.AttachShader(renderer.shaderProgramId, renderer.vertexShaderId)
+	gl.AttachShader(renderer.shaderProgramId, renderer.fragmentShaderId)
+	gl.LinkProgram(renderer.shaderProgramId)
+
+	var status int32
+	gl.GetProgramiv(renderer.shaderProgramId, gl.LINK_STATUS, &status) //logging
+	if status == gl.FALSE {
+		var logLength int32
+		gl.GetProgramiv(renderer.shaderProgramId, gl.INFO_LOG_LENGTH, &logLength)
+		log := strings.Repeat("\x00", int(logLength)+1)
+		gl.GetProgramInfoLog(renderer.shaderProgramId, logLength, nil, gl.Str(log))
+		s = log
+	}
+	if s != "" {
+		fmt.Println(s)
+	}
+
+	renderer.attribLocationTex = gl.GetUniformLocation(renderer.shaderProgramId, gl.Str("Texture"+"\x00"))
+	renderer.attribLocationProjMtx = gl.GetUniformLocation(renderer.shaderProgramId, gl.Str("ProjMtx"+"\x00"))
+	renderer.attribLocationPosition = gl.GetAttribLocation(renderer.shaderProgramId, gl.Str("Position"+"\x00"))
+	renderer.attribLocationUV = gl.GetAttribLocation(renderer.shaderProgramId, gl.Str("UV"+"\x00"))
+	renderer.attribLocationColor = gl.GetAttribLocation(renderer.shaderProgramId, gl.Str("Color"+"\x00"))
 
 	gl.GenBuffers(1, &renderer.vboHandle)
 	gl.GenBuffers(1, &renderer.elementsHandle)
@@ -264,6 +290,18 @@ func (renderer *OpenGL42) createDeviceObjects() {
 	gl.BindTexture(gl.TEXTURE_2D, uint32(lastTexture))
 	gl.BindBuffer(gl.ARRAY_BUFFER, uint32(lastArrayBuffer))
 	gl.BindVertexArray(uint32(lastVertexArray))
+}
+
+func compileError(shaderId uint32, info *string) {
+	var status int32
+	gl.GetShaderiv(shaderId, gl.COMPILE_STATUS, &status) //logging
+	if status == gl.FALSE {
+		var logLength int32
+		gl.GetShaderiv(shaderId, gl.INFO_LOG_LENGTH, &logLength)
+		log := strings.Repeat("\x00", int(logLength)+1)
+		gl.GetShaderInfoLog(shaderId, logLength, nil, gl.Str(log))
+		*info = fmt.Sprintln("failed to compile shader: \n" + log)
+	}
 }
 
 func (renderer *OpenGL42) createFontsTexture() {
@@ -299,26 +337,26 @@ func (renderer *OpenGL42) invalidateDeviceObjects() {
 	}
 	renderer.elementsHandle = 0
 
-	if (renderer.shaderHandle != 0) && (renderer.vertHandle != 0) {
-		gl.DetachShader(renderer.shaderHandle, renderer.vertHandle)
+	if (renderer.shaderProgramId != 0) && (renderer.vertexShaderId != 0) {
+		gl.DetachShader(renderer.shaderProgramId, renderer.vertexShaderId)
 	}
-	if renderer.vertHandle != 0 {
-		gl.DeleteShader(renderer.vertHandle)
+	if renderer.vertexShaderId != 0 {
+		gl.DeleteShader(renderer.vertexShaderId)
 	}
-	renderer.vertHandle = 0
+	renderer.vertexShaderId = 0
 
-	if (renderer.shaderHandle != 0) && (renderer.fragHandle != 0) {
-		gl.DetachShader(renderer.shaderHandle, renderer.fragHandle)
+	if (renderer.shaderProgramId != 0) && (renderer.fragmentShaderId != 0) {
+		gl.DetachShader(renderer.shaderProgramId, renderer.fragmentShaderId)
 	}
-	if renderer.fragHandle != 0 {
-		gl.DeleteShader(renderer.fragHandle)
+	if renderer.fragmentShaderId != 0 {
+		gl.DeleteShader(renderer.fragmentShaderId)
 	}
-	renderer.fragHandle = 0
+	renderer.fragmentShaderId = 0
 
-	if renderer.shaderHandle != 0 {
-		gl.DeleteProgram(renderer.shaderHandle)
+	if renderer.shaderProgramId != 0 {
+		gl.DeleteProgram(renderer.shaderProgramId)
 	}
-	renderer.shaderHandle = 0
+	renderer.shaderProgramId = 0
 
 	if renderer.fontTexture != 0 {
 		gl.DeleteTextures(1, &renderer.fontTexture)
