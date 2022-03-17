@@ -64,11 +64,11 @@ func NewGLFW(clientAPI GLFWClientAPI) (*GLFW, error) {
 	platform := &GLFW{
 		window:  window,
 	}
-	//platform.setKeyMapping()
+
+
 	platform.installCallbacks()
 
 	imGui := NewImgui()
-	//imGui.InitImgui()
 	platform.ImguiIO = imGui
 
 	return platform, nil

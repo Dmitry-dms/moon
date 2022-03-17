@@ -9,14 +9,14 @@ import (
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 
-	//	ma "github.com/go-gl/mathgl/mgl32"
+//	mgl "github.com/go-gl/mathgl/mgl32"
 	imgui "github.com/inkyblackness/imgui-go/v4"
 )
 
 type EditorScene struct {
 	showDemoWindow bool
 	glfw           *glfw.Window
-	tsh            *gogl.Shader
+	shader         *gogl.Shader
 	texture        gogl.TextureID
 }
 
@@ -29,8 +29,8 @@ func NewEditorScene(renderer renderers.Renderer, window *glfw.Window) *EditorSce
 	return &edtrScene
 }
 
-
 var vao gogl.BufferID
+
 //var triangleShader *gogl.Shader
 
 var vertices = []float32{
@@ -52,16 +52,16 @@ func (e *EditorScene) Init() {
 	if err != nil {
 		panic(err)
 	}
-	e.tsh = triangleShader
+	e.shader = triangleShader
 
 	texture := gogl.LoadTextureAlpha("assets/images/img.png")
 	e.texture = texture
 
-	gogl.GenBindBuffer(gl.ARRAY_BUFFER)//vbo
-	vao = gogl.GenBindVAO()//vao
+	gogl.GenBindBuffer(gl.ARRAY_BUFFER) //vbo
+	vao = gogl.GenBindVAO()             //vao
 	gogl.BufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
 
-	gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)//ebo
+	gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER) //ebo
 	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
 
 	// 0 - начало, 3 - размер
@@ -84,7 +84,15 @@ func (e *EditorScene) Update(dt float32) {
 }
 
 func (e *EditorScene) Render() {
-	e.tsh.Use()
+	e.shader.Use()
+	//w, h := e.glfw.GetSize()
+	// aspRatio := float32(w) / float32(h)
+	// projMatrix := mgl.Perspective(mgl.DegToRad(45), aspRatio, 0.1, 100)
+
+	// viewMatrix := mgl.Ident4()
+	
+	// e.shader.SetMat4("projection", projMatrix)
+	// e.shader.SetMat4("view", viewMatrix)
 
 	gogl.BindTexture(e.texture)
 	gogl.BindVertexArray(vao)
@@ -92,7 +100,7 @@ func (e *EditorScene) Render() {
 	//gl.DrawArrays(gl.TRIANGLES, 0, 3)
 	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, gl.PtrOffset(0))
 
-	err := e.tsh.CheckShaderForChanges()
+	err := e.shader.CheckShaderForChanges()
 	if err != nil {
 		fmt.Println(err)
 	}
