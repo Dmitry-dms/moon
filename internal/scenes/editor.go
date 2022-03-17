@@ -4,57 +4,61 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Dmitry-dms/moon/internal/renderers"
+
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 
-//	mgl "github.com/go-gl/mathgl/mgl32"
+	//	mgl "github.com/go-gl/mathgl/mgl32"
 	imgui "github.com/inkyblackness/imgui-go/v4"
 )
 
 type EditorScene struct {
-	showDemoWindow bool
-	glfw           *glfw.Window
-	shader         *gogl.Shader
-	texture        gogl.TextureID
+	showDemoWindow      bool
+	glfw                *glfw.Window
+	shader              *gogl.Shader
+	texture             *gogl.Texture
+	changeSceneCallback func(scene int)
+	camera              *gogl.Camera
 }
 
-func NewEditorScene(renderer renderers.Renderer, window *glfw.Window) *EditorScene {
+func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
 	edtrScene := EditorScene{
-		showDemoWindow: true,
-		glfw:           window,
+		showDemoWindow:      true,
+		changeSceneCallback: changeSceneCallback,
+		camera:              gogl.NewCamera(mgl32.Vec2{}),
 	}
 
 	return &edtrScene
 }
 
-var vao gogl.BufferID
+var vao uint32
 
 //var triangleShader *gogl.Shader
 
 var vertices = []float32{
-	//pos                //uv coords
-	0.5, 0.5, 0.0, 1.0, 1.0,
-	0.5, -0.5, 0.0, 1., 0.,
-	-0.5, -0.5, 0.0, 0., 0.,
-	-0.5, 0.5, 0.0, 0., 1.,
+	//pos                //color    //uv
+	100, 0, 0,	 	 1, 0, 0, 1,	1,1,//bottom right 0
+	0, 100, 0, 		 0, 1, 0, 1, 	0,0,//top left 1
+	100, 100, 0,	 0, 0, 1, 1, 	1,0,//top right 2
+	0, 0, 0, 		 1, 1, 0, 1, 	0,1,//bottom left 3
 }
 var indices = []int32{
+	2, 1, 0,
 	0, 1, 3,
-	1, 2, 3,
 }
 
 func (e *EditorScene) Init() {
 
 	fmt.Println("init editor scene")
-	triangleShader, err := gogl.NewShader("assets/triangle.vert", "assets/quadtexture.frag")
+	shader, err := gogl.NewShader("assets/shaders/default.glsl")
 	if err != nil {
 		panic(err)
 	}
-	e.shader = triangleShader
+	e.shader = shader
 
-	texture := gogl.LoadTextureAlpha("assets/images/img.png")
+	texture := gogl.LoadTextureAlpha("assets/images/goomba.png")
 	e.texture = texture
 
 	gogl.GenBindBuffer(gl.ARRAY_BUFFER) //vbo
@@ -64,13 +68,12 @@ func (e *EditorScene) Init() {
 	gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER) //ebo
 	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
 
-	// 0 - начало, 3 - размер
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
-	gl.EnableVertexAttribArray(0)
-	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
-	gl.EnableVertexAttribArray(1)
+	// // 0 - начало, 3 - размер
+	gogl.SetVertexAttribPointer(0, 3, gl.FLOAT, 9, 0)
+	gogl.SetVertexAttribPointer(1, 4, gl.FLOAT, 9, 3)
+	gogl.SetVertexAttribPointer(2, 2, gl.FLOAT, 9, 7)
 
-	gl.BindVertexArray(0)
+	//gl.BindVertexArray(0)
 
 }
 func (e *EditorScene) Start() {
@@ -79,8 +82,33 @@ func (e *EditorScene) Start() {
 func (e *EditorScene) Destroy() {
 
 }
-func (e *EditorScene) Update(dt float32) {
 
+var x,y float32
+func (e *EditorScene) Update(dt float64) {
+
+	//e.camera.SetPosition(mgl32.Vec2{float32(-dt*50)})
+
+
+	//fmt.Printf("%.1f FPS \n", 1.0/dt)
+	e.shader.Use()
+
+	e.shader.UploadTexture("uTexture", 0)
+	gl.ActiveTexture(gl.TEXTURE0)
+	e.texture.Bind()
+
+	e.shader.UploadMat4("uProjection", e.camera.GetProjectionMatrix())
+	e.shader.UploadMat4("uView", e.camera.GetViewMatrix())
+
+	gogl.BindVertexArray(vao)
+
+	// gl.EnableVertexAttribArray(0)
+	// gl.EnableVertexAttribArray(1)
+	gl.DrawElements(gl.TRIANGLES, int32(len(indices)), gl.UNSIGNED_INT, gl.PtrOffset(0))
+	// gl.DisableVertexAttribArray(0)
+	// gl.DisableVertexAttribArray(1)
+	e.texture.Unbind()
+	gogl.BindVertexArray(0)
+	e.shader.Detach()
 }
 
 func (e *EditorScene) Render() {
@@ -90,11 +118,11 @@ func (e *EditorScene) Render() {
 	// projMatrix := mgl.Perspective(mgl.DegToRad(45), aspRatio, 0.1, 100)
 
 	// viewMatrix := mgl.Ident4()
-	
+
 	// e.shader.SetMat4("projection", projMatrix)
 	// e.shader.SetMat4("view", viewMatrix)
 
-	gogl.BindTexture(e.texture)
+//	gogl.BindTexture(e.texture)
 	gogl.BindVertexArray(vao)
 
 	//gl.DrawArrays(gl.TRIANGLES, 0, 3)

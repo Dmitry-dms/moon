@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	//"fmt"
+	//"os"
 	"runtime"
 
 	"github.com/Dmitry-dms/moon/internal/core"
-	"github.com/Dmitry-dms/moon/internal/platforms"
-	"github.com/pkg/errors"
+	//"github.com/Dmitry-dms/moon/internal/platforms"
+	//"github.com/pkg/errors"
 )
 
 func init() {
@@ -18,13 +18,14 @@ func init() {
 
 
 func main() {
-	core, err := core.NewCore(1200, 720, platforms.GLFWClientAPIOpenGL42, 0)
-	if err != nil {
-		fmt.Println(errors.Unwrap(err))
-		os.Exit(1)
-	}
-	defer core.Dispose()
+	// core, err := core.NewCore(1200, 720, platforms.GLFWClientAPIOpenGL42, 0)
+	// if err != nil {
+	// 	fmt.Println(errors.Unwrap(err))
+	// 	os.Exit(1)
+	// }
+	//core.Window.Run()
+	defer core.Window.Dispose()
 
 	//Main loop
-	core.Run()
+	core.Window.Run()
 }

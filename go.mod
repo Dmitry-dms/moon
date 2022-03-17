@@ -8,7 +8,8 @@ require (
 	github.com/go-gl/mathgl v1.0.0
 	github.com/inkyblackness/imgui-go/v4 v4.4.0
 	github.com/pkg/errors v0.9.1
-	github.com/veandco/go-sdl2 v0.4.16
+	github.com/technohippy/go-glmatrix v1.0.0
+	neilpa.me/go-stbi v1.1.0
 )
 
 require golang.org/x/image v0.0.0-20220302094943-723b81ca9867 // indirect
