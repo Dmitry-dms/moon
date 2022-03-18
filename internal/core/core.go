@@ -24,6 +24,10 @@ func init() {
 	})
 }
 
+func (c *Core) GetCurrentScene() scenes.Scene {
+	return c.currentScene
+}
+
 type Core struct {
 	width, height int
 	glfwWindow    *GLFW
@@ -64,9 +68,11 @@ func (c *Core) changeScene(scene int) {
 	case 0:
 		c.currentScene = scenes.NewEditorScene(c.changeScene)
 		c.currentScene.Init()
+		c.currentScene.Start()
 	case 1:
-		c.currentScene = scenes.NewLevelScene(c.changeScene)
-		c.currentScene.Init()
+		// c.currentScene = scenes.NewLevelScene(c.changeScene)
+		// c.currentScene.Init()
+		// c.currentScene.Start()
 	default:
 		panic("Unknown scene")
 	}
@@ -78,9 +84,9 @@ func (c *Core) Dispose() {
 }
 
 func (c *Core) Run() {
-	beginTime := glfw.GetTime()
-	var endTime float64
-	var dt float64
+	beginTime := float32(glfw.GetTime())
+	var endTime float32
+	var dt float32
 	for !c.glfwWindow.ShouldStop() {
 		c.glfwWindow.ProcessEvents()
 
@@ -100,7 +106,7 @@ func (c *Core) Run() {
 		// // app.RenderScene()
 		c.glfwWindow.PostRender()
 
-		endTime = glfw.GetTime()
+		endTime = float32(glfw.GetTime())
 		dt = endTime - beginTime
 		beginTime = endTime
 	}

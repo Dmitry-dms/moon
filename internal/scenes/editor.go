@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-
+	"github.com/Dmitry-dms/moon/internal/components"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -21,6 +21,8 @@ type EditorScene struct {
 	texture             *gogl.Texture
 	changeSceneCallback func(scene int)
 	camera              *gogl.Camera
+	gameObjects         []components.GameObject
+	isRunning           bool
 }
 
 func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
@@ -28,21 +30,23 @@ func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
 		showDemoWindow:      true,
 		changeSceneCallback: changeSceneCallback,
 		camera:              gogl.NewCamera(mgl32.Vec2{}),
+		gameObjects:         make([]components.GameObject, 0),
 	}
 
 	return &edtrScene
 }
 
 var vao uint32
+var testObj *components.GameObject
 
 //var triangleShader *gogl.Shader
 
 var vertices = []float32{
 	//pos                //color    //uv
-	100, 0, 0,	 	 1, 0, 0, 1,	1,1,//bottom right 0
-	0, 100, 0, 		 0, 1, 0, 1, 	0,0,//top left 1
-	100, 100, 0,	 0, 0, 1, 1, 	1,0,//top right 2
-	0, 0, 0, 		 1, 1, 0, 1, 	0,1,//bottom left 3
+	100, 0, 0, 1, 0, 0, 1, 1, 1, //bottom right 0
+	0, 100, 0, 0, 1, 0, 1, 0, 0, //top left 1
+	100, 100, 0, 0, 0, 1, 1, 1, 0, //top right 2
+	0, 0, 0, 1, 1, 0, 1, 0, 1, //bottom left 3
 }
 var indices = []int32{
 	2, 1, 0,
@@ -52,6 +56,11 @@ var indices = []int32{
 func (e *EditorScene) Init() {
 
 	fmt.Println("init editor scene")
+
+	testObj = components.NewGameObject("test object", components.Transform{})
+	testObj.AddComponent(&components.SpriteRenderer{})
+	e.AddGameObjectToScene(testObj)
+
 	shader, err := gogl.NewShader("assets/shaders/default.glsl")
 	if err != nil {
 		panic(err)
@@ -76,18 +85,37 @@ func (e *EditorScene) Init() {
 	//gl.BindVertexArray(0)
 
 }
-func (e *EditorScene) Start() {
 
+// при запуске сцены, запускаем объекты
+func (e *EditorScene) Start() {
+	for _, g := range e.gameObjects {
+		g.Start()
+	}
+	e.isRunning = true
+}
+
+func (e *EditorScene) GetCamera() *gogl.Camera {
+	return e.camera
+}
+
+func (e *EditorScene) AddGameObjectToScene(obj *components.GameObject) {
+	if e.isRunning {
+		e.gameObjects = append(e.gameObjects, *obj)
+	} else {
+		e.gameObjects = append(e.gameObjects, *obj)
+		obj.Start()
+	}
 }
 func (e *EditorScene) Destroy() {
 
 }
 
-var x,y float32
-func (e *EditorScene) Update(dt float64) {
+var x, y float32
+var f bool
+
+func (e *EditorScene) Update(dt float32) {
 
 	//e.camera.SetPosition(mgl32.Vec2{float32(-dt*50)})
-
 
 	//fmt.Printf("%.1f FPS \n", 1.0/dt)
 	e.shader.Use()
@@ -109,6 +137,10 @@ func (e *EditorScene) Update(dt float64) {
 	e.texture.Unbind()
 	gogl.BindVertexArray(0)
 	e.shader.Detach()
+
+	for _, o := range e.gameObjects {
+		o.Update(dt)
+	}
 }
 
 func (e *EditorScene) Render() {
@@ -122,7 +154,7 @@ func (e *EditorScene) Render() {
 	// e.shader.SetMat4("projection", projMatrix)
 	// e.shader.SetMat4("view", viewMatrix)
 
-//	gogl.BindTexture(e.texture)
+	//	gogl.BindTexture(e.texture)
 	gogl.BindVertexArray(vao)
 
 	//gl.DrawArrays(gl.TRIANGLES, 0, 3)
