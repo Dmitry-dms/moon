@@ -3,11 +3,12 @@ package scenes
 import (
 	"fmt"
 	"time"
+	// "unsafe"
 
 	"github.com/Dmitry-dms/moon/internal/components"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 
-	"github.com/go-gl/gl/v4.2-core/gl"
+	// "github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 
@@ -24,7 +25,7 @@ type EditorScene struct {
 
 	currentGameWorld *GameWorld
 
-	shader *gogl.Shader
+	shader    *gogl.Shader
 	isRunning bool
 }
 
@@ -36,7 +37,7 @@ func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
 		changeSceneCallback: changeSceneCallback,
 		camera:              gogl.NewCamera(mgl32.Vec2{0, 0}),
 		//camera:              gogl.NewCamera(mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0}, 0.5, 0.1),
-		currentGameWorld:    world,
+		currentGameWorld: world,
 	}
 
 	return &edtrScene
@@ -45,48 +46,53 @@ func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
 func (e *EditorScene) GetCamera() *gogl.Camera {
 	return e.camera
 }
+func generateIndeces() []int32 {
+	//6 вершин на 1 квадрат
+	elements := make([]int32, 6*maxBatchSize)
+
+	for i := 0; i < maxBatchSize; i++ {
+		loadElementIndeces(elements, int32(i))
+	}
+
+	return elements
+}
+func loadElementIndeces(elements []int32, index int32) {
+	var offsetArrayIndex int32 = 6 * index
+	var offset int32 = 4 * index
+	// 3, 2, 0, 0, 2, 1 - вершины квадрата
+	elements[offsetArrayIndex] = offset + 3
+	elements[offsetArrayIndex+1] = offset + 2
+	elements[offsetArrayIndex+2] = offset + 0
+
+	elements[offsetArrayIndex+3] = offset + 0
+	elements[offsetArrayIndex+4] = offset + 2
+	elements[offsetArrayIndex+5] = offset + 1
+}
 
 func (e *EditorScene) Init() {
 
 	fmt.Println("init editor scene")
 	e.currentGameWorld.Init()
-	// var xOffset float32 = 10
-	// var yOffset float32 = 10
+	
 
-	// var totalWidth float32 = 600 - float32(xOffset)*2
-	// var totalHeight float32 = 300 - float32(yOffset)*2
-	// sizeX := totalWidth / 100
-	// sizeY := totalHeight / 100
-	// var padding float32 = 0
+	// s, _ := gogl.NewShader("assets/shaders/default.glsl")
+	// e.shader = s
+	// vao = gogl.GenBindVAO()
 
-	// for x := 0; x <1; x++ {
-	// 	for y := 0; y < 1; y++ {
+	// vbo = gogl.GenBindBuffer(gl.ARRAY_BUFFER)
+	// gl.BufferData(gl.ARRAY_BUFFER, 1000*6*4, nil, gl.DYNAMIC_DRAW)
 
-	// 		xPos := xOffset + float32(x)*sizeX + padding*float32(x)
-	// 		yPos := yOffset + float32(y)*sizeY + padding*float32(y)
 
-	// 		fmt.Println(xPos,yPos)
+	// gogl.SetVertexAttribPointer(0, 2, gl.FLOAT, 6, 0)
+	// gogl.SetVertexAttribPointer(1, 4, gl.FLOAT, 6, 2)
 
-	// 		g := components.NewGameObject(fmt.Sprintf("Object %d %d", x, y),
-	// 			components.NewStransfor(mgl32.Vec2{xPos, yPos}, mgl32.Vec2{sizeX, sizeY}))
-	// 		spr := components.NewSpriteRenderer(mgl32.Vec4{xPos / totalWidth, yPos / totalHeight, 1, 1})
-	// 		g.AddComponent(spr)
-	// 		e.AddGameObjectToScene(g)
+	// ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
 
-	// 	}
-	// }
+	// indeces = generateIndeces()
+	
+	// gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, indeces, gl.STATIC_DRAW)
 
-	s, _ := gogl.NewShader("assets/shaders/default.glsl")
-	e.shader = s
-	vao = gogl.GenBindVAO()
-	vbo = gogl.GenBindBuffer(gl.ARRAY_BUFFER)
-	gl.BufferData(gl.ARRAY_BUFFER, 1000*6*4, nil, gl.DYNAMIC_DRAW)
-
-	gogl.SetVertexAttribPointer(0, 2, gl.FLOAT, 6, 0)
-	gogl.SetVertexAttribPointer(1, 4, gl.FLOAT, 6, 2)
-
-	gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
-	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, indeces, gl.STATIC_DRAW)
+	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 }
 
@@ -134,15 +140,20 @@ func (e *EditorScene) Update(dt float32) {
 	// 	0.5, -0.5, 0, 1, 1, 1,
 	// }
 	// gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	// gl.BufferSubData(gl.ARRAY_BUFFER, 0, 24*4, gl.Ptr(vertices))
+	// gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(vertices)*4, gl.Ptr(vertices))
+	// gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
 	// e.shader.Use()
 	// e.shader.UploadMat4("uProjection", e.camera.GetProjectionMatrix())
 	// e.shader.UploadMat4("uView", e.camera.GetViewMatrix())
 
 	// gl.BindVertexArray(vao)
-	// gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 
+	//  gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+	// gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
+	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
+
+	//  gl.BindVertexArray(0)
 	// e.shader.Detach()
 
 	// for _, o := range e.gameObjects {
