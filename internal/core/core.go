@@ -90,12 +90,13 @@ func (c *Core) Run() {
 	for !c.glfwWindow.ShouldStop() {
 		c.glfwWindow.ProcessEvents()
 
-		gl.ClearColor(1, 1, 1, 1)
+		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		if dt >= 0 {
 			c.currentScene.Update(dt)
 		}
+		c.currentScene.Render()
 		// Signal start of a new frame
 		// c.glfwWindow.NewFrame(&dt)
 
