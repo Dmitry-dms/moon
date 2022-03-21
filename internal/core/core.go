@@ -1,106 +1,114 @@
 package core
 
 import (
+	"sync"
+
+	//"github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/Dmitry-dms/moon/internal/platforms"
 	"github.com/Dmitry-dms/moon/internal/renderers"
 	"github.com/Dmitry-dms/moon/internal/scenes"
 
-//	"github.com/go-gl/gl/v4.2-core/gl"
+	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	//"github.com/go-gl/glfw/v3.3/glfw"
 	//imgui "github.com/inkyblackness/imgui-go/v4"
-	"github.com/pkg/errors"
+	//"github.com/pkg/errors"
 )
 
-// type clipboard struct {
-// 	platform Platform
-// }
+var Window *Core
 
-// func (board clipboard) Text() (string, error) {
-// 	return board.platform.ClipboardText()
-// }
+func init() {
+	o := sync.Once{}
+	o.Do(func() { //make a singleton
+		Window = NewCore(1200, 700, GLFWClientAPIOpenGL42, 0)
+	})
+}
 
-// func (board clipboard) SetText(text string) {
-// 	board.platform.SetClipboardText(text)
-// }
-
-// type Scene interface {
-// 	Init()
-// 	Start()
-// 	Destroy()
-// 	Update(dt float32)
-// 	Render()
-// }
+func (c *Core) GetCurrentScene() scenes.Scene {
+	return c.currentScene
+}
 
 type Core struct {
 	width, height int
-	glfwWindow    *glfw.Window
+	glfwWindow    *GLFW
 	currentScene  scenes.Scene
-	platform      platforms.Platform
 	renderer      renderers.Renderer
 	imGui         *platforms.ImgUi
 }
 
-func NewCore(width, height int, glVersion platforms.GLFWClientAPI, scene int) (*Core, error) {
+func NewCore(width, height int, glVersion GLFWClientAPI, scene int) *Core {
 
-	platform, err := platforms.NewGLFW(glVersion)
+	platform, err := NewGLFW(glVersion, width, height)
 	if err != nil {
-		return nil, errors.Wrap(err, "Can't initialize GLFW")
+		panic(err)
+		//	return nil, errors.Wrap(err, "Can't initialize GLFW")
 	}
 
 	renderer, err := renderers.NewOpenGL42()
 	if err != nil {
-		return nil, errors.Wrapf(err, "Can't initialize OpenGL %s", glVersion)
+		panic(err)
+		//return nil, errors.Wrapf(err, "Can't initialize OpenGL %s", glVersion)
 	}
 
 	c := Core{
 		width:      width,
 		height:     height,
-		glfwWindow: platform.GetWindow(),
-		platform:   platform,
+		glfwWindow: platform,
 		renderer:   renderer,
-		imGui:      platform.ImguiIO,
+		//imGui:      platform.ImguiIO,
 	}
 
+	c.changeScene(0)
+
+	return &c //, nil
+}
+
+func (c *Core) changeScene(scene int) {
 	switch scene {
 	case 0:
-		c.currentScene = scenes.NewEditorScene(renderer,platform.GetWindow())
+		c.currentScene = scenes.NewEditorScene(c.changeScene)
 		c.currentScene.Init()
+		c.currentScene.Start()
+	case 1:
+		// c.currentScene = scenes.NewLevelScene(c.changeScene)
+		// c.currentScene.Init()
+		// c.currentScene.Start()
+	default:
+		panic("Unknown scene")
 	}
-
-	return &c, nil
 }
 func (c *Core) Dispose() {
 	c.renderer.Dispose()
 	//c.imGuiContext.Destroy()
-	c.platform.Dispose()
+	c.glfwWindow.Dispose()
 }
 
 func (c *Core) Run() {
-	// beginTime := glfw.GetTime()
-	// var endTime, dt float64
-	//showGoDemoWindow := false
-
+	beginTime := float32(glfw.GetTime())
+	var endTime float32
 	var dt float32
-	for !c.platform.ShouldStop() {
-		c.platform.ProcessEvents()
+	for !c.glfwWindow.ShouldStop() {
+		c.glfwWindow.ProcessEvents()
 
-	//	gl.ClearColor(0, 0, 0, 0)
-		//gl.Clear(gl.COLOR_BUFFER_BIT)
-		// Signal start of a new frame
-		c.platform.NewFrame(&dt)
+		gl.ClearColor(0, 0, 0, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		//if dt >= 0 {
-			//c.currentScene.Update(dt)
-		//}
-		c.imGui.Update(c.platform.DisplaySize(), c.platform.FramebufferSize(), dt, c.currentScene)
-		
-		// A this point, the application could perform its own rendering...
+		if dt >= 0 {
+			c.currentScene.Update(dt)
+		}
 		c.currentScene.Render()
-		// app.RenderScene()
-		c.platform.PostRender()
+		// Signal start of a new frame
+		// c.glfwWindow.NewFrame(&dt)
 
-		// endTime = glfw.GetTime()
-		// dt = endTime - beginTime
-		// beginTime = endTime
+		// c.imGui.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene)
+
+		// // A this point, the application could perform its own rendering...
+		// c.currentScene.Render()
+		// // app.RenderScene()
+		c.glfwWindow.PostRender()
+
+		endTime = float32(glfw.GetTime())
+		dt = endTime - beginTime
+		beginTime = endTime
 	}
 }

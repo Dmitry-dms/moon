@@ -3,8 +3,9 @@ package renderers
 import (
 	_ "embed" // using embed for the shader sources
 
-
-//	"github.com/go-gl/gl/v4.2-core/gl"
+	"github.com/go-gl/gl/v4.2-core/gl"
+	"github.com/pkg/errors"
+	//	"github.com/go-gl/gl/v4.2-core/gl"
 	//"github.com/pkg/errors"
 )
 
@@ -23,10 +24,10 @@ type OpenGL42 struct {
 // NewOpenGL3 attempts to initialize a renderer.
 // An OpenGL context has to be established before calling this function.
 func NewOpenGL42() (*OpenGL42, error) {
-	//err := gl.Init()
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "failed to initialize OpenGL 4.2-core")
-	// }
+	err := gl.Init()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to initialize OpenGL 4.2-core")
+	}
 
 	renderer := &OpenGL42{
 		//glslVersion: "#version 420",
