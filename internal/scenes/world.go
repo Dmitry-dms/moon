@@ -40,40 +40,33 @@ func (w *GameWorld) addGameObjToWorld(obj *components.GameObject) {
 var g *components.GameObject
 var sprsheet *gogl.Spritesheet
 
+func (w *GameWorld) loadResources() {
+	gogl.AssetPool.GetTexture("assets/images/blend1.png")
+	gogl.AssetPool.GetTexture("assets/images/blend2.png")
+}
+
 func (w *GameWorld) Init() {
+	w.loadResources()
 	fmt.Printf("Init game world - %s \n", w.Name)
 
 	sprsheet = gogl.AssetPool.GetSpriteSheet("assets/images/spritesheet.png")
 
 	g = components.NewGameObject("Obj 1",
-		components.NewTransform(mgl32.Vec2{100, 100}, mgl32.Vec2{256, 256}))
-	spr := components.NewSpriteRenderer(mgl32.Vec4{1, 1, 1, 1}, sprsheet.GetSprite(0))
+		components.NewTransform(mgl32.Vec2{400, 100}, mgl32.Vec2{256, 256}), 1)
+	spr := components.NewSpriteRenderer(mgl32.Vec4{1, 1, 1, 1}, gogl.NewSprite(gogl.AssetPool.GetTexture("assets/images/blend2.png")))
 	g.AddSpriteRenderer(spr)
 
 	g2 := components.NewGameObject("Obj 2",
-		components.NewTransform(mgl32.Vec2{400, 100}, mgl32.Vec2{256, 256}))
-	spr2 := components.NewSpriteRenderer(mgl32.Vec4{1, 1, 1, 1}, sprsheet.GetSprite(16))
+		components.NewTransform(mgl32.Vec2{200, 100}, mgl32.Vec2{256, 256}), 2)
+	spr2 := components.NewSpriteRenderer(mgl32.Vec4{1, 1, 1, 1}, gogl.NewSprite(gogl.AssetPool.GetTexture("assets/images/blend1.png")))
 	g2.AddSpriteRenderer(spr2)
 
 	w.addGameObjToWorld(g)
 	w.addGameObjToWorld(g2)
 
 }
-var spriteInd int
-var spriteFlipTime, spriteFlipTimeLeft float32 = 0.2, 0
+
 func (w *GameWorld) Update(dt float32) {
-	spriteFlipTimeLeft-= dt
-	if spriteFlipTimeLeft <= 0 {
-		spriteFlipTimeLeft = spriteFlipTime
-		spriteInd++
-		if spriteInd > 4  {
-			spriteInd = 0
-		}
-		g.SetSprite(sprsheet.GetSprite(spriteInd))
-	}
-
-
-
 
 	w.renderer.Update(dt)
 }

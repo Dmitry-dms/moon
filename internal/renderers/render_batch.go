@@ -39,9 +39,11 @@ type RenderBatch struct {
 	shader   *gogl.Shader
 	textures []*gogl.Texture
 	texSlots []int32
+
+	zIndex int
 }
 
-func NewRenderBatch(maxBatchSize int) *RenderBatch {
+func NewRenderBatch(maxBatchSize,zIndex int) *RenderBatch {
 	s, err := gogl.AssetPool.GetShader("assets/shaders/default.glsl")
 	if err != nil {
 		panic(err)
@@ -56,12 +58,15 @@ func NewRenderBatch(maxBatchSize int) *RenderBatch {
 		objects:      obj,
 		textures:     make([]*gogl.Texture, 0),
 		texSlots:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+		zIndex: zIndex,
 	}
 	rb.indeces = rb.generateIndeces()
 
 	return &rb
 }
-
+func (b *RenderBatch) GetZIndex() int {
+	return b.zIndex
+}
 //работа с OpenGL
 func (b *RenderBatch) Start() {
 	// fmt.Println("START BATCH")

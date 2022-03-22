@@ -56,6 +56,7 @@ func (e *EditorScene) Init() {
 
 	fmt.Println("init editor scene")
 	e.loadResources()
+	e.currentGameWorld.loadResources()
 	e.currentGameWorld.Init()
 
 }

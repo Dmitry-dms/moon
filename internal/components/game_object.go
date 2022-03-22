@@ -1,8 +1,6 @@
 package components
 
 import (
-
-
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -18,14 +16,17 @@ type GameObject struct {
 	Spr *SpriteRenderer
 
 	isDirty bool
+
+	zIndex int
 }
 
-func NewGameObject(name string, transform *Transform) *GameObject {
+func NewGameObject(name string, transform *Transform, zIndex int) *GameObject {
 	//fmt.Println("Creating " + name)
 	obj := GameObject{
 		name:          name,
 		Transform:     transform,
 		LastTransform: transform.Copy(),
+		zIndex:        zIndex,
 	}
 	return &obj
 }
@@ -36,10 +37,13 @@ func (g *GameObject) AddSpriteRenderer(spr *SpriteRenderer) {
 
 func (g *GameObject) Update(dt float32) {
 	if g.Transform != g.LastTransform {
-
 		g.Transform.CopyTo(g.LastTransform)
 		g.isDirty = true
 	}
+}
+
+func (g *GameObject) GetZIndex() int {
+	return g.zIndex
 }
 
 func (g *GameObject) SetColor(color mgl32.Vec4) {

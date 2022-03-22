@@ -36,6 +36,10 @@ func NewOpenGL42() (*OpenGL42, error) {
 
 	//imguiIO.SetBackendFlags(imguiIO.GetBackendFlags() | imgui.BackendFlagsRendererHasVtxOffset)
 
+	//включаем размытие
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+
 	return renderer, nil
 }
 

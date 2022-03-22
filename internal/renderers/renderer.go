@@ -1,6 +1,7 @@
 package renderers
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/Dmitry-dms/moon/internal/components"
@@ -60,7 +61,7 @@ func (r *Renderer) AddGameObj(obj *components.GameObject) {
 	added := false
 	tex := obj.Spr.GetTexture()
 	for _, b := range r.batches {
-		if b.hasRoom {
+		if b.hasRoom && (b.GetZIndex() == obj.GetZIndex()) {
 			if tex == nil || (b.HasTexture(tex) || b.HasTextureRoom()) {
 				b.AddGameObject(obj)
 				added = true
@@ -70,10 +71,13 @@ func (r *Renderer) AddGameObj(obj *components.GameObject) {
 	}
 
 	if !added {
-		newBatch := NewRenderBatch(r.maxBatchSize)
+		newBatch := NewRenderBatch(r.maxBatchSize, obj.GetZIndex())
 		newBatch.Start()
 		r.batches = append(r.batches, newBatch)
 		newBatch.AddGameObject(obj)
+		sort.Slice(r.batches, func(i, j int) bool {
+			return r.batches[i].GetZIndex() < r.batches[j].GetZIndex()
+		})
 	}
 
 }
