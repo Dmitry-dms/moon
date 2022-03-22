@@ -47,10 +47,12 @@ func (e *EditorScene) GetCamera() *gogl.Camera {
 
 func (e *EditorScene) loadResources() {
 	gogl.AssetPool.GetShader("assets/shaders/default.glsl")
+
+	gogl.AssetPool.AddSpritesheet("assets/images/spritesheet.png",
+		gogl.NewSpritesheet(gogl.AssetPool.GetTexture("assets/images/spritesheet.png"), 16, 16, 26, 0))
 }
 
 func (e *EditorScene) Init() {
-
 
 	fmt.Println("init editor scene")
 	e.loadResources()
