@@ -2,7 +2,8 @@ package components
 
 import (
 	"github.com/Dmitry-dms/moon/pkg/gogl"
-	"github.com/go-gl/mathgl/mgl32"
+	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/inkyblackness/imgui-go/v4"
 )
 
 //"fmt"
@@ -46,7 +47,7 @@ func (g *GameObject) GetZIndex() int {
 	return g.zIndex
 }
 
-func (g *GameObject) SetColor(color mgl32.Vec4) {
+func (g *GameObject) SetColor(color mgl.Vec4) {
 	if g.Spr.color != color {
 		g.isDirty = true
 		g.SetColor(color)
@@ -58,7 +59,7 @@ func (g *GameObject) SetSprite(sprite *gogl.Sprite) {
 	g.isDirty = true
 }
 
-func (g *GameObject) AddPosition(tr mgl32.Vec2) {
+func (g *GameObject) AddPosition(tr mgl.Vec2) {
 	g.LastTransform = g.Transform.Copy()
 	g.Transform.Position[0] += tr.X()
 	g.Transform.Position[1] += tr.Y()
@@ -71,6 +72,14 @@ func (g *GameObject) IsDirty() bool {
 
 func (g *GameObject) SetClean() {
 	g.isDirty = false
+}
+
+func (g *GameObject) Imgui() {
+	colors := [4]float32{g.Spr.color[0],g.Spr.color[1],g.Spr.color[2],g.Spr.color[3]}
+	if imgui.ColorPicker4("Color picker", &colors) {
+		g.Spr.SetColor(mgl.Vec4{colors[0],colors[1],colors[2],colors[3]})
+		g.isDirty = true
+	}
 }
 
 // func (g *GameObject) Start() {

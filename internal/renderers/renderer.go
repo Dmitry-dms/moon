@@ -64,8 +64,7 @@ func (r *Renderer) AddGameObj(obj *components.GameObject) {
 		if b.hasRoom && (b.GetZIndex() == obj.GetZIndex()) {
 			if tex == nil || (b.HasTexture(tex) || b.HasTextureRoom()) {
 				b.AddGameObject(obj)
-				added = true
-				break
+				return
 			}
 		}
 	}

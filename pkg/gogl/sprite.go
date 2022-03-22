@@ -29,6 +29,7 @@ func (s *Sprite) ReplaceTexCoords(texCoords []mgl32.Vec2) {
 }
 
 func (s *Sprite) GetTexture() *Texture {
+	
 	return s.texture
 }
 

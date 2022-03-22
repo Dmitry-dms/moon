@@ -16,19 +16,21 @@ type GameWorld struct {
 	Name                    string
 	Id                      int
 	renderer                renderers.GameRenderer
+	currGameObj             func(g *components.GameObject)
 }
 
 const (
 	maxBatchSize = 1000
 )
 
-func NewGameWorld(name string, widthTiles, heightTiles int) *GameWorld {
+func NewGameWorld(name string, widthTiles, heightTiles int, callback func(g *components.GameObject)) *GameWorld {
 	gw := GameWorld{
 		Name:        name,
 		widthTiles:  widthTiles,
 		heightTiles: heightTiles,
 		renderer:    renderers.NewRenderer(maxBatchSize),
 		Id:          0,
+		currGameObj: callback,
 	}
 	return &gw
 }
@@ -53,8 +55,10 @@ func (w *GameWorld) Init() {
 
 	g = components.NewGameObject("Obj 1",
 		components.NewTransform(mgl32.Vec2{400, 100}, mgl32.Vec2{256, 256}), 1)
-	spr := components.NewSpriteRenderer(mgl32.Vec4{1, 1, 1, 1}, gogl.NewSprite(gogl.AssetPool.GetTexture("assets/images/blend2.png")))
+	spr := components.NewSpriteRenderer(mgl32.Vec4{1, 1, 1, 1}, gogl.NewSprite(nil))
 	g.AddSpriteRenderer(spr)
+
+	w.currGameObj(g)
 
 	g2 := components.NewGameObject("Obj 2",
 		components.NewTransform(mgl32.Vec2{200, 100}, mgl32.Vec2{256, 256}), 2)

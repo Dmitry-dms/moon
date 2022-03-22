@@ -1,17 +1,18 @@
+//+build sdl
 package renderers
 
 import (
-	_ "embed" // using embed for the shader sources
+
 	"fmt"
 
 	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 )
 
-//go:embed gl-shader/main.vert
+
 var unversionedVertexShader string
 
-//go:embed gl-shader/main.frag
+
 var unversionedFragmentShader string
 
 // OpenGL3 implements a renderer based on github.com/go-gl/gl (v3.2-core).

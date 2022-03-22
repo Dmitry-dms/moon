@@ -20,7 +20,7 @@ var Window *Core
 func init() {
 	o := sync.Once{}
 	o.Do(func() { //make a singleton
-		Window = newCore(1200, 700, platforms.GLFWClientAPIOpenGL42, 0)
+		Window = newCore(1920, 1080, platforms.GLFWClientAPIOpenGL42, 0)
 	})
 }
 

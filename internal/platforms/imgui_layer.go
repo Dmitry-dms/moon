@@ -84,6 +84,16 @@ func (g *ImgUi) Dispose() {
 func (g *ImgUi) createFontsTexture() {
 	// Build texture atlas
 	io := imgui.CurrentIO()
+	
+	fontAtlas := io.Fonts()
+	fontConfig := imgui.NewFontConfig()
+
+	fontConfig.SetMergeMode(true)
+	fontConfig.SetPixelSnapH(true)
+	fontAtlas.AddFontFromFileTTF("assets/fonts/rany.otf",16)
+
+	fontConfig.Delete()
+
 	image := io.Fonts().TextureDataAlpha8()
 
 	// Upload texture to graphics system
@@ -95,13 +105,14 @@ func (g *ImgUi) createFontsTexture() {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.PixelStorei(gl.UNPACK_ROW_LENGTH, 0)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(image.Width), int32(image.Height),
-		0, gl.RED, gl.UNSIGNED_BYTE, image.Pixels)
+		0, gl.RED, gl.UNSIGNED_BYTE, image.Pixels) 
 
 	// Store our identifier
 	io.Fonts().SetTextureID(imgui.TextureID(g.fontTexture))
 
 	// Restore state
 	gl.BindTexture(gl.TEXTURE_2D, uint32(lastTexture))
+
 }
 
 func (g *ImgUi) invalidateDeviceObjects() {

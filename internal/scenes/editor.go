@@ -23,20 +23,23 @@ type EditorScene struct {
 	changeSceneCallback func(scene int)
 	camera              *gogl.Camera
 
-	currentGameWorld *GameWorld
+	activeGameWorld  *GameWorld
+	activeGameObject *components.GameObject
 
 	isRunning bool
 }
 
 func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
-	world := NewGameWorld("first", 20, 20)
-
 	edtrScene := EditorScene{
 		showDemoWindow:      true,
 		changeSceneCallback: changeSceneCallback,
 		camera:              gogl.NewCamera(mgl32.Vec2{0, 0}),
-		currentGameWorld:    world,
 	}
+	callback := func(g *components.GameObject) {
+		edtrScene.activeGameObject = g
+	}
+	world := NewGameWorld("first", 20, 20, callback)
+	edtrScene.activeGameWorld = world
 
 	return &edtrScene
 }
@@ -56,13 +59,9 @@ func (e *EditorScene) Init() {
 
 	fmt.Println("init editor scene")
 	e.loadResources()
-	e.currentGameWorld.loadResources()
-	e.currentGameWorld.Init()
+	e.activeGameWorld.loadResources()
+	e.activeGameWorld.Init()
 
-}
-
-var indeces = []int32{
-	3, 2, 0, 0, 2, 1,
 }
 
 // при запуске сцены, запускаем объекты
@@ -85,31 +84,13 @@ func (e *EditorScene) Destroy() {
 
 }
 
-var vao, vbo, ebo uint32
-var f = true
-
 func (e *EditorScene) Update(dt float32) {
 	//fmt.Printf("FPS - %.1f \n", 1/dt)
-	e.currentGameWorld.Update(dt)
-
-	// for _, o := range e.gameObjects {
-	// 	if o != nil {
-	// 		o.Update(dt)
-	// 	}
-	// }
-
-	// e.renderer.Render(*e.camera)
-
+	e.activeGameWorld.Update(dt)
 }
 
 func (e *EditorScene) Render() {
-	e.currentGameWorld.Render(e.camera)
-	// e.shader.Use()
-	// gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, gl.PtrOffset(0))
-	// err := e.shader.CheckShaderForChanges()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	e.activeGameWorld.Render(e.camera)
 }
 func (e *EditorScene) Imgui() {
 	// // 1. Show a simple window.
@@ -119,6 +100,14 @@ func (e *EditorScene) Imgui() {
 		imgui.Text(fmt.Sprintf("Application average %.3f ms/frame (%.1f FPS)",
 			float32(time.Second.Milliseconds())/imgui.CurrentIO().Framerate(), imgui.CurrentIO().Framerate()))
 		imgui.End()
+	}
+
+	{
+		if e.activeGameObject != nil {
+			imgui.Begin("Inspector")
+			e.activeGameObject.Imgui()
+			imgui.End()
+		}
 	}
 
 	// 3. Show the ImGui demo window. Most of the sample code is in imgui.ShowDemoWindow().

@@ -2,7 +2,7 @@ package components
 
 import (
 	"github.com/Dmitry-dms/moon/pkg/gogl"
-	"github.com/go-gl/mathgl/mgl32"
+
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -40,6 +40,7 @@ func (r *SpriteRenderer) SetSprite(sprite *gogl.Sprite) {
 	r.sprite = sprite
 }
 
-func (r *SpriteRenderer) SetColor(color mgl32.Vec4) {
+func (r *SpriteRenderer) SetColor(color mgl.Vec4) {
 	r.color = color
 }
+
