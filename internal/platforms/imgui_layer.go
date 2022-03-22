@@ -1,11 +1,8 @@
 package platforms
 
 import (
-	"fmt"
-	"strings"
-
-	//	"github.com/Dmitry-dms/moon/internal/scenes"
 	"github.com/Dmitry-dms/moon/internal/scenes"
+	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	imgui "github.com/inkyblackness/imgui-go/v4"
@@ -15,10 +12,11 @@ type ImgUi struct {
 	context *imgui.Context
 	io      imgui.IO
 
-	glslVersion          string
+	shader *gogl.Shader
+
 	fontTexture            uint32
 	shaderProgramId        uint32
-	vertexShaderId         uint32
+
 	fragmentShaderId       uint32
 	attribLocationTex      int32
 	attribLocationProjMtx  int32
@@ -27,24 +25,17 @@ type ImgUi struct {
 	attribLocationColor    int32
 	vboHandle              uint32
 	elementsHandle         uint32
-
-	clearColor [3]float32
 }
 
 func NewImgui() *ImgUi {
 	context := imgui.CreateContext(nil)
 	io := imgui.CurrentIO()
-	err := gl.Init()
-	if err != nil {
-		panic("failed to initialize OpenGL")
-	}
 	g := ImgUi{
 		context:     context,
 		io:          io,
-		glslVersion: "#version 420",
-		clearColor:  [3]float32{0.0, 0.0, 0.0},
 	}
 	io.SetBackendFlags(io.GetBackendFlags() | imgui.BackendFlagsRendererHasVtxOffset)
+
 	g.setKeyMapping()
 	g.createDeviceObjects()
 	return &g
@@ -54,111 +45,23 @@ func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt fl
 
 	imgui.NewFrame()
 
-	//currentScene.Imgui()
-
-	// if showGoDemoWindow {
-	// 	demo.Show(&showGoDemoWindow)
-	// }
+	currentScene.Imgui()
 
 	// Rendering
 	imgui.Render() // This call only creates the draw data list. Actual rendering to framebuffer is done below.
 
-	g.PreRender(g.clearColor)
+	
 	g.Render(displaySize, framebufferSize, imgui.RenderedDrawData())
 }
 
-// func (g *ImgUi) InitImgui() {
-// 	g.setKeyMapping()
-// }
 
-var unversionedVertexShader string = `uniform mat4 ProjMtx;
-
-in vec2 Position;
-in vec2 UV;
-in vec4 Color;
-
-out vec2 Frag_UV;
-out vec4 Frag_Color;
-
-void main()
-{
-    Frag_UV = UV;
-    Frag_Color = Color;
-    gl_Position = ProjMtx * vec4(Position.xy, 0, 1);
-}`
-
-var unversionedFragmentShader string = `uniform sampler2D Texture;
-
-in vec2 Frag_UV;
-in vec4 Frag_Color;
-
-out vec4 Out_Color;
-
-void main()
-{
-    Out_Color = vec4(Frag_Color.rgb, Frag_Color.a * texture(Texture, Frag_UV.st).r);
-}`
-
-// PreRender clears the framebuffer.
-func (g *ImgUi) PreRender(clearColor [3]float32) {
-	gl.ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
-}
 func (g *ImgUi) createDeviceObjects() {
-	//glfw.GetCurrentContext().MakeContextCurrent()
-	// Backup GL state
-	var lastTexture int32
-	var lastArrayBuffer int32
-	var lastVertexArray int32
-	gl.GetIntegerv(gl.TEXTURE_BINDING_2D, &lastTexture)
-	gl.GetIntegerv(gl.ARRAY_BUFFER_BINDING, &lastArrayBuffer)
-	gl.GetIntegerv(gl.VERTEX_ARRAY_BINDING, &lastVertexArray)
-
-	vertexShader := g.glslVersion + "\n" + unversionedVertexShader
-	fragmentShader := g.glslVersion + "\n" + unversionedFragmentShader
-
-	g.shaderProgramId = gl.CreateProgram()
-	g.vertexShaderId = gl.CreateShader(gl.VERTEX_SHADER)
-	g.fragmentShaderId = gl.CreateShader(gl.FRAGMENT_SHADER)
-
-	glShaderSource := func(handle uint32, source string) {
-		csource, free := gl.Strs(source + "\x00")
-		defer free()
-
-		gl.ShaderSource(handle, 1, csource, nil)
+	sh, err := gogl.NewShader("assets/shaders/imgui.glsl")
+	if err != nil {
+		panic(err)
 	}
-
-	glShaderSource(g.vertexShaderId, vertexShader)
-	glShaderSource(g.fragmentShaderId, fragmentShader)
-
-	gl.CompileShader(g.vertexShaderId)
-	var s string
-	compileError(g.vertexShaderId, &s)
-	if s != "" {
-		fmt.Println(s)
-	}
-	gl.CompileShader(g.fragmentShaderId)
-	compileError(g.fragmentShaderId, &s)
-	if s != "" {
-		fmt.Println(s)
-	}
-
-	gl.AttachShader(g.shaderProgramId, g.vertexShaderId)
-	gl.AttachShader(g.shaderProgramId, g.fragmentShaderId)
-	gl.LinkProgram(g.shaderProgramId)
-
-	var status int32
-	gl.GetProgramiv(g.shaderProgramId, gl.LINK_STATUS, &status) //logging
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetProgramiv(g.shaderProgramId, gl.INFO_LOG_LENGTH, &logLength)
-		log := strings.Repeat("\x00", int(logLength)+1)
-		gl.GetProgramInfoLog(g.shaderProgramId, logLength, nil, gl.Str(log))
-		s = log
-	}
-	if s != "" {
-		fmt.Println(s)
-	}
+	g.shader = sh
+	g.shaderProgramId = sh.ProgramId
 
 	g.attribLocationTex = gl.GetUniformLocation(g.shaderProgramId, gl.Str("Texture"+"\x00"))
 	g.attribLocationProjMtx = gl.GetUniformLocation(g.shaderProgramId, gl.Str("ProjMtx"+"\x00"))
@@ -170,24 +73,8 @@ func (g *ImgUi) createDeviceObjects() {
 	gl.GenBuffers(1, &g.elementsHandle)
 
 	g.createFontsTexture()
-
-	// Restore modified GL state
-	gl.BindTexture(gl.TEXTURE_2D, uint32(lastTexture))
-	gl.BindBuffer(gl.ARRAY_BUFFER, uint32(lastArrayBuffer))
-	gl.BindVertexArray(uint32(lastVertexArray))
 }
 
-func compileError(shaderId uint32, info *string) {
-	var status int32
-	gl.GetShaderiv(shaderId, gl.COMPILE_STATUS, &status) //logging
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetShaderiv(shaderId, gl.INFO_LOG_LENGTH, &logLength)
-		log := strings.Repeat("\x00", int(logLength)+1)
-		gl.GetShaderInfoLog(shaderId, logLength, nil, gl.Str(log))
-		*info = fmt.Sprintln("failed to compile shader: \n" + log)
-	}
-}
 
 // Dispose cleans up the resources.
 func (g *ImgUi) Dispose() {
@@ -227,13 +114,7 @@ func (g *ImgUi) invalidateDeviceObjects() {
 	}
 	g.elementsHandle = 0
 
-	if (g.shaderProgramId != 0) && (g.vertexShaderId != 0) {
-		gl.DetachShader(g.shaderProgramId, g.vertexShaderId)
-	}
-	if g.vertexShaderId != 0 {
-		gl.DeleteShader(g.vertexShaderId)
-	}
-	g.vertexShaderId = 0
+	g.shader.Detach()
 
 	if (g.shaderProgramId != 0) && (g.fragmentShaderId != 0) {
 		gl.DetachShader(g.shaderProgramId, g.fragmentShaderId)

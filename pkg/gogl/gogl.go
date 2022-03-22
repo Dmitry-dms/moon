@@ -77,7 +77,6 @@ func CreateShader(source string, shaderType uint32) (uint32, error) {
 	gl.ShaderSource(shaderId, 1, vsource, nil)
 	free()
 	gl.CompileShader(shaderId)
-
 	var status int32
 	gl.GetShaderiv(shaderId, gl.COMPILE_STATUS, &status) //logging
 	if status == gl.FALSE {
@@ -85,21 +84,13 @@ func CreateShader(source string, shaderType uint32) (uint32, error) {
 		gl.GetShaderiv(shaderId, gl.INFO_LOG_LENGTH, &logLength)
 		log := strings.Repeat("\x00", int(logLength)+1)
 		gl.GetShaderInfoLog(shaderId, logLength, nil, gl.Str(log))
-		//fmt.Println("failed to compile shader: \n" + log)
 		return 0, errors.New(log)
 	}
 	return shaderId, nil
 }
 
 func CreateProgram(path string) (uint32, error) {
-	// vert, err := LoadShader(vertPath, gl.VERTEX_SHADER)
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// frag, err := LoadShader(fragPath, gl.FRAGMENT_SHADER)
-	// if err != nil {
-	// 	return 0, err
-	// }
+
 	vert, frag, err := LoadShaders(path)
 	if err != nil {
 		return 0, err

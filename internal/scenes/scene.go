@@ -17,8 +17,8 @@ type Scene interface {
 	AddGameObjectToScene(obj *components.GameObject)
 	GetCamera() *gogl.Camera
 	Render()
-//	Render()
-	//Imgui()
+
+	Imgui()
 }
 
 

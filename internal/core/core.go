@@ -5,7 +5,7 @@ import (
 
 	//"github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/Dmitry-dms/moon/internal/platforms"
-	"github.com/Dmitry-dms/moon/internal/renderers"
+
 	"github.com/Dmitry-dms/moon/internal/scenes"
 
 	"github.com/go-gl/gl/v4.2-core/gl"
@@ -20,7 +20,7 @@ var Window *Core
 func init() {
 	o := sync.Once{}
 	o.Do(func() { //make a singleton
-		Window = newCore(1200, 700, GLFWClientAPIOpenGL42, 0)
+		Window = newCore(1200, 700, platforms.GLFWClientAPIOpenGL42, 0)
 	})
 }
 
@@ -29,38 +29,24 @@ func (c *Core) GetCurrentScene() scenes.Scene {
 }
 
 type Core struct {
-	width, height int
-	glfwWindow    *GLFW
+	width, height *int
+	glfwWindow    *platforms.GLFW
 	currentScene  scenes.Scene
-	renderer      *renderers.OpenGL42
 	imGui         *platforms.ImgUi
 }
 
-func newCore(width, height int, glVersion GLFWClientAPI, scene int) *Core {
-
-	platform, err := NewGLFW(glVersion, width, height)
+func newCore(width, height int, glVersion platforms.GLFWClientAPI, scene int) *Core {
+	platform, err := platforms.NewGLFW(glVersion, &width, &height)
 	if err != nil {
 		panic(err)
-		//	return nil, errors.Wrap(err, "Can't initialize GLFW")
 	}
-
-	renderer, err := renderers.NewOpenGL42()
-	if err != nil {
-		panic(err)
-		//return nil, errors.Wrapf(err, "Can't initialize OpenGL %s", glVersion)
-	}
-
 	c := Core{
-		width:      width,
-		height:     height,
+		width:      &width,
+		height:     &height,
 		glfwWindow: platform,
-		renderer:   renderer,
-		//imGui:      platform.ImguiIO,
 	}
-
 	c.changeScene(0)
-
-	return &c //, nil
+	return &c 
 }
 
 func (c *Core) changeScene(scene int) {
@@ -78,7 +64,7 @@ func (c *Core) changeScene(scene int) {
 	}
 }
 func (c *Core) Dispose() {
-	c.renderer.Dispose()
+	//c.renderer.Dispose()
 	//c.imGuiContext.Destroy()
 	c.glfwWindow.Dispose()
 }
@@ -96,15 +82,16 @@ func (c *Core) Run() {
 		if dt >= 0 {
 			c.currentScene.Update(dt)
 		}
-		c.currentScene.Render()
+		
 		// Signal start of a new frame
-		// c.glfwWindow.NewFrame(&dt)
+		c.glfwWindow.NewFrame(dt)
 
-		// c.imGui.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene)
-
+		
+		
 		// // A this point, the application could perform its own rendering...
-		// c.currentScene.Render()
-		// // app.RenderScene()
+		c.currentScene.Render()
+		
+		c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene)
 		c.glfwWindow.PostRender()
 
 		endTime = float32(glfw.GetTime())
