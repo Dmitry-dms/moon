@@ -1,13 +1,9 @@
 package main
 
 import (
-	//"fmt"
-	//"os"
 	"runtime"
-
 	"github.com/Dmitry-dms/moon/internal/core"
-	//"github.com/Dmitry-dms/moon/internal/platforms"
-	//"github.com/pkg/errors"
+
 )
 
 func init() {

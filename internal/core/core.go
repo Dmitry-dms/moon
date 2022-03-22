@@ -20,7 +20,7 @@ var Window *Core
 func init() {
 	o := sync.Once{}
 	o.Do(func() { //make a singleton
-		Window = NewCore(1200, 700, GLFWClientAPIOpenGL42, 0)
+		Window = newCore(1200, 700, GLFWClientAPIOpenGL42, 0)
 	})
 }
 
@@ -32,11 +32,11 @@ type Core struct {
 	width, height int
 	glfwWindow    *GLFW
 	currentScene  scenes.Scene
-	renderer      renderers.Renderer
+	renderer      *renderers.OpenGL42
 	imGui         *platforms.ImgUi
 }
 
-func NewCore(width, height int, glVersion GLFWClientAPI, scene int) *Core {
+func newCore(width, height int, glVersion GLFWClientAPI, scene int) *Core {
 
 	platform, err := NewGLFW(glVersion, width, height)
 	if err != nil {
