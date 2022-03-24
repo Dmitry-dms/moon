@@ -7,7 +7,7 @@ import (
 	// "unsafe"
 
 	"github.com/Dmitry-dms/moon/internal/components"
-	"github.com/Dmitry-dms/moon/internal/listeners"
+	//	"github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 
 	//  "github.com/go-gl/gl/v4.2-core/gl"
@@ -27,6 +27,7 @@ type EditorScene struct {
 
 	activeGameWorld  *GameWorld
 	activeGameObject *components.GameObject
+	mouseControls    *components.MouseControls
 
 	isRunning bool
 }
@@ -42,6 +43,7 @@ func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
 	}
 	world := NewGameWorld("first", 20, 20, callback)
 	edtrScene.activeGameWorld = world
+	edtrScene.mouseControls = components.NewMouseControls(edtrScene.AddGameObjectToScene)
 
 	return &edtrScene
 }
@@ -81,7 +83,7 @@ func (e *EditorScene) Start() {
 var inc int
 
 func (e *EditorScene) AddGameObjectToScene(obj *components.GameObject) {
-
+	e.activeGameWorld.AddGameObjToWorld(obj)
 }
 func (e *EditorScene) Destroy() {
 	e.activeGameWorld.Save()
@@ -89,7 +91,8 @@ func (e *EditorScene) Destroy() {
 
 func (e *EditorScene) Update(dt float32) {
 	//fmt.Printf("FPS - %.1f \n", 1/dt)
-	listeners.GetOrthoX()
+	//listeners.GetOrthoX()
+	e.mouseControls.Update(dt)
 	e.activeGameWorld.Update(dt)
 }
 
@@ -103,7 +106,7 @@ func (e *EditorScene) Imgui() {
 			float32(time.Second.Milliseconds())/imgui.CurrentIO().Framerate(), imgui.CurrentIO().Framerate()))
 		imgui.End()
 	}
-
+	imgui.Begin("Image picker")
 	pos := imgui.WindowPos() //текущая позиция окна
 	size := imgui.WindowSize()
 	itemSpacing := imgui.CurrentStyle().ItemSpacing()
@@ -120,13 +123,15 @@ func (e *EditorScene) Imgui() {
 		if imgui.ImageButtonV(imgui.TextureID(id), imgui.Vec2{X: float32(spWidth), Y: float32(spHeight)},
 			imgui.Vec2{X: float32(texCoords[2].X()), Y: float32(texCoords[0].Y())},
 			imgui.Vec2{X: float32(texCoords[0].X()), Y: float32(texCoords[2].Y())}, -1,
-			imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0}, imgui.Vec4{X: 255, Y:255, Z: 255, W: 255}) {
-			fmt.Printf("Button %d was clicked\n", i)
+			imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}) {
+
+			obj := components.GenerateSpriteObject(sprite, spWidth, spHeight)
+			//привязываем к курсору
+			e.mouseControls.PickupObject(obj)
+
 		}
+
 		imgui.PopID()
-		// if imgui.ImageButton(imgui.TextureID(id), imgui.Vec2{float32(spWidth), float32(spHeight)}) {
-		// 	fmt.Printf("Button %d was clicked", i)
-		// }
 
 		lastBtnPos := imgui.ItemRectMax()
 		lastX2 := lastBtnPos.X
@@ -136,6 +141,7 @@ func (e *EditorScene) Imgui() {
 			imgui.SameLine()
 		}
 	}
+	imgui.End()
 
 	{
 		if e.activeGameObject != nil {

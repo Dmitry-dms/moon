@@ -6,13 +6,10 @@ import (
 	"os"
 	"regexp"
 
-
 	"github.com/Dmitry-dms/moon/internal/components"
 
 	"github.com/Dmitry-dms/moon/internal/renderers"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
-
-
 )
 
 type GameWorld struct {
@@ -41,7 +38,7 @@ func NewGameWorld(name string, widthTiles, heightTiles int, callback func(g *com
 	return &gw
 }
 
-func (w *GameWorld) addGameObjToWorld(obj *components.GameObject) {
+func (w *GameWorld) AddGameObjToWorld(obj *components.GameObject) {
 	w.gameObjects = append(w.gameObjects, obj)
 	w.renderer.AddGameObj(obj)
 }
@@ -68,8 +65,6 @@ func (w *GameWorld) Init() {
 	// sprite1 := gogl.DefSprite()
 	// spr.SetSprite(sprite1)
 	// g.AddSpriteRenderer(spr)
-
-
 
 	// g2 = components.NewGameObject("Obj 2",
 	// 	components.NewTransform(mgl32.Vec2{200, 100}, mgl32.Vec2{256, 256}), 2)
@@ -116,11 +111,13 @@ func (w *GameWorld) Save() {
 func (w *GameWorld) Load() {
 	file, err := os.Open(fmt.Sprintf("saves/%s.txt", w.Name))
 	if err != nil {
-		fmt.Println(err)
+		return
 	}
 	defer file.Close()
 	reader := bufio.NewScanner(file)
 	reg := regexp.MustCompile("\\{.*\\}")
+
+	maxGoID := -1
 	for reader.Scan() {
 		t := reader.Text()
 		if len([]rune(t)) != 1 {
@@ -131,13 +128,19 @@ func (w *GameWorld) Load() {
 				if err != nil {
 					fmt.Println(err)
 				} else {
-					w.addGameObjToWorld(obj)
+					w.AddGameObjToWorld(obj)
+
+					if obj.GetUid() > maxGoID {
+						maxGoID = obj.GetUid()
+					}
 				}
 			}
 
 		}
 	}
-	w.currGameObj(w.gameObjects[0])
+	maxGoID++
+	components.Init(maxGoID)
+	//	w.currGameObj(w.gameObjects[0])
 
 }
 

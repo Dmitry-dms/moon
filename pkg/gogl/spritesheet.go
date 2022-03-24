@@ -9,13 +9,13 @@ type Spritesheet struct {
 	sprites []*Sprite
 }
 
-func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight, numberSprites, spacing int) *Spritesheet{
+func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight float32, numberSprites, spacing int) *Spritesheet {
 	sprites := make([]*Sprite, 0)
 	sh := Spritesheet{
 		texture: tex,
 	}
-	currentX := 0
-	currentY := 0 
+	var currentX float32 = 0
+	var currentY float32 = 0
 	// проход начинается с лево на право верхнего ряда
 
 	for i := 0; i < numberSprites; i++ {
@@ -36,13 +36,13 @@ func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight, numberSprites, spac
 		sprite.SetTexture(tex)
 		sprite.SetWidth(spriteWidth)
 		sprite.SetHeight(spriteHeight)
-		
+
 		sprites = append(sprites, sprite)
 
-		currentX += spriteWidth + spacing
-		if currentX >= tex.GetWidth() {//достигли конца текстуры
+		currentX += spriteWidth + float32(spacing)
+		if currentX >= tex.GetWidth() { //достигли конца текстуры
 			currentX = 0
-			currentY += spriteHeight + spacing //переход на ряд выше
+			currentY += spriteHeight + float32(spacing) //переход на ряд ниже
 		}
 	}
 	sh.sprites = sprites
@@ -50,7 +50,7 @@ func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight, numberSprites, spac
 	return &sh
 }
 
-func (sh *Spritesheet) GetSprite(index int) *Sprite{
+func (sh *Spritesheet) GetSprite(index int) *Sprite {
 	return sh.sprites[index]
 }
 func (sh *Spritesheet) Size() int {

@@ -11,7 +11,7 @@ type SpriteRenderer struct {
 	sprite *gogl.Sprite
 }
 
-var defaultColor = mgl.Vec4{1, 0, 0, 1}
+var defaultColor = mgl.Vec4{1, 1, 1, 1}
 
 func DefSpriteRenderer() *SpriteRenderer {
 	return &SpriteRenderer{

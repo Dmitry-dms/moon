@@ -106,7 +106,7 @@ func GetOrthoX() float64 {//мировые координаты
 	return currentX
 }
 func GetOrthoY() float64 {
-	currentY := GetY()
+	currentY := float64(mWinListener.height) - GetY()
 
 	currentY = (currentY/float64(mWinListener.height))*2 - 1
 

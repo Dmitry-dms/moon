@@ -12,26 +12,26 @@ import (
 type Texture struct {
 	filepath      string
 	textureId     uint32
-	width, height int
+	width, height float32
 }
 
 type TextureExported struct {
-	Filepath  string `json:"filepath"`
-	TextureId uint32 `json:"texture_id"`
-	Width     int    `json:"texture_width"`
-	Height    int    `json:"texture_height"`
+	Filepath  string  `json:"filepath"`
+	TextureId uint32  `json:"texture_id"`
+	Width     float32 `json:"texture_width"`
+	Height    float32 `json:"texture_height"`
 }
 
 func (t *Texture) GetFilepath() string {
 	return t.filepath
 }
 
-func CreateTexture(filepath string, id uint32,width,height int) *Texture {
+func CreateTexture(filepath string, id uint32, width, height float32) *Texture {
 	return &Texture{
-		filepath: filepath,
+		filepath:  filepath,
 		textureId: id,
-		width: width,
-		height: height,
+		width:     width,
+		height:    height,
 	}
 }
 
@@ -77,8 +77,8 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 	textureStruct := Texture{
 		filepath:  filepath,
 		textureId: texture,
-		width:     w,
-		height:    h,
+		width:     float32(w),
+		height:    float32(h),
 	}
 	return &textureStruct, nil
 }
@@ -97,10 +97,10 @@ func (t *Texture) Unbind() {
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 }
 
-func (t *Texture) GetWidth() int {
+func (t *Texture) GetWidth() float32 {
 	return t.width
 }
-func (t *Texture) GetHeight() int {
+func (t *Texture) GetHeight() float32 {
 	return t.height
 }
 

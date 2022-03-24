@@ -20,6 +20,8 @@ type GameObject struct {
 
 	isDirty bool
 	zIndex  int
+
+	uid int
 }
 
 func NewGameObject(name string, transform *Transform, zIndex int) *GameObject {
@@ -28,12 +30,25 @@ func NewGameObject(name string, transform *Transform, zIndex int) *GameObject {
 		Transform:     transform,
 		LastTransform: transform.Copy(),
 		zIndex:        zIndex,
+		uid:           -1,
 	}
+	obj.generateId()
 	return &obj
 }
 
 func (g *GameObject) AddSpriteRenderer(spr *SpriteRenderer) {
 	g.Spr = *spr
+}
+
+func (g *GameObject) generateId() {
+	if g.uid == -1 {
+		id := ID_COUNTER
+		ID_COUNTER++
+		g.uid = id
+	}
+}
+func (g *GameObject) GetUid() int {
+	return g.uid
 }
 
 func (g *GameObject) Update(dt float32) {
@@ -63,6 +78,10 @@ func (g *GameObject) AddPosition(tr mgl.Vec2) {
 	g.LastTransform = g.Transform.Copy()
 	g.Transform.position[0] += tr.X()
 	g.Transform.position[1] += tr.Y()
+	g.isDirty = true
+}
+func (g *GameObject) SetPosition(tr mgl.Vec2) {
+	g.Transform.SetPosition(tr)
 	g.isDirty = true
 }
 
@@ -111,6 +130,7 @@ type gameObjExported struct {
 	Transform tranformExported
 	Spr       spriteRendererExported
 	ZIndex    int `json:"z_index"`
+	Uid       int `json:"uid"`
 }
 
 func (g *GameObject) MarshalJSON() ([]byte, error) {
@@ -132,8 +152,8 @@ func (g *GameObject) MarshalJSON() ([]byte, error) {
 		spriteExported = &gogl.SpriteExported{
 			Texture:   texExported,
 			TexCoords: g.Spr.GetTextureCoords(),
-			Width: g.Spr.sprite.GetWidth(),
-			Height: g.Spr.sprite.GetHeight(),
+			Width:     g.Spr.sprite.GetWidth(),
+			Height:    g.Spr.sprite.GetHeight(),
 		}
 	} else {
 		spriteExported = &gogl.SpriteExported{
@@ -152,6 +172,7 @@ func (g *GameObject) MarshalJSON() ([]byte, error) {
 		Transform: transfExp,
 		Spr:       sprExported,
 		ZIndex:    g.zIndex,
+		Uid: g.GetUid(),
 	}
 	return json.Marshal(rt)
 }
@@ -185,6 +206,7 @@ func (g *GameObject) UnmarshalJSON(data []byte) error {
 
 	spr.sprite = sprite
 	g.Spr = spr
+	g.uid = tr.Uid
 	return err
 }
 

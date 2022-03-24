@@ -192,7 +192,9 @@ func (platform *GLFW) mouseButtonChange(window *glfw.Window, rawButton glfw.Mous
 	if known && (action == glfw.Press) {
 		platform.mouseJustPressed[buttonIndex] = true
 	}
-	listeners.MouseButtonCallback(window, rawButton, action, mods)
+	if !platform.ImguiIO.CurrentIO().WantCaptureMouse() {
+		listeners.MouseButtonCallback(window, rawButton, action, mods)
+	}
 }
 
 func (platform *GLFW) sizeCllback(w *glfw.Window, width int, height int) {
@@ -205,7 +207,9 @@ func (platform *GLFW) sizeCllback(w *glfw.Window, width int, height int) {
 func (platform *GLFW) mouseScrollChange(window *glfw.Window, x, y float64) {
 	platform.ImguiIO.CurrentIO().AddMouseWheelDelta(float32(x), float32(y))
 
-	listeners.MouseScrollCallback(window, x,  y)
+	if !platform.ImguiIO.CurrentIO().WantCaptureMouse() {
+		listeners.MouseScrollCallback(window, x,  y)
+	}
 }
 
 func (platform *GLFW) keyChange(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
@@ -222,7 +226,9 @@ func (platform *GLFW) keyChange(window *glfw.Window, key glfw.Key, scancode int,
 	platform.ImguiIO.CurrentIO().KeyAlt(int(glfw.KeyLeftAlt), int(glfw.KeyRightAlt))
 	platform.ImguiIO.CurrentIO().KeySuper(int(glfw.KeyLeftSuper), int(glfw.KeyRightSuper))
 
-	listeners.KeyCallback(window, key, scancode, action, mods)
+	if !platform.ImguiIO.CurrentIO().WantCaptureKeyboard() {
+		listeners.KeyCallback(window, key, scancode, action, mods)
+	}
 }
 
 func (platform *GLFW) charChange(window *glfw.Window, char rune) {
