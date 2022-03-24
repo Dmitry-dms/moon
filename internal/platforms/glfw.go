@@ -164,6 +164,8 @@ func (glfw *GLFW) installCallbacks() {
 	glfw.window.SetMouseButtonCallback(glfw.mouseButtonChange)
 	glfw.window.SetScrollCallback(glfw.mouseScrollChange)
 	glfw.window.SetKeyCallback(glfw.keyChange)
+
+	glfw.window.SetSizeCallback(glfw.sizeCllback)
 }
 const (
 
@@ -191,6 +193,13 @@ func (platform *GLFW) mouseButtonChange(window *glfw.Window, rawButton glfw.Mous
 		platform.mouseJustPressed[buttonIndex] = true
 	}
 	listeners.MouseButtonCallback(window, rawButton, action, mods)
+}
+
+func (platform *GLFW) sizeCllback(w *glfw.Window, width int, height int) {
+	platform.width = &width
+	platform.height = &height
+
+	listeners.SizeCllback(w, width, height)
 }
 
 func (platform *GLFW) mouseScrollChange(window *glfw.Window, x, y float64) {

@@ -42,7 +42,8 @@ func (p *assetPool) GetShader(resourcePath string) (*Shader, error) {
 func (p *assetPool) GetTexture(resourcePath string) *Texture {
 	sh, ok := p.textures[resourcePath]
 	if !ok {
-		tex, err := LoadTextureAlpha(resourcePath)
+		texture := &Texture{}
+		tex, err := texture.Init(resourcePath)
 		if err == nil {
 			p.textures[resourcePath] = tex
 		}

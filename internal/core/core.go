@@ -3,7 +3,7 @@ package core
 import (
 	"sync"
 
-	//"github.com/Dmitry-dms/moon/internal/listeners"
+	"github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/Dmitry-dms/moon/internal/platforms"
 
 	"github.com/Dmitry-dms/moon/internal/scenes"
@@ -20,7 +20,11 @@ var Window *Core
 func init() {
 	o := sync.Once{}
 	o.Do(func() { //make a singleton
-		Window = newCore(1920, 1080, platforms.GLFWClientAPIOpenGL42, 0)
+		width:= 1280
+		height := 720
+		Window = newCore(width, height, platforms.GLFWClientAPIOpenGL42, 0)
+		listeners.SetWinHeight(height)
+		listeners.SetWinWidth(width)
 	})
 }
 
@@ -55,6 +59,7 @@ func (c *Core) changeScene(scene int) {
 		c.currentScene = scenes.NewEditorScene(c.changeScene)
 		c.currentScene.Init()
 		c.currentScene.Start()
+		listeners.SetCamera(c.currentScene.GetCamera())
 	case 1:
 		// c.currentScene = scenes.NewLevelScene(c.changeScene)
 		// c.currentScene.Init()
@@ -64,6 +69,7 @@ func (c *Core) changeScene(scene int) {
 	}
 }
 func (c *Core) Dispose() {
+	c.currentScene.Destroy()
 	//c.renderer.Dispose()
 	//c.imGuiContext.Destroy()
 	c.glfwWindow.Dispose()

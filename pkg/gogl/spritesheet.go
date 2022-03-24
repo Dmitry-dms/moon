@@ -31,8 +31,12 @@ func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight, numberSprites, spac
 			{leftX, bottomY},
 		}
 
-		sprite := NewSprite(tex)
-		sprite.ReplaceTexCoords(texCoords)
+		sprite := &Sprite{}
+		sprite.SetTexCoords(texCoords)
+		sprite.SetTexture(tex)
+		sprite.SetWidth(spriteWidth)
+		sprite.SetHeight(spriteHeight)
+		
 		sprites = append(sprites, sprite)
 
 		currentX += spriteWidth + spacing
@@ -48,4 +52,7 @@ func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight, numberSprites, spac
 
 func (sh *Spritesheet) GetSprite(index int) *Sprite{
 	return sh.sprites[index]
+}
+func (sh *Spritesheet) Size() int {
+	return len(sh.sprites)
 }

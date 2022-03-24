@@ -1,23 +1,41 @@
 package gogl
 
 import (
-
-	_ "image/png"
+	// "encoding/json"
 	"image"
+	_ "image/png"
 	"os"
 
-
 	"github.com/go-gl/gl/v4.2-core/gl"
-
 )
 
 type Texture struct {
-	filepath  string
-	TextureId uint32
+	filepath      string
+	textureId     uint32
 	width, height int
 }
 
-func LoadTextureAlpha(filepath string) (*Texture, error) {
+type TextureExported struct {
+	Filepath  string `json:"filepath"`
+	TextureId uint32 `json:"texture_id"`
+	Width     int    `json:"texture_width"`
+	Height    int    `json:"texture_height"`
+}
+
+func (t *Texture) GetFilepath() string {
+	return t.filepath
+}
+
+func CreateTexture(filepath string, id uint32,width,height int) *Texture {
+	return &Texture{
+		filepath: filepath,
+		textureId: id,
+		width: width,
+		height: height,
+	}
+}
+
+func (t *Texture) Init(filepath string) (*Texture, error) {
 	infile, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
@@ -54,13 +72,13 @@ func LoadTextureAlpha(filepath string) (*Texture, error) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
-	gl.GenerateMipmap(gl.TEXTURE_2D)
+	//gl.GenerateMipmap(gl.TEXTURE_2D)
 
 	textureStruct := Texture{
 		filepath:  filepath,
-		TextureId: texture,
-		width: w,
-		height: h,
+		textureId: texture,
+		width:     w,
+		height:    h,
 	}
 	return &textureStruct, nil
 }
@@ -73,7 +91,7 @@ func genBindTexture() uint32 {
 }
 
 func (t *Texture) Bind() {
-	gl.BindTexture(gl.TEXTURE_2D, t.TextureId)
+	gl.BindTexture(gl.TEXTURE_2D, t.textureId)
 }
 func (t *Texture) Unbind() {
 	gl.BindTexture(gl.TEXTURE_2D, 0)
@@ -84,4 +102,8 @@ func (t *Texture) GetWidth() int {
 }
 func (t *Texture) GetHeight() int {
 	return t.height
+}
+
+func (t *Texture) GetId() uint32 {
+	return t.textureId
 }

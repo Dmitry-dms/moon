@@ -7,18 +7,30 @@ import (
 )
 
 type SpriteRenderer struct {
-	color         mgl.Vec4
-	sprite        *gogl.Sprite
-	lastTransform Transform
+	color  mgl.Vec4
+	sprite *gogl.Sprite
 }
 
-func NewSpriteRenderer(color mgl.Vec4, sprite *gogl.Sprite) *SpriteRenderer {
-	spr := SpriteRenderer{
-		color:  color,
-		sprite: sprite,
+var defaultColor = mgl.Vec4{1, 0, 0, 1}
+
+func DefSpriteRenderer() *SpriteRenderer {
+	return &SpriteRenderer{
+		color: defaultColor,
 	}
-	return &spr
 }
+
+// func NewSpriteRenderer(color mgl.Vec4, sprite *gogl.Sprite) *SpriteRenderer {
+// 	spr := SpriteRenderer{
+// 		color:  color,
+// 		sprite: sprite,
+// 	}
+// 	return &spr
+// }
+type spriteRendererExported struct {
+	Color  mgl.Vec4            `json:"color"`
+	Sprite *gogl.SpriteExported `json:"sprite,omitempty"`
+}
+
 func (r *SpriteRenderer) GetTexture() *gogl.Texture {
 	return r.sprite.GetTexture()
 }
@@ -32,6 +44,7 @@ func (r *SpriteRenderer) Update(dt float32) {
 func (r *SpriteRenderer) GetColor() mgl.Vec4 {
 	return r.color
 }
+
 // func (r *SpriteRenderer) Start() {
 
 // }
@@ -43,4 +56,3 @@ func (r *SpriteRenderer) SetSprite(sprite *gogl.Sprite) {
 func (r *SpriteRenderer) SetColor(color mgl.Vec4) {
 	r.color = color
 }
-

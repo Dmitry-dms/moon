@@ -191,8 +191,8 @@ func (b *RenderBatch) loadVertexProperties(index int) {
 			yAdd = 1
 		}
 		//load position
-		b.vertices[offset] = obj.Transform.Position.X() + (xAdd * obj.Transform.Scale.X())
-		b.vertices[offset+1] = obj.Transform.Position.Y() + (yAdd * obj.Transform.Scale.Y())
+		b.vertices[offset] = obj.Transform.GetPosition().X() + (xAdd * obj.Transform.GetScale().X())
+		b.vertices[offset+1] = obj.Transform.GetPosition().Y() + (yAdd * obj.Transform.GetScale().Y())
 		//load color
 		b.vertices[offset+2] = color.X()
 		b.vertices[offset+3] = color.Y()

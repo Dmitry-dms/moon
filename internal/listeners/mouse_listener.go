@@ -3,15 +3,17 @@ package listeners
 import (
 	"sync"
 
+	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
-var MouseListener *mouseListener
+var mMouseListener *mouseListener
 
 func init() {
 	o := sync.Once{}
 	o.Do(func() {
-		MouseListener = newMouseListener()
+		mMouseListener = newMouseListener()
 	})
 }
 
@@ -20,6 +22,7 @@ type mouseListener struct {
 	xPos, yPos, lastX, lastY float64
 	mouseBtnPressed          [9]bool
 	isDragging               bool
+	camera                   *gogl.Camera
 }
 
 func newMouseListener() *mouseListener {
@@ -28,70 +31,100 @@ func newMouseListener() *mouseListener {
 }
 
 func MousePositionCallback(w *glfw.Window, xpos float64, ypos float64) {
-	MouseListener.lastX = MouseListener.xPos
-	MouseListener.lastY = MouseListener.yPos
+	mMouseListener.lastX = mMouseListener.xPos
+	mMouseListener.lastY = mMouseListener.yPos
 
-	MouseListener.xPos = xpos
-	MouseListener.yPos = ypos
+	mMouseListener.xPos = xpos
+	mMouseListener.yPos = ypos
 
-	MouseListener.isDragging = MouseListener.mouseBtnPressed[0] ||
-		MouseListener.mouseBtnPressed[1] ||
-		MouseListener.mouseBtnPressed[2]
+	mMouseListener.isDragging = mMouseListener.mouseBtnPressed[0] ||
+		mMouseListener.mouseBtnPressed[1] ||
+		mMouseListener.mouseBtnPressed[2]
 }
 
 //mods - это сочетания клавиш
 func MouseButtonCallback(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
 	switch action {
 	case glfw.Press:
-		//если клавишей на мышке больше, игнорируем нажатие
-		if int(button) < len(MouseListener.mouseBtnPressed) {
-			MouseListener.mouseBtnPressed[button] = true
+		//если кнопок на мышке больше, игнорируем нажатие
+		if int(button) < len(mMouseListener.mouseBtnPressed) {
+			mMouseListener.mouseBtnPressed[button] = true
 		}
 	case glfw.Release:
-		if int(button) < len(MouseListener.mouseBtnPressed) {
-			MouseListener.mouseBtnPressed[button] = false
-			MouseListener.isDragging = false
+		if int(button) < len(mMouseListener.mouseBtnPressed) {
+			mMouseListener.mouseBtnPressed[button] = false
+			mMouseListener.isDragging = false
 		}
 	}
 }
 
 func MouseScrollCallback(w *glfw.Window, xoff float64, yoff float64) {
-	MouseListener.scrollX = xoff
-	MouseListener.scrollY = yoff
+	mMouseListener.scrollX = xoff
+	mMouseListener.scrollY = yoff
 }
 
 func EndFrame() {
-	MouseListener.scrollX, MouseListener.scrollY = 0, 0
-	MouseListener.lastX, MouseListener.lastY = MouseListener.xPos, MouseListener.yPos
+	mMouseListener.scrollX, mMouseListener.scrollY = 0, 0
+	mMouseListener.lastX, mMouseListener.lastY = mMouseListener.xPos, mMouseListener.yPos
 }
 
 func GetX() float64 {
-	return MouseListener.xPos
+	return mMouseListener.xPos
 }
 func GetY() float64 {
-	return MouseListener.yPos
+	return mMouseListener.yPos
 }
 
 func GetDx() float64 {
-	return (MouseListener.lastX - MouseListener.xPos)
+	return (mMouseListener.lastX - mMouseListener.xPos)
 }
 func GetDy() float64 {
-	return (MouseListener.lastY - MouseListener.yPos)
+	return (mMouseListener.lastY - mMouseListener.yPos)
 }
 
 func GetScrollX() float64 {
-	return MouseListener.scrollX
+	return mMouseListener.scrollX
 }
 func GetScrollY() float64 {
-	return MouseListener.scrollY
+	return mMouseListener.scrollY
+}
+
+func SetCamera(camera *gogl.Camera) {
+	mMouseListener.camera = camera
+}
+func GetOrthoX() float64 {//мировые координаты
+	currentX := GetX()
+
+	currentX = (currentX/float64(mWinListener.width))*2 - 1
+
+	tmp := mgl32.Vec4{float32(currentX), 0, 0, 1}
+	inv := mMouseListener.camera.GetInverseProjection().Mul4x1(tmp)
+	inv2 := mMouseListener.camera.GetInverseView().Mul4x1(inv)
+
+	currentX = float64(inv2.X())
+	
+	return currentX
+}
+func GetOrthoY() float64 {
+	currentY := GetY()
+
+	currentY = (currentY/float64(mWinListener.height))*2 - 1
+
+	tmp := mgl32.Vec4{0, float32(currentY), 0, 1}
+	inv := mMouseListener.camera.GetInverseProjection().Mul4x1(tmp)
+	inv2 := mMouseListener.camera.GetInverseView().Mul4x1(inv)
+
+	currentY = float64(inv2.Y())
+	
+	return currentY
 }
 func IsDragging() bool {
-	return MouseListener.isDragging
+	return mMouseListener.isDragging
 }
 
 func MouseButtonDown(button glfw.MouseButton) bool {
-	if int(button) < len(MouseListener.mouseBtnPressed) {
-		return MouseListener.mouseBtnPressed[button]
+	if int(button) < len(mMouseListener.mouseBtnPressed) {
+		return mMouseListener.mouseBtnPressed[button]
 	} else {
 		return false
 	}

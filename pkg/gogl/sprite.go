@@ -5,32 +5,68 @@ import (
 )
 
 type Sprite struct {
-	texture *Texture
-	texCoords []mgl32.Vec2
+	texture       *Texture
+	texCoords     []mgl32.Vec2
+	width, height int
+}
+
+type SpriteExported struct {
+	Texture   *TextureExported `json:"texture,omitempty"`
+	TexCoords []mgl32.Vec2     `json:"texture_coords"`
+	Width     int              `json:"sprite_width"`
+	Height    int              `json:"sprite_height"`
 }
 
 var defaultTexCoords = []mgl32.Vec2{
-	{1,0},
-	{1,1},
-	{0,1},
-	{0,0},
+	{1, 0},
+	{1, 1},
+	{0, 1},
+	{0, 0},
 }
 
-func NewSprite(tex *Texture) *Sprite {
-	sp := Sprite{
-		texture: tex,
+func DefSprite() *Sprite {
+	return &Sprite{
 		texCoords: defaultTexCoords,
 	}
-	return &sp
 }
 
-func (s *Sprite) ReplaceTexCoords(texCoords []mgl32.Vec2) {
+// func NewSprite(tex *Texture) *Sprite {
+// 	sp := Sprite{
+// 		texture: tex,
+// 		texCoords: defaultTexCoords,
+// 	}
+// 	return &sp
+// }
+func (s *Sprite) SetTexture(tex *Texture) {
+	s.texture = tex
+}
+
+func (s *Sprite) GetWidth() int {
+	return s.width
+}
+func (s *Sprite) GetHeight() int {
+	return s.height
+}
+func (s *Sprite) SetHeight(h int) {
+	s.height = h
+}
+func (s *Sprite) SetWidth(w int) {
+	s.width = w
+}
+
+func (s *Sprite) SetTexCoords(texCoords []mgl32.Vec2) {
 	s.texCoords = texCoords
 }
 
 func (s *Sprite) GetTexture() *Texture {
-	
 	return s.texture
+}
+func (s *Sprite) GetTexId() int {
+	if s.GetTexture() != nil {
+		return int(s.GetTexture().GetId())
+	} else {
+		return -1
+	}
 }
 
 func (s *Sprite) GetTextureCoords() []mgl32.Vec2 {

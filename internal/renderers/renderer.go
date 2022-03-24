@@ -18,8 +18,8 @@ import (
 // 	Dispose()
 // }
 
-// интерфейс, который отвечает за отрисовку всех игровых объектов
-type GameRenderer interface {
+// интерфейс, который отвечает за отрисовку всех игровых объектов на сцене
+type SceneRenderer interface {
 	Update(dt float32)
 	Render(camera *gogl.Camera)
 	AddGameObj(obj *components.GameObject)
@@ -29,16 +29,13 @@ type Renderer struct {
 	maxBatchSize     int
 	gameObjetcsCount uint
 	batches          []*RenderBatch
-	//GameObjects      []GameObject
 	wg *sync.WaitGroup
 }
 
 func NewRenderer(maxBatchSize int) *Renderer {
-	//gObjs := make([]GameObject, 0, 1000)
 	r := Renderer{
 		maxBatchSize: maxBatchSize,
 		batches:      make([]*RenderBatch, 0, 1000),
-		//GameObjects:  gObjs,
 		wg: &sync.WaitGroup{},
 	}
 	return &r
