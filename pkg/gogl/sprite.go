@@ -5,16 +5,17 @@ import (
 )
 
 type Sprite struct {
-	texture       *Texture
-	texCoords     []mgl32.Vec2
-	width, height float32
+	texture   *Texture     `json:"texture"`
+	texCoords []mgl32.Vec2 `json:"tex_coords"`
+	width     float32      `json:"sprite_width"`
+	height    float32      `json:"sprite_height"`
 }
 
 type SpriteExported struct {
 	Texture   *TextureExported `json:"texture,omitempty"`
-	TexCoords []mgl32.Vec2     `json:"texture_coords"`
-	Width     float32              `json:"sprite_width"`
-	Height    float32              `json:"sprite_height"`
+	TexCoords []mgl32.Vec2     `json:"tex_coords"`
+	Width     float32          `json:"sprite_width"`
+	Height    float32          `json:"sprite_height"`
 }
 
 var defaultTexCoords = []mgl32.Vec2{

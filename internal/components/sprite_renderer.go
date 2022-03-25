@@ -7,8 +7,8 @@ import (
 )
 
 type SpriteRenderer struct {
-	color  mgl.Vec4
-	sprite *gogl.Sprite
+	color  mgl.Vec4 `json:"color"`
+	sprite *gogl.Sprite `json:"sprite"`
 }
 
 var defaultColor = mgl.Vec4{1, 1, 1, 1}

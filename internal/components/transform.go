@@ -7,8 +7,8 @@ import (
 )
 
 type Transform struct {
-	position mgl.Vec2
-	scale    mgl.Vec2
+	position mgl.Vec2 `json:"position"`
+	scale    mgl.Vec2 `json:"scale"`
 }
 
 type tranformExported struct {

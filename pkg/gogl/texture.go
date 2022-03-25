@@ -10,9 +10,10 @@ import (
 )
 
 type Texture struct {
-	filepath      string
-	textureId     uint32
-	width, height float32
+	filepath  string  `json:"filepath"`
+	textureId uint32  `json:"texture_id"`
+	width     float32 `json:"texture_width"`
+	height    float32 `json:"texture_height"`
 }
 
 type TextureExported struct {

@@ -2,6 +2,7 @@ package scenes
 
 import (
 	"bufio"
+
 	"fmt"
 	"os"
 	"regexp"
@@ -98,11 +99,13 @@ func (w *GameWorld) Save() {
 	defer file.Close()
 	writer := bufio.NewWriter(file)
 	writer.WriteString("[\n")
-	for _, v := range w.gameObjects {
+	for i, v := range w.gameObjects {
 		m, _ := v.MarshalJSON()
 		s := string(m)
 		writer.WriteString(s)
-		writer.WriteString(",\n")
+		if i != len(w.gameObjects) -1 {
+			writer.WriteString(",\n")
+		}
 	}
 	writer.WriteString("]")
 	writer.Flush()
@@ -124,6 +127,7 @@ func (w *GameWorld) Load() {
 			spitted := reg.FindAllString(t, 1)
 			for _, spl := range spitted {
 				obj := &components.GameObject{}
+				//err := json.Unmarshal([]byte(spl), obj)
 				err := obj.UnmarshalJSON([]byte(spl))
 				if err != nil {
 					fmt.Println(err)

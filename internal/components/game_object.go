@@ -4,24 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/go-gl/mathgl/mgl32"
 	mgl "github.com/go-gl/mathgl/mgl32"
 	"github.com/inkyblackness/imgui-go/v4"
 )
 
 type GameObject struct {
-	name string
-
-	Transform     *Transform
+	name          string     `json:"name"`
+	Transform     *Transform `json:"transform"`
 	LastTransform *Transform
-
-	Spr SpriteRenderer
-
-	isDirty bool
-	zIndex  int
-
-	uid int
+	Spr           SpriteRenderer `json:"sprite_renderer"`
+	isDirty       bool
+	zIndex        int `json:"z_index"`
+	uid           int `json:"uid"`
+}
+type gameObjExported struct {
+	Name      string `json:"name"`
+	Transform tranformExported `json:"transform"`
+	Spr       spriteRendererExported `json:"sprite_renderer"`
+	ZIndex    int `json:"z_index"`
+	Uid       int `json:"uid"`
 }
 
 func NewGameObject(name string, transform *Transform, zIndex int) *GameObject {
@@ -125,62 +130,145 @@ func reflObj(g *GameObject) {
 
 }
 
-type gameObjExported struct {
-	Name      string `json:"name"`
-	Transform tranformExported
-	Spr       spriteRendererExported
-	ZIndex    int `json:"z_index"`
-	Uid       int `json:"uid"`
-}
-
 func (g *GameObject) MarshalJSON() ([]byte, error) {
-	var transfExp tranformExported
-	var spriteExported *gogl.SpriteExported
-	var sprExported spriteRendererExported
-	var texExported *gogl.TextureExported
-	transfExp = tranformExported{
-		Position: g.Transform.position,
-		Scale:    g.Transform.scale,
-	}
-	if g.Spr.GetTexture() != nil {
-		texExported = &gogl.TextureExported{
-			Filepath:  g.Spr.GetTexture().GetFilepath(),
-			TextureId: g.Spr.GetTexture().GetId(),
-			Width:     g.Spr.GetTexture().GetWidth(),
-			Height:    g.Spr.GetTexture().GetHeight(),
-		}
-		spriteExported = &gogl.SpriteExported{
-			Texture:   texExported,
-			TexCoords: g.Spr.GetTextureCoords(),
-			Width:     g.Spr.sprite.GetWidth(),
-			Height:    g.Spr.sprite.GetHeight(),
-		}
-	} else {
-		spriteExported = &gogl.SpriteExported{
-			Texture:   nil,
-			TexCoords: g.Spr.GetTextureCoords(),
-		}
-	}
+	// var transfExp tranformExported
+	// var spriteExported *gogl.SpriteExported
+	// var sprExported spriteRendererExported
+	// var texExported *gogl.TextureExported
+	// transfExp = tranformExported{
+	// 	Position: g.Transform.position,
+	// 	Scale:    g.Transform.scale,
+	// }
+	// if g.Spr.GetTexture() != nil {
+	// 	texExported = &gogl.TextureExported{
+	// 		Filepath:  g.Spr.GetTexture().GetFilepath(),
+	// 		TextureId: g.Spr.GetTexture().GetId(),
+	// 		Width:     g.Spr.GetTexture().GetWidth(),
+	// 		Height:    g.Spr.GetTexture().GetHeight(),
+	// 	}
+	// 	spriteExported = &gogl.SpriteExported{
+	// 		Texture:   texExported,
+	// 		TexCoords: g.Spr.GetTextureCoords(),
+	// 		Width:     g.Spr.sprite.GetWidth(),
+	// 		Height:    g.Spr.sprite.GetHeight(),
+	// 	}
+	// } else {
+	// 	spriteExported = &gogl.SpriteExported{
+	// 		Texture:   nil,
+	// 		TexCoords: g.Spr.GetTextureCoords(),
+	// 	}
+	// }
 
-	sprExported = spriteRendererExported{
-		Color:  g.Spr.GetColor(),
-		Sprite: spriteExported,
-	}
+	// sprExported = spriteRendererExported{
+	// 	Color:  g.Spr.GetColor(),
+	// 	Sprite: spriteExported,
+	// }
 
-	rt := gameObjExported{
-		Name:      g.name,
-		Transform: transfExp,
-		Spr:       sprExported,
-		ZIndex:    g.zIndex,
-		Uid: g.GetUid(),
+	// rt := gameObjExported{
+	// 	Name:      g.name,
+	// 	Transform: transfExp,
+	// 	Spr:       sprExported,
+	// 	ZIndex:    g.zIndex,
+	// 	Uid:       g.GetUid(),
+	// }
+	// return json.Marshal(rt)
+	data := reflectJson(reflect.Indirect(reflect.ValueOf(g)), reflect.Indirect(reflect.ValueOf(g)).Type())
+	return []byte(data), nil
+}
+func reflectJson(t reflect.Value, ty reflect.Type) string {
+	num := t.NumField()
+	jsonBuilder := strings.Builder{}
+
+	jsonBuilder.WriteString("{")
+	for i := 0; i < num; i++ {
+		field := t.Field(i)
+		//если ссылка пуста, пропускаем
+		if field.Kind() == reflect.Pointer {
+			if field.IsNil() {
+				continue
+			}
+			//если структура пуста, пропускаем
+		} else if field.Kind() == reflect.Struct {
+			if field.IsZero() {
+				continue
+			}
+		}
+		jsonTag := ty.Field(i).Tag.Get("json")
+		if jsonTag == "" {
+			continue
+		}
+		//запятую ставим вначале, т.к. так проще проверить на нулевые указатели, структуры
+		if i != 0 && jsonTag != "" {
+			jsonBuilder.WriteString(",")
+		}
+
+		jsonBuilder.WriteString(fmt.Sprintf("\"%s\"", jsonTag))
+		jsonBuilder.WriteString(":")
+		switch field.Kind() {
+		case reflect.Pointer:
+			//проверяем, что ссылка указывает на структуру
+			if reflect.Indirect(field).Kind() == reflect.Struct {
+				jsonBuilder.WriteString(reflectJson(reflect.Indirect(field), reflect.Indirect(field).Type()))
+			} else {
+				switch reflect.Indirect(field).Kind() {
+				case reflect.Int, reflect.Float32, reflect.Int32:
+					jsonBuilder.WriteString(fmt.Sprintf("%v", reflect.Indirect(field)))
+				case reflect.String:
+					jsonBuilder.WriteString(fmt.Sprintf("\"%v\"", reflect.Indirect(field)))
+				}
+				//jsonBuilder.WriteString(fmt.Sprintf("\"%v\"", reflect.Indirect(field)))
+			}
+		case reflect.Struct:
+			jsonBuilder.WriteString(reflectJson(field, field.Type()))
+		case reflect.Array:
+			l := field.Len()
+			jsonBuilder.WriteString("[")
+			for i := 0; i < l; i++ {
+
+				d := field.Index(i)
+				jsonBuilder.WriteString(fmt.Sprintf("%v", d))
+				if i != l-1 {
+					jsonBuilder.WriteString(",")
+				}
+			}
+			jsonBuilder.WriteString("]")
+		case reflect.TypeOf([]mgl32.Vec2{}).Kind():
+			l := field.Len()
+			jsonBuilder.WriteString("[")
+			for i := 0; i < l; i++ {
+				jsonBuilder.WriteString("[")
+				num := field.Index(i).Len()
+				for j := 0; j < num; j++ {
+					d := field.Index(i).Index(j)
+					jsonBuilder.WriteString(fmt.Sprintf("%v", d))
+					if j != num-1 {
+						jsonBuilder.WriteString(",")
+					}
+				}
+				jsonBuilder.WriteString("]")
+				if i != l-1 {
+					jsonBuilder.WriteString(",")
+				}
+			}
+			jsonBuilder.WriteString("]")
+		case reflect.Int, reflect.Float32, reflect.Int32, reflect.Uint32:
+			jsonBuilder.WriteString(fmt.Sprintf("%v", field))
+		case reflect.String:
+			jsonBuilder.WriteString(fmt.Sprintf("\"%v\"", field))
+		default:
+			fmt.Println("DEFAULT = ", field)
+			jsonBuilder.WriteString(fmt.Sprintf("%v", field))
+
+		}
 	}
-	return json.Marshal(rt)
+	jsonBuilder.WriteString("}")
+	return jsonBuilder.String()
 }
 func (g *GameObject) UnmarshalJSON(data []byte) error {
+	//fmt.Println(string(data))
 	var tr gameObjExported
 	err := json.Unmarshal(data, &tr)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	g.isDirty = true
@@ -208,6 +296,7 @@ func (g *GameObject) UnmarshalJSON(data []byte) error {
 	g.Spr = spr
 	g.uid = tr.Uid
 	return err
+	return nil
 }
 
 // func (g *GameObject) Start() {
