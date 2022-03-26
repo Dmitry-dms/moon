@@ -5,6 +5,7 @@ import (
 
 	"github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/Dmitry-dms/moon/internal/platforms"
+	"github.com/Dmitry-dms/moon/internal/renderers"
 
 	"github.com/Dmitry-dms/moon/internal/scenes"
 
@@ -44,6 +45,7 @@ func newCore(width, height int, glVersion platforms.GLFWClientAPI, scene int) *C
 	if err != nil {
 		panic(err)
 	}
+	renderers.Init()
 	c := Core{
 		width:      &width,
 		height:     &height,
@@ -82,10 +84,13 @@ func (c *Core) Run() {
 	for !c.glfwWindow.ShouldStop() {
 		c.glfwWindow.ProcessEvents()
 
+		renderers.DebugDraw.BeginFrame()
+
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		if dt >= 0 {
+			renderers.DebugDraw.Draw(c.currentScene.GetCamera())
 			c.currentScene.Update(dt)
 		}
 		

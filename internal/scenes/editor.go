@@ -67,7 +67,9 @@ func (e *EditorScene) Init() {
 	e.activeGameWorld.Init()
 	e.activeGameWorld.Load()
 
+
 }
+
 
 // при запуске сцены, запускаем объекты
 func (e *EditorScene) Start() {
@@ -90,6 +92,10 @@ func (e *EditorScene) Destroy() {
 }
 
 func (e *EditorScene) Update(dt float32) {
+	// debugDraw.BeginFrame()
+	// if dt >= 0{
+	// 	debugDraw.Draw(e.camera)
+	// }
 	//fmt.Printf("FPS - %.1f \n", 1/dt)
 	//listeners.GetOrthoX()
 	e.mouseControls.Update(dt)
@@ -97,6 +103,8 @@ func (e *EditorScene) Update(dt float32) {
 }
 
 func (e *EditorScene) Render() {
+	
+
 	e.activeGameWorld.Render(e.camera)
 }
 func (e *EditorScene) Imgui() {

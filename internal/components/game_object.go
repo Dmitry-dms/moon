@@ -265,7 +265,6 @@ func reflectJson(t reflect.Value, ty reflect.Type) string {
 	return jsonBuilder.String()
 }
 func (g *GameObject) UnmarshalJSON(data []byte) error {
-	//fmt.Println(string(data))
 	var tr gameObjExported
 	err := json.Unmarshal(data, &tr)
 	if err != nil {

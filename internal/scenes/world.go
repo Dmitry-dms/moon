@@ -2,12 +2,14 @@ package scenes
 
 import (
 	"bufio"
+	"math"
 
 	"fmt"
 	"os"
 	"regexp"
 
 	"github.com/Dmitry-dms/moon/internal/components"
+	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/Dmitry-dms/moon/internal/renderers"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
@@ -85,10 +87,7 @@ func (w *GameWorld) Init() {
 	// s, err := g.MarshalJSON()
 	// fmt.Println(string(s), err)
 
-}
-
-type exportedWorld struct {
-	GameObjects []*components.GameObject `json:"game_objects"`
+	//renderers.DebugDraw.AddLine2d(mgl32.Vec2{0, 0}, mgl32.Vec2{600, 600}, mgl32.Vec3{1, 0, 0}, 200)
 }
 
 func (w *GameWorld) Save() {
@@ -103,7 +102,7 @@ func (w *GameWorld) Save() {
 		m, _ := v.MarshalJSON()
 		s := string(m)
 		writer.WriteString(s)
-		if i != len(w.gameObjects) -1 {
+		if i != len(w.gameObjects)-1 {
 			writer.WriteString(",\n")
 		}
 	}
@@ -147,24 +146,17 @@ func (w *GameWorld) Load() {
 	//	w.currGameObj(w.gameObjects[0])
 
 }
-
-var f bool
-
+var t float32 = 0
 func (w *GameWorld) Update(dt float32) {
+	x := math.Sin(float64(t))*200 + 600
+	y := math.Cos(float64(t))*200 + 400
+	t += 0.05
+
+	renderers.DebugDraw.AddLine2d(mgl32.Vec2{600, 400}, mgl32.Vec2{float32(x), float32(y)}, mgl32.Vec3{1, 0, 0}, 5)
 
 	w.renderer.Update(dt)
 }
 func (w *GameWorld) Render(camera *gogl.Camera) {
-	if f == false {
-		// fmt.Printf("BEFORE = %v \n", g2)
-		// m, err := g2.MarshalJSON()
-		// fmt.Println(string(m), err)
 
-		// var newObj components.GameObject
-		// newObj.UnmarshalJSON(m)
-		// fmt.Printf("AFTER = %v \n", newObj)
-
-		f = true
-	}
 	w.renderer.Render(camera)
 }
