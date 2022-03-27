@@ -36,7 +36,7 @@ func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
 	edtrScene := EditorScene{
 		showDemoWindow:      true,
 		changeSceneCallback: changeSceneCallback,
-		camera:              gogl.NewCamera(mgl32.Vec2{-250, 0}),
+		camera:              gogl.NewCamera(mgl32.Vec2{0, 0}),
 	}
 	callback := func(g *components.GameObject) {
 		edtrScene.activeGameObject = g
@@ -92,14 +92,9 @@ func (e *EditorScene) Destroy() {
 }
 
 func (e *EditorScene) Update(dt float32) {
-	// debugDraw.BeginFrame()
-	// if dt >= 0{
-	// 	debugDraw.Draw(e.camera)
-	// }
-	//fmt.Printf("FPS - %.1f \n", 1/dt)
-	//listeners.GetOrthoX()
+
 	e.mouseControls.Update(dt)
-	e.activeGameWorld.Update(dt)
+	e.activeGameWorld.Update(dt, e.camera)
 }
 
 func (e *EditorScene) Render() {
@@ -122,8 +117,8 @@ func (e *EditorScene) Imgui() {
 	windowX2 := pos.X + size.X
 	for i := 0; i < sprsheet.Size(); i++ {
 		sprite := sprsheet.GetSprite(i)
-		spWidth := sprite.GetWidth() * 4
-		spHeight := sprite.GetHeight() * 4
+		spWidth := sprite.GetWidth() * 2
+		spHeight := sprite.GetHeight() * 2
 		id := sprite.GetTexture().GetId()
 		texCoords := sprite.GetTextureCoords()
 
@@ -133,7 +128,7 @@ func (e *EditorScene) Imgui() {
 			imgui.Vec2{X: float32(texCoords[0].X()), Y: float32(texCoords[2].Y())}, -1,
 			imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}) {
 
-			obj := components.GenerateSpriteObject(sprite, spWidth, spHeight)
+			obj := components.GenerateSpriteObject(sprite, 32, 32)
 			//привязываем к курсору
 			e.mouseControls.PickupObject(obj)
 

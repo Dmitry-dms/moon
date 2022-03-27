@@ -20,7 +20,7 @@ func NewCamera(position mgl.Vec2) *Camera {
 		view:     mgl.Mat4{},
 		invProj:  mgl.Mat4{},
 		invView:  mgl.Mat4{},
-		projSize: mgl.Vec2{32, 32},
+		projSize: mgl.Vec2{32*40, 32*21},
 		zoom:     1,
 	}
 	c.AdjustProjection()
@@ -30,8 +30,11 @@ func NewCamera(position mgl.Vec2) *Camera {
 func (c *Camera) SetPosition(vec mgl.Vec2) {
 	c.Position = c.Position.Add(vec)
 }
+func (c *Camera) GetProjectionSize() mgl.Vec2 {
+	return c.projSize
+}
 func (c *Camera) AdjustProjection() {
-	c.proj = mgl.Ortho(0, 32*40, 0, 32*21, 0, 100)
+	c.proj = mgl.Ortho(0, c.projSize[0], 0, c.projSize[1], 0, 100)
 	c.invProj = c.proj.Inv()
 }
 

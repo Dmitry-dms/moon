@@ -84,23 +84,26 @@ func (c *Core) Run() {
 	for !c.glfwWindow.ShouldStop() {
 		c.glfwWindow.ProcessEvents()
 
-		renderers.DebugDraw.BeginFrame()
+
 
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
+
+		renderers.DebugDraw.BeginFrame()
 
 		if dt >= 0 {
 			renderers.DebugDraw.Draw(c.currentScene.GetCamera())
 			c.currentScene.Update(dt)
 		}
+
 		
 		// Signal start of a new frame
 		c.glfwWindow.NewFrame(dt)
 
 		
-		
 		// // A this point, the application could perform its own rendering...
 		c.currentScene.Render()
+
 		
 		c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene)
 		c.glfwWindow.PostRender()

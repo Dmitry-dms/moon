@@ -123,11 +123,20 @@ func (b *RenderBatch) Render(camera *gogl.Camera) {
 	b.shader.UploadIntArray("uTextures", b.texSlots)
 
 	gogl.BindVertexArray(b.vaoId)
+	gl.EnableVertexAttribArray(0)
+	gl.EnableVertexAttribArray(1)
+	gl.EnableVertexAttribArray(2)
+	gl.EnableVertexAttribArray(3)
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
-
 	gl.DrawElements(gl.TRIANGLES, int32(b.numSprites)*6, gl.UNSIGNED_INT, nil)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
+
+	gl.DisableVertexAttribArray(0)
+	gl.DisableVertexAttribArray(1)
+	gl.DisableVertexAttribArray(2)
+	gl.DisableVertexAttribArray(3)
+	
 
 	gl.BindVertexArray(0)
 	for i := 0; i < len(b.textures); i++ {

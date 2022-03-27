@@ -7,9 +7,14 @@ import (
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
+	// "github.com/Dmitry-dms/moon/pkg/math"
 )
 
 func main() {
+
+
+}
+func reflectTest() {
 	g := 5
 	th := Third{
 		address: "address third",
@@ -26,7 +31,6 @@ func main() {
 
 	str := reflectJson(reflect.ValueOf(o), reflect.TypeOf(o))
 	fmt.Println(str)
-	//reflectFromJson(str)
 }
 
 func reflectJson(t reflect.Value, ty reflect.Type) string {

@@ -2,14 +2,14 @@ package scenes
 
 import (
 	"bufio"
-	"math"
+
 
 	"fmt"
 	"os"
-	"regexp"
+	 "regexp"
 
 	"github.com/Dmitry-dms/moon/internal/components"
-	"github.com/go-gl/mathgl/mgl32"
+
 
 	"github.com/Dmitry-dms/moon/internal/renderers"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
@@ -58,36 +58,8 @@ func (w *GameWorld) loadResources() {
 func (w *GameWorld) Init() {
 	w.loadResources()
 	fmt.Printf("Init game world - %s \n", w.Name)
-
 	sprsheet = gogl.AssetPool.GetSpriteSheet("assets/images/decorations.png")
 
-	// g = components.NewGameObject("Obj 1",
-	// 	components.NewTransform(mgl32.Vec2{400, 100}, mgl32.Vec2{256, 256}), 1)
-	// spr := components.DefSpriteRenderer()
-
-	// sprite1 := gogl.DefSprite()
-	// spr.SetSprite(sprite1)
-	// g.AddSpriteRenderer(spr)
-
-	// g2 = components.NewGameObject("Obj 2",
-	// 	components.NewTransform(mgl32.Vec2{200, 100}, mgl32.Vec2{256, 256}), 2)
-	// //spr2 := components.NewSpriteRenderer(mgl32.Vec4{1, 1, 1, 1}, gogl.NewSprite(gogl.AssetPool.GetTexture("assets/images/blend1.png")))
-	// spr2 := &components.SpriteRenderer{}
-	// spr2.SetColor(mgl32.Vec4{1, 1, 1, 1})
-
-	// sprite2 := gogl.DefSprite()
-	// sprite2.SetTexture(gogl.AssetPool.GetTexture("assets/images/blend1.png"))
-
-	// spr2.SetSprite(sprite2)
-	// g2.AddSpriteRenderer(spr2)
-
-	// w.addGameObjToWorld(g)
-	// w.addGameObjToWorld(g2)
-
-	// s, err := g.MarshalJSON()
-	// fmt.Println(string(s), err)
-
-	//renderers.DebugDraw.AddLine2d(mgl32.Vec2{0, 0}, mgl32.Vec2{600, 600}, mgl32.Vec3{1, 0, 0}, 200)
 }
 
 func (w *GameWorld) Save() {
@@ -126,7 +98,7 @@ func (w *GameWorld) Load() {
 			spitted := reg.FindAllString(t, 1)
 			for _, spl := range spitted {
 				obj := &components.GameObject{}
-				//err := json.Unmarshal([]byte(spl), obj)
+
 				err := obj.UnmarshalJSON([]byte(spl))
 				if err != nil {
 					fmt.Println(err)
@@ -146,14 +118,10 @@ func (w *GameWorld) Load() {
 	//	w.currGameObj(w.gameObjects[0])
 
 }
-var t float32 = 0
-func (w *GameWorld) Update(dt float32) {
-	x := math.Sin(float64(t))*200 + 600
-	y := math.Cos(float64(t))*200 + 400
-	t += 0.05
 
-	renderers.DebugDraw.AddLine2d(mgl32.Vec2{600, 400}, mgl32.Vec2{float32(x), float32(y)}, mgl32.Vec3{1, 0, 0}, 5)
+func (w *GameWorld) Update(dt float32, camera *gogl.Camera) {
 
+	renderers.UpdateGridLines(camera)
 	w.renderer.Update(dt)
 }
 func (w *GameWorld) Render(camera *gogl.Camera) {
