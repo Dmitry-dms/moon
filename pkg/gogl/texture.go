@@ -12,28 +12,47 @@ import (
 type Texture struct {
 	filepath  string  `json:"filepath"`
 	textureId uint32  `json:"texture_id"`
-	width     float32 `json:"texture_width"`
-	height    float32 `json:"texture_height"`
+	width     int32 `json:"texture_width"`
+	height    int32 `json:"texture_height"`
 }
 
 type TextureExported struct {
 	Filepath  string  `json:"filepath"`
 	TextureId uint32  `json:"texture_id"`
-	Width     float32 `json:"texture_width"`
-	Height    float32 `json:"texture_height"`
+	Width     int32 `json:"texture_width"`
+	Height    int32 `json:"texture_height"`
 }
 
 func (t *Texture) GetFilepath() string {
 	return t.filepath
 }
 
-func CreateTexture(filepath string, id uint32, width, height float32) *Texture {
-	return &Texture{
-		filepath:  filepath,
-		textureId: id,
+func CreateTexture(filepath string, texId uint32, width, height int32) *Texture {
+	t := &Texture{
+		filepath: filepath,
+		width: width,
+		height: height,
+		textureId: texId,
+	}
+	// t.Init(filepath)
+	return t
+}
+
+func NewTextureFramebuffer(width, height int32) *Texture {
+	texture := genBindTexture()
+
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
+	//gl.GenerateMipmap(gl.TEXTURE_2D)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+	textureStruct := Texture{
+		filepath:  "generated",
+		textureId: texture,
 		width:     width,
 		height:    height,
 	}
+	return &textureStruct
 }
 
 func (t *Texture) Init(filepath string) (*Texture, error) {
@@ -78,8 +97,8 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 	textureStruct := Texture{
 		filepath:  filepath,
 		textureId: texture,
-		width:     float32(w),
-		height:    float32(h),
+		width:     int32(w),
+		height:    int32(h),
 	}
 	return &textureStruct, nil
 }
@@ -98,10 +117,10 @@ func (t *Texture) Unbind() {
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 }
 
-func (t *Texture) GetWidth() float32 {
+func (t *Texture) GetWidth() int32 {
 	return t.width
 }
-func (t *Texture) GetHeight() float32 {
+func (t *Texture) GetHeight() int32 {
 	return t.height
 }
 

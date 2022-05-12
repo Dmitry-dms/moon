@@ -16,7 +16,7 @@ type GameObject struct {
 	name          string     `json:"name"`
 	Transform     *Transform `json:"transform"`
 	LastTransform *Transform
-	Spr           SpriteRenderer `json:"sprite_renderer"`
+	Spr           *SpriteRenderer `json:"sprite_renderer"`
 	isDirty       bool
 	zIndex        int `json:"z_index"`
 	uid           int `json:"uid"`
@@ -42,7 +42,7 @@ func NewGameObject(name string, transform *Transform, zIndex int) *GameObject {
 }
 
 func (g *GameObject) AddSpriteRenderer(spr *SpriteRenderer) {
-	g.Spr = *spr
+	g.Spr = spr
 }
 
 func (g *GameObject) generateId() {
@@ -292,7 +292,7 @@ func (g *GameObject) UnmarshalJSON(data []byte) error {
 	}
 
 	spr.sprite = sprite
-	g.Spr = spr
+	g.Spr = &spr
 	g.uid = tr.Uid
 	return err
 	return nil

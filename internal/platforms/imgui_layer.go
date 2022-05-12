@@ -1,6 +1,7 @@
 package platforms
 
 import (
+	"github.com/Dmitry-dms/moon/internal/editor"
 	"github.com/Dmitry-dms/moon/internal/scenes"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
@@ -14,8 +15,8 @@ type ImgUi struct {
 
 	shader *gogl.Shader
 
-	fontTexture            uint32
-	shaderProgramId        uint32
+	fontTexture     uint32
+	shaderProgramId uint32
 
 	fragmentShaderId       uint32
 	attribLocationTex      int32
@@ -31,8 +32,8 @@ func NewImgui() *ImgUi {
 	context := imgui.CreateContext(nil)
 	io := imgui.CurrentIO()
 	g := ImgUi{
-		context:     context,
-		io:          io,
+		context: context,
+		io:      io,
 	}
 	io.SetBackendFlags(io.GetBackendFlags() | imgui.BackendFlagsRendererHasVtxOffset)
 
@@ -41,19 +42,19 @@ func NewImgui() *ImgUi {
 	return &g
 }
 
-func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt float32, currentScene scenes.Scene) {
+func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt float32, currentScene scenes.Scene, texId uint32) {
 
 	imgui.NewFrame()
 
+	editor.Imgui(16/9, texId)	
+	
 	currentScene.Imgui()
 
 	// Rendering
 	imgui.Render() // This call only creates the draw data list. Actual rendering to framebuffer is done below.
 
-	
 	g.Render(displaySize, framebufferSize, imgui.RenderedDrawData())
 }
-
 
 func (g *ImgUi) createDeviceObjects() {
 	sh, err := gogl.NewShader("assets/shaders/imgui.glsl")
@@ -75,7 +76,6 @@ func (g *ImgUi) createDeviceObjects() {
 	g.createFontsTexture()
 }
 
-
 // Dispose cleans up the resources.
 func (g *ImgUi) Dispose() {
 	g.invalidateDeviceObjects()
@@ -84,13 +84,13 @@ func (g *ImgUi) Dispose() {
 func (g *ImgUi) createFontsTexture() {
 	// Build texture atlas
 	io := imgui.CurrentIO()
-	
+
 	fontAtlas := io.Fonts()
 	fontConfig := imgui.NewFontConfig()
 
 	fontConfig.SetMergeMode(true)
 	fontConfig.SetPixelSnapH(true)
-	fontAtlas.AddFontFromFileTTF("assets/fonts/rany.otf",16)
+	fontAtlas.AddFontFromFileTTF("assets/fonts/rany.otf", 16)
 
 	fontConfig.Delete()
 
@@ -105,7 +105,7 @@ func (g *ImgUi) createFontsTexture() {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.PixelStorei(gl.UNPACK_ROW_LENGTH, 0)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(image.Width), int32(image.Height),
-		0, gl.RED, gl.UNSIGNED_BYTE, image.Pixels) 
+		0, gl.RED, gl.UNSIGNED_BYTE, image.Pixels)
 
 	// Store our identifier
 	io.Fonts().SetTextureID(imgui.TextureID(g.fontTexture))

@@ -48,7 +48,9 @@ func (r *SpriteRenderer) GetColor() mgl.Vec4 {
 // func (r *SpriteRenderer) Start() {
 
 // }
-
+func (r *SpriteRenderer) SetTExture(tex *gogl.Texture) {
+	r.sprite.SetTexture(tex)
+}
 func (r *SpriteRenderer) SetSprite(sprite *gogl.Sprite) {
 	r.sprite = sprite
 }

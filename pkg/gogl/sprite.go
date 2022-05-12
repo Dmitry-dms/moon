@@ -7,15 +7,15 @@ import (
 type Sprite struct {
 	texture   *Texture     `json:"texture"`
 	texCoords []mgl32.Vec2 `json:"tex_coords"`
-	width     float32      `json:"sprite_width"`
-	height    float32      `json:"sprite_height"`
+	width     int32      `json:"sprite_width"`
+	height    int32      `json:"sprite_height"`
 }
 
 type SpriteExported struct {
 	Texture   *TextureExported `json:"texture,omitempty"`
 	TexCoords []mgl32.Vec2     `json:"tex_coords"`
-	Width     float32          `json:"sprite_width"`
-	Height    float32          `json:"sprite_height"`
+	Width     int32          `json:"sprite_width"`
+	Height    int32          `json:"sprite_height"`
 }
 
 var defaultTexCoords = []mgl32.Vec2{
@@ -42,16 +42,16 @@ func (s *Sprite) SetTexture(tex *Texture) {
 	s.texture = tex
 }
 
-func (s *Sprite) GetWidth() float32 {
+func (s *Sprite) GetWidth() int32 {
 	return s.width
 }
-func (s *Sprite) GetHeight() float32 {
+func (s *Sprite) GetHeight() int32 {
 	return s.height
 }
-func (s *Sprite) SetHeight(h float32) {
+func (s *Sprite) SetHeight(h int32) {
 	s.height = h
 }
-func (s *Sprite) SetWidth(w float32) {
+func (s *Sprite) SetWidth(w int32) {
 	s.width = w
 }
 

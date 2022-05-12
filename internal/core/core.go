@@ -21,8 +21,8 @@ var Window *Core
 func init() {
 	o := sync.Once{}
 	o.Do(func() { //make a singleton
-		width:= 1280
-		height := 720
+		var width int32 = 1920
+		var height int32 = 1080
 		Window = newCore(width, height, platforms.GLFWClientAPIOpenGL42, 0)
 		listeners.SetWinHeight(height)
 		listeners.SetWinWidth(width)
@@ -34,13 +34,14 @@ func (c *Core) GetCurrentScene() scenes.Scene {
 }
 
 type Core struct {
-	width, height *int
+	width, height *int32
 	glfwWindow    *platforms.GLFW
 	currentScene  scenes.Scene
 	imGui         *platforms.ImgUi
+	framebuffer   *renderers.Framebuffer
 }
 
-func newCore(width, height int, glVersion platforms.GLFWClientAPI, scene int) *Core {
+func newCore(width, height int32, glVersion platforms.GLFWClientAPI, scene int) *Core {
 	platform, err := platforms.NewGLFW(glVersion, &width, &height)
 	if err != nil {
 		panic(err)
@@ -51,14 +52,21 @@ func newCore(width, height int, glVersion platforms.GLFWClientAPI, scene int) *C
 		height:     &height,
 		glfwWindow: platform,
 	}
+	buffer, err := renderers.NewFramebuffer(width, height)
+	if err != nil {
+		panic(err)
+	}
+	gl.Viewport(0, 0, width, height)
+	c.framebuffer = buffer
 	c.changeScene(0)
-	return &c 
+	return &c
 }
 
 func (c *Core) changeScene(scene int) {
 	switch scene {
 	case 0:
 		c.currentScene = scenes.NewEditorScene(c.changeScene)
+		c.currentScene.Load()
 		c.currentScene.Init()
 		c.currentScene.Start()
 		listeners.SetCamera(c.currentScene.GetCamera())
@@ -84,28 +92,22 @@ func (c *Core) Run() {
 	for !c.glfwWindow.ShouldStop() {
 		c.glfwWindow.ProcessEvents()
 
+		renderers.DebugDraw.BeginFrame()
 
-
+		// c.framebuffer.Bind()
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-
-		renderers.DebugDraw.BeginFrame()
 
 		if dt >= 0 {
 			renderers.DebugDraw.Draw(c.currentScene.GetCamera())
 			c.currentScene.Update(dt)
 		}
-
-		
-		// Signal start of a new frame
-		c.glfwWindow.NewFrame(dt)
-
-		
-		// // A this point, the application could perform its own rendering...
 		c.currentScene.Render()
+		// c.framebuffer.Unbind()
 
-		
-		c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene)
+		c.glfwWindow.NewFrame(dt)
+		c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
+
 		c.glfwWindow.PostRender()
 
 		endTime = float32(glfw.GetTime())

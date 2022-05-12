@@ -24,7 +24,7 @@ const (
 
 // GLFW implements a platform based on github.com/go-gl/glfw (v3.2).
 type GLFW struct {
-	width, height *int
+	width, height *int32
 	ImguiIO       *ImgUi
 	renderer      *renderers.OpenGL42
 	window *glfw.Window
@@ -38,7 +38,7 @@ func (g *GLFW) GetWindow() *glfw.Window {
 }
 
 // NewGLFW attempts to initialize a GLFW context.
-func NewGLFW(clientAPI GLFWClientAPI, width, height *int) (*GLFW, error) {
+func NewGLFW(clientAPI GLFWClientAPI, width, height *int32) (*GLFW, error) {
 
 	err := glfw.Init()
 	if err != nil {
@@ -64,7 +64,7 @@ func NewGLFW(clientAPI GLFWClientAPI, width, height *int) (*GLFW, error) {
 	glfw.WindowHint(glfw.Resizable, glfw.True)
 
 	//Создание окна
-	window, err := glfw.CreateWindow(*width, *height, "ImGui-Go GLFW+"+string(clientAPI)+" example", nil, nil)
+	window, err := glfw.CreateWindow(int(*width), int(*height), "ImGui-Go GLFW+"+string(clientAPI)+" example", nil, nil)
 	if err != nil {
 		glfw.Terminate()
 		return nil, fmt.Errorf("failed to create window: %w", err)
@@ -198,10 +198,12 @@ func (platform *GLFW) mouseButtonChange(window *glfw.Window, rawButton glfw.Mous
 }
 
 func (platform *GLFW) sizeCllback(w *glfw.Window, width int, height int) {
-	platform.width = &width
-	platform.height = &height
+	w1 := int32(width)
+	h := int32(height)
+	platform.width = &w1
+	platform.height = &h
 
-	listeners.SizeCllback(w, width, height)
+	listeners.SizeCllback(w, int32(width), int32(height))
 }
 
 func (platform *GLFW) mouseScrollChange(window *glfw.Window, x, y float64) {

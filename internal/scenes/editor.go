@@ -59,13 +59,19 @@ func (e *EditorScene) loadResources() {
 		gogl.NewSpritesheet(gogl.AssetPool.GetTexture("assets/images/decorations.png"), 16, 16, 81, 0))
 }
 
+func (e *EditorScene) Load() {
+	e.loadResources()
+	e.activeGameWorld.loadResources()
+	e.activeGameWorld.Load()
+}
+
 func (e *EditorScene) Init() {
 
 	fmt.Println("init editor scene")
-	e.loadResources()
-	e.activeGameWorld.loadResources()
+
+	
 	e.activeGameWorld.Init()
-	e.activeGameWorld.Load()
+
 
 
 }

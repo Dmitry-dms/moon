@@ -8,7 +8,7 @@ import (
 	"regexp"
 
 	"github.com/Dmitry-dms/moon/internal/components"
-	"github.com/go-gl/mathgl/mgl32"
+
 
 	"github.com/Dmitry-dms/moon/internal/renderers"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
@@ -58,6 +58,14 @@ func (w *GameWorld) Init() {
 	w.loadResources()
 	fmt.Printf("Init game world - %s \n", w.Name)
 	sprsheet = gogl.AssetPool.GetSpriteSheet("assets/images/decorations.png")
+
+	// for _, v := range w.gameObjects {
+	// 	if v.Spr != nil {
+	// 		if v.Spr.GetTexture() != nil {
+	// 			v.Spr.SetTExture(gogl.AssetPool.GetTexture(v.Spr.GetTexture().GetFilepath()))
+	// 		}
+	// 	}
+	// }
 
 }
 
@@ -117,10 +125,9 @@ func (w *GameWorld) Load() {
 	//	w.currGameObj(w.gameObjects[0])
 
 }
-var angle float32 = 30
+
 func (w *GameWorld) Update(dt float32, camera *gogl.Camera) {
-	renderers.DebugDraw.AddCircle(mgl32.Vec2{200,200}, 64,  mgl32.Vec3{1,0,0}, 1)
-	angle += 40*dt
+	
 
 	renderers.UpdateGridLines(camera)
 	w.renderer.Update(dt)

@@ -9,13 +9,13 @@ type Spritesheet struct {
 	sprites []*Sprite
 }
 
-func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight float32, numberSprites, spacing int) *Spritesheet {
+func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight int32, numberSprites, spacing int) *Spritesheet {
 	sprites := make([]*Sprite, 0)
 	sh := Spritesheet{
 		texture: tex,
 	}
-	var currentX float32 = 0
-	var currentY float32 = 0
+	var currentX int32 = 0
+	var currentY int32 = 0
 	// проход начинается с лево на право верхнего ряда
 
 	for i := 0; i < numberSprites; i++ {
@@ -39,10 +39,10 @@ func NewSpritesheet(tex *Texture, spriteWidth, spriteHeight float32, numberSprit
 
 		sprites = append(sprites, sprite)
 
-		currentX += spriteWidth + float32(spacing)
+		currentX += spriteWidth + int32(spacing)
 		if currentX >= tex.GetWidth() { //достигли конца текстуры
 			currentX = 0
-			currentY += spriteHeight + float32(spacing) //переход на ряд ниже
+			currentY += spriteHeight + int32(spacing) //переход на ряд ниже
 		}
 	}
 	sh.sprites = sprites
