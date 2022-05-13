@@ -62,9 +62,11 @@ func NewGLFW(clientAPI GLFWClientAPI, width, height *int32) (*GLFW, error) {
 	glfw.DefaultWindowHints()
 	glfw.WindowHint(glfw.Visible, glfw.False) //пока окно не скофигугрировано, не показываем его
 	glfw.WindowHint(glfw.Resizable, glfw.True)
+	glfw.WindowHint(glfw.Maximized, glfw.True) // открывается сразу в windowed fullscreen
+
 
 	//Создание окна
-	window, err := glfw.CreateWindow(int(*width), int(*height), "ImGui-Go GLFW+"+string(clientAPI)+" example", nil, nil)
+	window, err := glfw.CreateWindow(int(*width), int(*height), "GLFW+"+string(clientAPI)+" example", nil, nil)
 	if err != nil {
 		glfw.Terminate()
 		return nil, fmt.Errorf("failed to create window: %w", err)
@@ -73,6 +75,7 @@ func NewGLFW(clientAPI GLFWClientAPI, width, height *int32) (*GLFW, error) {
 	window.MakeContextCurrent()
 	//включаем верт. синхронизацию
 	glfw.SwapInterval(1)
+	
 	//включаем окно
 	window.Show()
 	platform := &GLFW{

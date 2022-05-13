@@ -1,8 +1,6 @@
-package components
+package ui
 
 import (
-	"encoding/json"
-
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -16,25 +14,25 @@ func (t *Transform) IsEqual(tr *Transform) bool {
 	return t.position == tr.position && t.scale == tr.scale
 }
 
-type tranformExported struct {
-	Position mgl.Vec2 `json:"position"`
-	Scale    mgl.Vec2 `json:"scale"`
-}
+// type tranformExported struct {
+// 	Position mgl.Vec2 `json:"position"`
+// 	Scale    mgl.Vec2 `json:"scale"`
+// }
 
-func (t *Transform) MarshalJSON() ([]byte, error) {
-	tr := tranformExported{
-		Position: t.position,
-		Scale:    t.scale,
-	}
-	return json.Marshal(tr)
-}
-func (t *Transform) UnmarshalJSON(data []byte) error {
-	var tr tranformExported
-	err := json.Unmarshal(data, &tr)
-	t.position = tr.Position
-	t.scale = tr.Scale
-	return err
-}
+// func (t *Transform) MarshalJSON() ([]byte, error) {
+// 	tr := tranformExported{
+// 		Position: t.position,
+// 		Scale:    t.scale,
+// 	}
+// 	return json.Marshal(tr)
+// }
+// func (t *Transform) UnmarshalJSON(data []byte) error {
+// 	var tr tranformExported
+// 	err := json.Unmarshal(data, &tr)
+// 	t.position = tr.Position
+// 	t.scale = tr.Scale
+// 	return err
+// }
 
 func NewTransform(pos, scale mgl.Vec2) *Transform {
 	return &Transform{position: pos, scale: scale}

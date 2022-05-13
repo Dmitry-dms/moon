@@ -8,10 +8,14 @@ import (
 	"regexp"
 
 	"github.com/Dmitry-dms/moon/internal/components"
+	"github.com/Dmitry-dms/moon/internal/listeners"
 
+	// "github.com/Dmitry-dms/moon/internal/listeners"
+	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/Dmitry-dms/moon/internal/renderers"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui"
 )
 
 type GameWorld struct {
@@ -27,6 +31,8 @@ const (
 	maxBatchSize = 1000
 )
 
+var uir *ui.UiRenderer
+
 func NewGameWorld(name string, widthTiles, heightTiles int, callback func(g *components.GameObject)) *GameWorld {
 	gw := GameWorld{
 		Name:        name,
@@ -37,6 +43,7 @@ func NewGameWorld(name string, widthTiles, heightTiles int, callback func(g *com
 		currGameObj: callback,
 		gameObjects: make([]*components.GameObject, 0),
 	}
+	uir = ui.NewUIRenderer(maxBatchSize, 100)
 	return &gw
 }
 
@@ -54,10 +61,15 @@ func (w *GameWorld) loadResources() {
 	gogl.AssetPool.GetTexture("assets/images/blend2.png")
 }
 
+
+
+var button *ui.Button
+
 func (w *GameWorld) Init() {
 	w.loadResources()
 	fmt.Printf("Init game world - %s \n", w.Name)
 	sprsheet = gogl.AssetPool.GetSpriteSheet("assets/images/decorations.png")
+	uir.Start()
 
 	// for _, v := range w.gameObjects {
 	// 	if v.Spr != nil {
@@ -66,6 +78,47 @@ func (w *GameWorld) Init() {
 	// 		}
 	// 	}
 	// }
+
+	// g = components.NewGameObject("Obj 1",
+	// 	components.NewTransform(mgl32.Vec2{0, 0}, mgl32.Vec2{100, 100}), 1)
+	// spr := components.DefSpriteRenderer()
+
+	// sprite1 := gogl.DefSprite()
+	// sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/blend2.png"))
+	// spr.SetSprite(sprite1)
+	// g.AddSpriteRenderer(spr)
+	// w.AddGameObjToWorld(g)
+
+
+	spr := ui.DefSpriteRenderer()
+
+	sprite1 := gogl.DefSprite()
+	sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/blend2.png"))
+	spr.SetSprite(sprite1)
+	com := ui.Button{
+		UiObject: ui.UiObject{
+			Transform: ui.NewTransform(mgl32.Vec2{0, 0}, mgl32.Vec2{100, 100}),
+			Name: "1",
+			Spr: spr,
+			ZIndex: 1,
+		},
+	}
+	uir.AddUIComponent(&com)
+
+	// g2 = components.NewGameObject("Obj 2",
+	// 	components.NewTransform(mgl32.Vec2{200, 100}, mgl32.Vec2{256, 256}), 2)
+	// //spr2 := components.NewSpriteRenderer(mgl32.Vec4{1, 1, 1, 1}, gogl.NewSprite(gogl.AssetPool.GetTexture("assets/images/blend1.png")))
+	// spr2 := &components.SpriteRenderer{}
+	// spr2.SetColor(mgl32.Vec4{1, 1, 1, 1})
+
+	// sprite2 := gogl.DefSprite()
+	// sprite2.SetTexture(gogl.AssetPool.GetTexture("assets/images/blend1.png"))
+
+	// spr2.SetSprite(sprite2)
+	// g2.AddSpriteRenderer(spr2)
+
+
+	// w.AddGameObjToWorld(g2)
 
 }
 
@@ -127,12 +180,18 @@ func (w *GameWorld) Load() {
 }
 
 func (w *GameWorld) Update(dt float32, camera *gogl.Camera) {
-	
+	camera.UpdateProjection(mgl32.Vec2{float32(listeners.GetWindowWidth()),float32(listeners.GetWindowHeight())})
 
-	renderers.UpdateGridLines(camera)
+	uir.Update(dt)
+	// fmt.Println(float32(listeners.GetOrthoX()), float32(listeners.GetOrthoY()))
+	// g.SetPosition(mgl32.Vec2{float32(listeners.GetOrthoX()), float32(listeners.GetOrthoY())})
+	// g.SetPosition(mgl32.Vec2{float32(listeners.GetX()), float32(listeners.GetY())})
+	// g.AddPosition(mgl32.Vec2{dt*10,0})
+	// renderers.DebugDraw.AddBox2D(mgl32.Vec2{1000,500}, mgl32.Vec2{100,100}, 0, mgl32.Vec3{1,0,0}, 200000)
+	// renderers.UpdateGridLines(camera) // Debug draw
 	w.renderer.Update(dt)
 }
 func (w *GameWorld) Render(camera *gogl.Camera) {
-
+	uir.Render(camera)
 	w.renderer.Render(camera)
 }

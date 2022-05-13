@@ -21,8 +21,8 @@ var Window *Core
 func init() {
 	o := sync.Once{}
 	o.Do(func() { //make a singleton
-		var width int32 = 1920
-		var height int32 = 1080
+		var width int32 = 1280
+		var height int32 = 720
 		Window = newCore(width, height, platforms.GLFWClientAPIOpenGL42, 0)
 		listeners.SetWinHeight(height)
 		listeners.SetWinWidth(width)
@@ -52,12 +52,12 @@ func newCore(width, height int32, glVersion platforms.GLFWClientAPI, scene int) 
 		height:     &height,
 		glfwWindow: platform,
 	}
-	buffer, err := renderers.NewFramebuffer(width, height)
-	if err != nil {
-		panic(err)
-	}
-	gl.Viewport(0, 0, width, height)
-	c.framebuffer = buffer
+	// buffer, err := renderers.NewFramebuffer(width, height)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// gl.Viewport(0, 0, width, height)
+	// c.framebuffer = buffer
 	c.changeScene(0)
 	return &c
 }
@@ -92,21 +92,21 @@ func (c *Core) Run() {
 	for !c.glfwWindow.ShouldStop() {
 		c.glfwWindow.ProcessEvents()
 
-		renderers.DebugDraw.BeginFrame()
+		// renderers.DebugDraw.BeginFrame()
 
 		// c.framebuffer.Bind()
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		if dt >= 0 {
-			renderers.DebugDraw.Draw(c.currentScene.GetCamera())
+			// renderers.DebugDraw.Draw(c.currentScene.GetCamera())
 			c.currentScene.Update(dt)
 		}
 		c.currentScene.Render()
 		// c.framebuffer.Unbind()
 
-		c.glfwWindow.NewFrame(dt)
-		c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
+		// c.glfwWindow.NewFrame(dt)
+		// c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
 
 		c.glfwWindow.PostRender()
 

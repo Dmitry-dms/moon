@@ -1,14 +1,8 @@
-package renderers
+package ui
 
 import (
-	// "fmt"
-	"sync"
-
-	"github.com/Dmitry-dms/moon/internal/components"
-
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
-
 )
 
 const (
@@ -27,51 +21,68 @@ const (
 	texIdOffset     = texCoordsOffset + texCoordsSize
 )
 
-type RenderBatch struct {
-	objects    []*components.GameObject
-	numSprites int
-	hasRoom    bool
-
+type UiRenderer struct {
 	vertices []float32
 	indeces  []int32
 
 	vaoId, vboId, ebo uint32
 	maxBatchSize      int
 
+	objects []Renderable
+
 	shader   *gogl.Shader
 	textures []*gogl.Texture
 	texSlots []int32
 
-	zIndex int
+	zIndex, numSprites int
 }
 
-func NewRenderBatch(maxBatchSize, zIndex int) *RenderBatch {
+func NewUIRenderer(maxBatchSize, zIndex int) *UiRenderer {
 	s, err := gogl.AssetPool.GetShader("assets/shaders/default.glsl")
 	if err != nil {
 		panic(err)
 	}
-	obj := make([]*components.GameObject, 0, maxBatchSize)
+
 	vt := make([]float32, maxBatchSize*4*vertexSize)
-	rb := RenderBatch{
+	rb := UiRenderer{
 		shader:       s,
 		maxBatchSize: maxBatchSize,
 		vertices:     vt,
-		hasRoom:      true,
-		objects:      obj,
 		textures:     make([]*gogl.Texture, 0),
 		texSlots:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
 		zIndex:       zIndex,
+		objects:      make([]Renderable, 0),
 	}
 	rb.indeces = rb.generateIndeces()
 
 	return &rb
 }
-func (b *RenderBatch) GetZIndex() int {
-	return b.zIndex
+
+func (b *UiRenderer) generateIndeces() []int32 {
+	//6 вершин на 1 квадрат
+	elements := make([]int32, 6*b.maxBatchSize)
+
+	for i := 0; i < b.maxBatchSize; i++ {
+		b.loadElementIndeces(elements, int32(i))
+	}
+
+	return elements
+}
+func (b *UiRenderer) loadElementIndeces(elements []int32, index int32) {
+	var offsetArrayIndex int32 = 6 * index
+	var offset int32 = 4 * index
+	// 3, 2, 0, 0, 2, 1 - вершины квадрата
+	elements[offsetArrayIndex] = offset + 3
+	elements[offsetArrayIndex+1] = offset + 2
+	elements[offsetArrayIndex+2] = offset + 0
+
+	elements[offsetArrayIndex+3] = offset + 0
+	elements[offsetArrayIndex+4] = offset + 2
+	elements[offsetArrayIndex+5] = offset + 1
 }
 
 //работа с OpenGL
-func (b *RenderBatch) Start() {
+func (b *UiRenderer) Start() {
 	// fmt.Println("START BATCH")
 	b.vaoId = gogl.GenBindVAO()
 
@@ -90,33 +101,17 @@ func (b *RenderBatch) Start() {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 }
+func (b *UiRenderer) Render(camera *gogl.Camera) {
 
-func (b *RenderBatch) Update(dt float32, wg *sync.WaitGroup) {
-	for _, obj := range b.objects {
-		obj.Update(dt)
-	}
-	wg.Done()
-}
-
-func (b *RenderBatch) Render(camera *gogl.Camera) {
-	rebuffer := false
-	for i, obj := range b.objects {
-		if obj.IsDirty() {
-		
-			b.loadVertexProperties(i)
-			obj.SetClean()
-			rebuffer = true
-		}
+	for i := range b.objects {
+		b.loadVertexProperties(i)
 	}
 
-	if rebuffer {
-		gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
-		gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(b.vertices)*4, gl.Ptr(b.vertices))
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	}
+	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
+	gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(b.vertices)*4, gl.Ptr(b.vertices))
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
 	b.shader.Use()
-
 
 	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
@@ -149,37 +144,41 @@ func (b *RenderBatch) Render(camera *gogl.Camera) {
 	b.shader.Detach()
 }
 
-func (b *RenderBatch) AddGameObject(obj *components.GameObject) {
+func (b *UiRenderer) AddUIComponent(c Renderable) {
 	index := b.numSprites
-	b.objects = append(b.objects, obj)
+	b.objects = append(b.objects, c)
 	b.numSprites++
-	tex := obj.Spr.GetTexture()
+	if c.Spr() != nil {
+		tex := c.Spr().GetTexture()
 
-	if tex != nil {
-		isAdded := false
-		for _, v := range b.textures {
-			if tex == v {
-				isAdded = true
-				break
+		if tex != nil {
+			isAdded := false
+			for _, v := range b.textures {
+				if tex == v {
+					isAdded = true
+					break
+				}
+			}
+			if !isAdded {
+				b.textures = append(b.textures, tex)
 			}
 		}
-		if !isAdded {
-			b.textures = append(b.textures, tex)
-		}
 	}
+
 	b.loadVertexProperties(index)
-	if b.numSprites >= b.maxBatchSize {
-		b.hasRoom = false
+}
+func (b *UiRenderer) Update(dt float32) {
+	for _, obj := range b.objects {
+		obj.Update(dt)
 	}
 }
 
-func (b *RenderBatch) loadVertexProperties(index int) {
+func (b *UiRenderer) loadVertexProperties(index int) {
 	obj := b.objects[index]
-
 
 	offset := index * 4 * int(vertexSize)
 
-	spr := obj.Spr
+	spr := obj.Spr()
 	color := spr.GetColor()
 	tex := spr.GetTexture()
 
@@ -205,8 +204,8 @@ func (b *RenderBatch) loadVertexProperties(index int) {
 			yAdd = 1
 		}
 		//load position
-		x := obj.Transform.GetPosition().X() + (xAdd * obj.Transform.GetScale().X())
-		y := obj.Transform.GetPosition().Y() + (yAdd * obj.Transform.GetScale().Y())
+		x := obj.Transform().GetPosition().X() + (xAdd * obj.Transform().GetScale().X())
+		y := obj.Transform().GetPosition().Y() + (yAdd * obj.Transform().GetScale().Y())
 		// fmt.Printf("BATCH - %.1f %.1f \n",x, y)
 		b.vertices[offset] = x
 		b.vertices[offset+1] = y
@@ -224,39 +223,4 @@ func (b *RenderBatch) loadVertexProperties(index int) {
 
 		offset += vertexSize
 	}
-}
-
-func (b *RenderBatch) generateIndeces() []int32 {
-	//6 вершин на 1 квадрат
-	elements := make([]int32, 6*b.maxBatchSize)
-
-	for i := 0; i < b.maxBatchSize; i++ {
-		b.loadElementIndeces(elements, int32(i))
-	}
-
-	return elements
-}
-func (b *RenderBatch) loadElementIndeces(elements []int32, index int32) {
-	var offsetArrayIndex int32 = 6 * index
-	var offset int32 = 4 * index
-	// 3, 2, 0, 0, 2, 1 - вершины квадрата
-	elements[offsetArrayIndex] = offset + 3
-	elements[offsetArrayIndex+1] = offset + 2
-	elements[offsetArrayIndex+2] = offset + 0
-
-	elements[offsetArrayIndex+3] = offset + 0
-	elements[offsetArrayIndex+4] = offset + 2
-	elements[offsetArrayIndex+5] = offset + 1
-}
-
-func (b *RenderBatch) HasTextureRoom() bool {
-	return len(b.textures) < 8
-}
-func (b *RenderBatch) HasTexture(texture *gogl.Texture) bool {
-	for _, v := range b.textures {
-		if texture == v {
-			return true
-		}
-	}
-	return false
 }

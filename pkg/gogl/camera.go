@@ -1,6 +1,7 @@
 package gogl
 
 import (
+	
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -20,7 +21,8 @@ func NewCamera(position mgl.Vec2) *Camera {
 		view:     mgl.Mat4{},
 		invProj:  mgl.Mat4{},
 		invView:  mgl.Mat4{},
-		projSize: mgl.Vec2{32*40, 32*21},
+		// projSize: mgl.Vec2{32*40, 32*21},
+		projSize: mgl.Vec2{1920, 1080},
 		zoom:     1,
 	}
 	c.AdjustProjection()
@@ -33,12 +35,19 @@ func (c *Camera) SetPosition(vec mgl.Vec2) {
 func (c *Camera) GetProjectionSize() mgl.Vec2 {
 	return c.projSize
 }
+func (c *Camera) UpdateProjection(pr mgl.Vec2) {
+	c.projSize = pr
+	c.proj = mgl.Ortho(0, pr[0], 0, pr[1], 0, 100)
+	c.invProj = c.proj.Inv()
+}
 func (c *Camera) AdjustProjection() {
 	c.proj = mgl.Ortho(0, c.projSize[0], 0, c.projSize[1], 0, 100)
 	c.invProj = c.proj.Inv()
 }
 
 func (c *Camera) GetViewMatrix() mgl.Mat4 {
+
+
 	cameraFront := mgl.Vec3{0, 0, -1}
 	cameraUp := mgl.Vec3{0, 1, 0}
 	c.view = mgl.LookAtV(mgl.Vec3{c.Position.X(), c.Position.Y(), 20},
@@ -46,6 +55,7 @@ func (c *Camera) GetViewMatrix() mgl.Mat4 {
 		cameraUp)
 
 	c.invView = c.view.Inv()
+
 	return c.view
 }
 func (c *Camera) GetProjectionMatrix() mgl.Mat4 {

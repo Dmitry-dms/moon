@@ -41,7 +41,7 @@ func NewEditorScene(changeSceneCallback func(scene int)) *EditorScene {
 	callback := func(g *components.GameObject) {
 		edtrScene.activeGameObject = g
 	}
-	world := NewGameWorld("first", 20, 20, callback)
+	world := NewGameWorld("first", 64, 64, callback)
 	edtrScene.activeGameWorld = world
 	edtrScene.mouseControls = components.NewMouseControls(edtrScene.AddGameObjectToScene)
 
@@ -62,7 +62,7 @@ func (e *EditorScene) loadResources() {
 func (e *EditorScene) Load() {
 	e.loadResources()
 	e.activeGameWorld.loadResources()
-	e.activeGameWorld.Load()
+	// e.activeGameWorld.Load()
 }
 
 func (e *EditorScene) Init() {
@@ -71,8 +71,6 @@ func (e *EditorScene) Init() {
 
 	
 	e.activeGameWorld.Init()
-
-
 
 }
 
@@ -105,7 +103,6 @@ func (e *EditorScene) Update(dt float32) {
 
 func (e *EditorScene) Render() {
 	
-
 	e.activeGameWorld.Render(e.camera)
 }
 func (e *EditorScene) Imgui() {

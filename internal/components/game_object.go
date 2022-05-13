@@ -30,6 +30,7 @@ type gameObjExported struct {
 }
 
 func NewGameObject(name string, transform *Transform, zIndex int) *GameObject {
+
 	obj := GameObject{
 		name:          name,
 		Transform:     transform,
@@ -43,6 +44,7 @@ func NewGameObject(name string, transform *Transform, zIndex int) *GameObject {
 
 func (g *GameObject) AddSpriteRenderer(spr *SpriteRenderer) {
 	g.Spr = spr
+	g.isDirty = true
 }
 
 func (g *GameObject) generateId() {
@@ -57,7 +59,9 @@ func (g *GameObject) GetUid() int {
 }
 
 func (g *GameObject) Update(dt float32) {
-	if g.Transform != g.LastTransform {
+	
+	if !g.Transform.IsEqual(g.LastTransform) {
+		
 		g.Transform.CopyTo(g.LastTransform)
 		g.isDirty = true
 	}
