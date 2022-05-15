@@ -4,9 +4,9 @@ import (
 	_ "bufio"
 	"errors"
 	"fmt"
+	"unsafe"
 
 	//	"regexp"
-	"unsafe"
 
 	"time"
 
@@ -87,6 +87,10 @@ func CreateShader(source string, shaderType uint32) (uint32, error) {
 		return 0, errors.New(log)
 	}
 	return shaderId, nil
+}
+
+func Str(src string) *uint8 {
+	return gl.Str(src + "\x00")
 }
 
 func CreateProgram(path string) (uint32, error) {
