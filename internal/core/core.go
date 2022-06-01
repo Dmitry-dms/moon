@@ -1,7 +1,7 @@
 package core
 
 import (
-	"sync"
+	// "sync"
 
 	"github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/Dmitry-dms/moon/internal/platforms"
@@ -14,20 +14,22 @@ import (
 	//"github.com/go-gl/glfw/v3.3/glfw"
 	//imgui "github.com/inkyblackness/imgui-go/v4"
 	//"github.com/pkg/errors"
+
+
 )
 
 var Window *Core
 
-func init() {
-	o := sync.Once{}
-	o.Do(func() { //make a singleton
-		var width int32 = 1280
-		var height int32 = 720
-		Window = newCore(width, height, platforms.GLFWClientAPIOpenGL42, 0)
-		listeners.SetWinHeight(height)
-		listeners.SetWinWidth(width)
-	})
-}
+// func init() {
+// 	o := sync.Once{}
+// 	o.Do(func() { //make a singleton
+// 		var width int32 = 1280
+// 		var height int32 = 720
+// 		Window = newCore(width, height, platforms.GLFWClientAPIOpenGL42, 0)
+// 		listeners.SetWinHeight(height)
+// 		listeners.SetWinWidth(width)
+// 	})
+// }
 
 func (c *Core) GetCurrentScene() scenes.Scene {
 	return c.currentScene
@@ -52,12 +54,12 @@ func newCore(width, height int32, glVersion platforms.GLFWClientAPI, scene int) 
 		height:     &height,
 		glfwWindow: platform,
 	}
-	// buffer, err := renderers.NewFramebuffer(width, height)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// gl.Viewport(0, 0, width, height)
-	// c.framebuffer = buffer
+	buffer, err := renderers.NewFramebuffer(200, 200)
+	if err != nil {
+		panic(err)
+	}
+	gl.Viewport(0, 0, width, height)
+	c.framebuffer = buffer
 	c.changeScene(0)
 	return &c
 }
@@ -94,16 +96,16 @@ func (c *Core) Run() {
 
 		// renderers.DebugDraw.BeginFrame()
 
-		// c.framebuffer.Bind()
+		c.framebuffer.Bind()
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		if dt >= 0 {
 			// renderers.DebugDraw.Draw(c.currentScene.GetCamera())
-			c.currentScene.Update(dt)
+			// c.currentScene.Update(dt)
 		}
 		c.currentScene.Render()
-		// c.framebuffer.Unbind()
+		c.framebuffer.Unbind()
 
 		// c.glfwWindow.NewFrame(dt)
 		// c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
@@ -115,3 +117,5 @@ func (c *Core) Run() {
 		beginTime = endTime
 	}
 }
+
+

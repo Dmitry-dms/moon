@@ -35,6 +35,7 @@ func ImGui_ImplOpenGL3_Init(version string) bool {
 	var current_tex int32
 	//для проверки
 	gl.GetIntegerv(gl.TEXTURE_BINDING_2D, &current_tex)
+
 	return true
 }
 
