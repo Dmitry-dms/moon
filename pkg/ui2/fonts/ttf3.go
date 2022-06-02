@@ -46,7 +46,7 @@ func (f *Font) FromTTF(options Options, path string, lowChar int, highChar int) 
 
 	// Подстраивает высоту
 	// image = shrinkToFit(image)
-	f.uploadTexture(image)
+	// f.uploadTexture(image)
 
 	// pngFile, _ := os.OpenFile("target.png", os.O_CREATE|os.O_RDWR, 0664)
 

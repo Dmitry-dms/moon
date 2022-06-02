@@ -2,13 +2,18 @@ package main
 
 import (
 	"fmt"
+	"runtime"
+
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui2"
 	"github.com/Dmitry-dms/moon/pkg/ui2/fonts"
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
-
 )
+
+func init() {
+	runtime.LockOSThread()
+}
 
 var vertices = []float32{
 	0.5, 0.5, 1.0, 0.2, 0.11, 1.0, 0.0,
@@ -50,10 +55,10 @@ func main() {
 
 	fontShader, _ := gogl.NewShader("assets/shaders/fonts.glsl")
 
-	font := fonts.NewFont("assets/fonts/Roboto.ttf", 12)
+	font := fonts.NewFont("assets/fonts/Roboto.ttf", 60)
 
 
-	texcCoords := font.GetCharacter('p').TexCoords
+	texcCoords := font.GetCharacter('&').TexCoords
 	vertices[5], vertices[6] = texcCoords[0].X, texcCoords[0].Y
 	vertices[12], vertices[13] = texcCoords[1].X, texcCoords[1].Y
 	vertices[19], vertices[20] = texcCoords[2].X, texcCoords[2].Y

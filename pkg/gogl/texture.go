@@ -2,6 +2,8 @@ package gogl
 
 import (
 	"image"
+	"image/color"
+	"image/draw"
 	"image/png"
 	_ "image/png"
 	"os"
@@ -79,8 +81,8 @@ func UploadTextureFromMemory(data *image.Gray) *Texture {
 	}
 
 	texture := genBindTexture()
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
@@ -214,4 +216,68 @@ func (t *Texture) GetHeight() int32 {
 
 func (t *Texture) GetId() uint32 {
 	return t.textureId
+}
+
+
+func ImageToBytes(img image.Image) []byte {
+	size := img.Bounds().Size()
+	w, h := size.X, size.Y
+
+	switch img := img.(type) {
+	case *image.Paletted:
+		bs := make([]byte, 4*w*h)
+
+		b := img.Bounds()
+		x0 := b.Min.X
+		y0 := b.Min.Y
+		x1 := b.Max.X
+		y1 := b.Max.Y
+
+		palette := make([]uint8, len(img.Palette)*4)
+		for i, c := range img.Palette {
+			rgba := color.RGBAModel.Convert(c).(color.RGBA)
+			palette[4*i] = rgba.R
+			palette[4*i+1] = rgba.G
+			palette[4*i+2] = rgba.B
+			palette[4*i+3] = rgba.A
+		}
+		// Even img is a subimage of another image, Pix starts with 0-th index.
+		idx0 := 0
+		idx1 := 0
+		d := img.Stride - (x1 - x0)
+		for j := 0; j < y1-y0; j++ {
+			for i := 0; i < x1-x0; i++ {
+				p := int(img.Pix[idx0])
+				bs[idx1] = palette[4*p]
+				bs[idx1+1] = palette[4*p+1]
+				bs[idx1+2] = palette[4*p+2]
+				bs[idx1+3] = palette[4*p+3]
+				idx0++
+				idx1 += 4
+			}
+			idx0 += d
+		}
+		return bs
+	case *image.RGBA:
+		if len(img.Pix) == 4*w*h {
+			return img.Pix
+		}
+		return imageToBytesSlow(img)
+	default:
+		return imageToBytesSlow(img)
+	}
+}
+
+func imageToBytesSlow(img image.Image) []byte {
+	size := img.Bounds().Size()
+	w, h := size.X, size.Y
+	bs := make([]byte, 4*w*h)
+
+	dstImg := &image.RGBA{
+		Pix:    bs,
+		Stride: 4 * w,
+		Rect:   image.Rect(0, 0, w, h),
+	}
+	draw.Draw(dstImg, image.Rect(0, 0, w, h), img, img.Bounds().Min, draw.Src)
+	return bs
 }

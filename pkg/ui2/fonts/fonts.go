@@ -41,7 +41,7 @@ func NewFont(filepath string, size int32) *Font {
 		CharMap:  make(map[int]*CharInfo, 50),
 	}
 
-	f.generatebitmap2()
+	f.generateAndUploadBitmap()
 	return &f
 }
 
@@ -80,7 +80,7 @@ func (f *Font) generatebitmap2() {
 		letters = append(letters, r)
 	}
 
-	const (
+	var (
 		width        = 50
 		height       = 36
 		startingDotX = 0
@@ -96,7 +96,7 @@ func (f *Font) generatebitmap2() {
 		log.Fatalf("Parse: %v", err)
 	}
 	face, err := opentype.NewFace(parsed, &opentype.FaceOptions{
-		Size:    32,
+		Size:    float64(f.FontSize),
 		DPI:     72,
 		Hinting: font.HintingNone,
 	})
@@ -116,12 +116,16 @@ func (f *Font) generatebitmap2() {
 	for _, l := range letters {
 		d.DrawString(string(l))
 		// fmt.Println(d.Dot.X.Ceil())
-		_, a, _ := d.Face.GlyphBounds(l)
+		b, a, _ := d.Face.GlyphBounds(l)
 		// fmt.Println(b.Max.X.Ceil())
+		// fmt.Printf("char = %q, minX = %d, minY = %d, maxX = %d, maxY = %d, a = %d \n",
+		// 	l, b.Min.X.Ceil(), b.Min.Y.Ceil(), b.Max.X.Ceil(), b.Max.Y.Ceil(), a.Ceil())
 		width2 += a.Ceil()
+		if -b.Min.Y.Ceil() > startingDotY {
+			startingDotY = -b.Min.Y.Ceil()
+		}
 	}
-	width2+=1
-	fmt.Println(width2, height)
+	height = d.Face.Metrics().Height.Ceil()
 	dst2 := image.NewGray(image.Rect(0, 0, width2, height))
 	d2 := font.Drawer{
 		Dst:  dst2,
@@ -129,23 +133,43 @@ func (f *Font) generatebitmap2() {
 		Face: face,
 		Dot:  fixed.P(startingDotX, startingDotY),
 	}
+
 	for _, l := range letters {
-		d2.DrawString(string(l))
-		// fmt.Println(d.Dot.X.Ceil())
+
 		b, a, _ := d2.Face.GlyphBounds(l)
 
+		d2.DrawString(string(l))
+		// fmt.Println(d.Dot.X.Ceil())
+
+		_ = b
+		// ch := CharInfo{
+		// 	srcX:   d2.Dot.X.Ceil() - a.Ceil(),
+		// 	srcY:   d2.Dot.Y.Ceil(),
+		// 	width:  a.Ceil(),
+		// 	heigth: -b.Min.Y.Ceil() + b.Max.Y.Ceil(),
+		// }
+		w, h := (b.Max.X - b.Min.X).Ceil(), (b.Max.Y - b.Min.Y).Ceil()
+		// if b.Min.X&((1<<6)-1) != 0 {
+		// 	w++
+		// }
+		// if b.Min.Y&((1<<6)-1) != 0 {
+		// 	h++
+		// }
+		sx := d2.Dot.X.Ceil() - a.Ceil()
+		sy := d2.Dot.Y.Ceil() - -b.Min.Y.Ceil()
+		// w, h := a.Ceil(), -b.Min.Y.Ceil()+b.Max.Y.Ceil()
 		ch := CharInfo{
-			srcX:   d2.Dot.X.Ceil() - a.Ceil(), // начало
-			srcY:   d2.Dot.Y.Ceil(),
-			width:  a.Ceil(),
-			heigth: b.Max.Y.Ceil() - b.Min.Y.Ceil(),
+			srcX:   sx,
+			srcY:   sy,
+			width:  w,
+			heigth: h,
 		}
 		ch.calcTexCoords(width2, height)
-		// fmt.Printf("char - %q, x - %d, y - %d, w - %d, h - %d \n", l, ch.srcX, ch.srcY, ch.width, ch.heigth)
+		// if l == 'Q' {
+		// 	fmt.Printf("char - %q, x - %d, y - %d, w - %d, h - %d \n", l, ch.srcX, ch.srcY, ch.width, ch.heigth)
+		// }
 		f.CharMap[int(l)] = &ch
 	}
-
-
 
 	// d.DrawString(string(letters))
 
@@ -154,18 +178,9 @@ func (f *Font) generatebitmap2() {
 	defer pngFile.Close()
 
 	encoder := png.Encoder{
-		CompressionLevel: png.NoCompression,
+		CompressionLevel: png.BestCompression,
 	}
 	err = encoder.Encode(pngFile, dst2)
-	// f.uploadTexture((*image.NRGBA)(dst2))
-	
-	// gogl.TextureFromPNG("assets/images/blend2.png")
-	// gogl.TextureFromPNG("assets/images/mario.png")
-	// gogl.TextureFromPNG("assets/images/img.png")
-	// gogl.TextureFromPNG("assets/images/decorations.png")
-	// t, _ := gogl.TextureFromPNG("e.png")
-	// t, _ := NewTextureFromFile("assets/images/blend1.png", gl.REPEAT, gl.REPEAT)
-	// f.TextureId = t.handle
 
 	t2 := &gogl.Texture{}
 
@@ -175,26 +190,120 @@ func (f *Font) generatebitmap2() {
 	f.TextureId = t2.GetId()
 }
 
-func (f *Font) uploadTexture(img *image.NRGBA) {
-	t := &gogl.Texture{}
+var siz = 512
 
-	t, _ = t.Init("e.png")
-	f.TextureId = t.GetId()
-	// data := img.Pix
+func (f *Font) generateAndUploadBitmap() {
+	cp := charmap.Windows1252
+	letters := []rune{}
+	for i := 32; i < 127; i++ {
+		r := cp.DecodeByte(byte(i))
+		letters = append(letters, r)
+	}
 
-	// var texId uint32
-	// gl.GenTextures(1, &texId)
-	// gl.BindTexture(gl.TEXTURE_2D, texId)
+	var (
+		width        = siz
+		height       = siz
+		startingDotX = 0
+		startingDotY = int(f.FontSize)
+	)
+	var face font.Face
+	{
+		ttfBytes, err := ioutil.ReadFile(f.Filepath)
+		if err != nil {
+			panic(err)
+		}
 
-	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
-	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		parsed, err := opentype.Parse(ttfBytes)
+		if err != nil {
+			log.Fatalf("Parse: %v", err)
+		}
+		face, err = opentype.NewFace(parsed, &opentype.FaceOptions{
+			Size:    float64(f.FontSize),
+			DPI:     72,
+			Hinting: font.HintingFull,
+		})
+		if err != nil {
+			log.Fatalf("NewFace: %v", err)
+		}
+	}
 
-	// gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(img.Bounds().Dx()),
-	// 	int32(img.Bounds().Dy()), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+	dst := image.NewGray(image.Rect(0, 0, width, height))
+	d := font.Drawer{
+		Dst:  dst,
+		Src:  image.White,
+		Face: face,
+		Dot:  fixed.P(startingDotX, startingDotY),
+	}
+	fontSize := d.Face.Metrics().Height
+	//check width
+	// width2 := 0
+	dx := startingDotX
+	dy := startingDotY
+	maxDesc := 0
 
-	// f.TextureId = texId
+	for _, l := range letters {
+		b, a, _ := d.Face.GlyphBounds(l)
+
+		// fmt.Printf("char - %q, sX = %d, width = %d \n", l, d.Dot.X.Ceil(), a.Ceil())
+
+		if (siz - dx) <= a.Ceil() {
+			dx = 0
+			dy += fontSize.Ceil()
+
+			d.Dot = fixed.P(0, dy)
+			maxDesc = 0
+		}
+		dx += a.Ceil()
+		
+		d.DrawString(string(l))
+
+		w, h := (b.Max.X - b.Min.X).Ceil(), (b.Max.Y - b.Min.Y).Ceil()
+		sy := d.Dot.Y.Ceil() - -b.Min.Y.Ceil()
+		sx := d.Dot.X.Ceil() - a.Ceil() + b.Min.X.Ceil() //- (a.Ceil()-b.Max.X.Ceil())
+		// w, h := a.Ceil(), -b.Min.Y.Ceil()+b.Max.Y.Ceil()
+		ch := CharInfo{
+			srcX:   sx,
+			srcY:   sy,
+			width:  w,
+			heigth: h,
+		}
+		// draw.Draw(dst, image.Rect(sx, sy, sx+w, sy+h), Border, image.ZP, draw.Src)
+		// width += dx
+		if -b.Min.Y.Ceil() > startingDotY {
+			startingDotY = -b.Min.Y.Ceil()
+		}
+		f.CharMap[int(l)] = &ch
+
+		if b.Max.Y.Ceil() > maxDesc {
+			maxDesc = b.Max.Y.Ceil()
+		}
+	}
+	dy += maxDesc
+	fmt.Println(dy)
+
+	// fmt.Println(width, height)
+	dst2 := dst.SubImage(image.Rect(0, 0, siz, siz))
+	dst3 := image.NewGray(dst2.Bounds())
+	draw.Draw(dst3, dst2.Bounds(), dst2, image.ZP, draw.Src)
+	ng := image.NewRGBA(dst2.Bounds())
+	// dst2 = ng
+
+	for _, v := range f.CharMap {
+		v.calcTexCoords(siz, siz)
+		draw.Draw(ng, image.Rect(v.srcX, v.srcY, v.srcX+v.width, v.srcY+v.heigth), Border, image.ZP, draw.Src)
+	}
+
+	pngFile, _ := os.OpenFile("e.png", os.O_CREATE|os.O_RDWR, 0664)
+
+	defer pngFile.Close()
+
+	encoder := png.Encoder{
+		CompressionLevel: png.BestCompression,
+	}
+	encoder.Encode(pngFile, dst3)
+
+	t2 := gogl.UploadTextureFromMemory(dst3)
+	f.TextureId = t2.GetId()
 }
 
 type Texture struct {
