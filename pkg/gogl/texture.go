@@ -281,3 +281,4 @@ func imageToBytesSlow(img image.Image) []byte {
 	draw.Draw(dstImg, image.Rect(0, 0, w, h), img, img.Bounds().Min, draw.Src)
 	return bs
 }
+

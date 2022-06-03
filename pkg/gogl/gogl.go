@@ -135,6 +135,7 @@ func GenBindVAO() uint32 {
 func GenEBO() uint32 {
 	var ebo uint32
 	gl.GenBuffers(1, &ebo)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	return ebo
 }
 
@@ -151,7 +152,7 @@ func SetVertexAttribPointer(index uint32, size int32, xtype uint32, stride, offs
 	case gl.FLOAT:
 		memSize = 4
 	}
-	gl.VertexAttribPointer(index, size, xtype, false, int32(stride*memSize), gl.PtrOffset(offset*memSize))
+	gl.VertexAttribPointer(index, size, xtype, false, int32(stride), gl.PtrOffset(offset*memSize))
 	gl.EnableVertexAttribArray(index)
 }
 
