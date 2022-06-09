@@ -1,7 +1,7 @@
 package core
 
 import (
-	// "sync"
+	"sync"
 
 	"github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/Dmitry-dms/moon/internal/platforms"
@@ -20,16 +20,16 @@ import (
 
 var Window *Core
 
-// func init() {
-// 	o := sync.Once{}
-// 	o.Do(func() { //make a singleton
-// 		var width int32 = 1280
-// 		var height int32 = 720
-// 		Window = newCore(width, height, platforms.GLFWClientAPIOpenGL42, 0)
-// 		listeners.SetWinHeight(height)
-// 		listeners.SetWinWidth(width)
-// 	})
-// }
+func init() {
+	o := sync.Once{}
+	o.Do(func() { //make a singleton
+		var width int32 = 1280
+		var height int32 = 720
+		Window = newCore(width, height, platforms.GLFWClientAPIOpenGL42, 0)
+		listeners.SetWinHeight(height)
+		listeners.SetWinWidth(width)
+	})
+}
 
 func (c *Core) GetCurrentScene() scenes.Scene {
 	return c.currentScene
@@ -102,13 +102,13 @@ func (c *Core) Run() {
 
 		if dt >= 0 {
 			// renderers.DebugDraw.Draw(c.currentScene.GetCamera())
-			// c.currentScene.Update(dt)
+			c.currentScene.Update(dt)
 		}
 		c.currentScene.Render()
 		c.framebuffer.Unbind()
 
-		// c.glfwWindow.NewFrame(dt)
-		// c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
+		c.glfwWindow.NewFrame(dt)
+		c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
 
 		c.glfwWindow.PostRender()
 

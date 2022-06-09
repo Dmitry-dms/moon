@@ -3,6 +3,7 @@ package fonts
 import (
 	// "log"
 
+	// "fmt"
 	"image/color"
 	"log"
 
@@ -39,9 +40,9 @@ type TextBatch struct {
 func NewTextBatch(font *Font) *TextBatch {
 	fontShader, _ := gogl.NewShader("assets/shaders/fonts.glsl")
 	tb := TextBatch{
-		Vertices: make([]float32, batchSize*vertexSize),
-		Shader:   fontShader,
-		Font:     font,
+		Vertices:   make([]float32, batchSize*vertexSize),
+		Shader:     fontShader,
+		Font:       font,
 		projection: mgl32.Ident4(),
 	}
 	return &tb
@@ -74,20 +75,50 @@ func (t *TextBatch) Init() {
 	gogl.SetVertexAttribPointer(0, 2, gl.FLOAT, stride, 0)
 	gogl.SetVertexAttribPointer(1, 3, gl.FLOAT, stride, 2)
 	gogl.SetVertexAttribPointer(2, 2, gl.FLOAT, stride, 5)
+
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.BindVertexArray(0)
 }
-func (t *TextBatch) AddText(text string, x, y int, scale float32,rgb color.RGBA) {
-	for _, l := range text {
-		info := t.Font.GetCharacter(l)
+
+var first = true
+
+func (t *TextBatch) AddText(text string, x, y int, scale float32, rgb color.RGBA) {
+	var dx, dy int
+	dy = y
+	dx = x
+	prevR := rune(-1)
+	faceHeight := t.Font.Face.Metrics().Height
+	// fmt.Println("-------------------------------")
+	for _, r := range text {
+		info := t.Font.GetCharacter(r)
 		if info.width == 0 {
-			log.Printf("Unknown char = %q", l)
+			log.Printf("Unknown char = %q", r)
 			continue
 		}
-		xPos := float32(x)
-		yPos := float32(y)
+		if prevR >= 0 {
+			kern := t.Font.Face.Kern(prevR, r).Ceil()
+			dx += kern
+			// fmt.Printf("%q %q %d \n", prevR, r, kern)
+		}
+		if r == '\n' {
+			dx = x
+			dy -= faceHeight.Ceil()
+			prevR = rune(-1)
+			continue
+		}
+		xPos := float32(dx)
+		yPos := float32(dy)
+
+		if info.Descend != 0 {
+			yPos -= float32(info.Descend)*scale
+		}
 
 		t.addCharacter(xPos, yPos, scale, info, rgb)
-		x += info.width * int(scale)
+		dx += info.width * int(scale)
+		prevR = r
 	}
+	// fmt.Println("-------------------------------")
+	first = false
 }
 
 func (t *TextBatch) FlushBatch() {
@@ -99,13 +130,18 @@ func (t *TextBatch) FlushBatch() {
 	//draw
 	t.Shader.Use()
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_BUFFER, t.Font.TextureId)
+	// gl.BindTexture(gl.TEXTURE_BUFFER, t.Font.TextureId)
+	gl.BindTexture(gl.TEXTURE_2D, t.Font.TextureId)
 	t.Shader.UploadTexture("uFontTexture", 0)
 	t.Shader.UploadMat4("uProjection", t.projection)
 
 	gl.BindVertexArray(t.Vao)
 
 	gl.DrawElements(gl.TRIANGLES, int32(t.Size*6), gl.UNSIGNED_INT, nil)
+
+	gl.BindVertexArray(0)
+	gl.BindTexture(gl.TEXTURE_2D, 0)
+
 
 	//reset batch for use on next draw call
 	t.Size = 0

@@ -6,10 +6,16 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/math"
 )
 
+const (
+	CharNotFound = -25
+)
+
 type CharInfo struct {
-	srcX, srcY    int
-	width, heigth int
-	TexCoords     [2]math.Vec2
+	srcX, srcY                int
+	width, heigth             int
+	TexCoords                 [2]math.Vec2
+	Ascend, Descend           int
+	LeftBearing, RigthBearing int
 }
 
 func (c *CharInfo) calcTexCoords(fontWidth, fontHeight int) {
@@ -25,7 +31,7 @@ func (c *CharInfo) calcTexCoords(fontWidth, fontHeight int) {
 func (f *Font) GetCharacter(chr rune) CharInfo {
 	c, ok := f.CharMap[int(chr)]
 	if !ok {
-		panic("nothing found")
+		return *f.CharMap[CharNotFound]
 	}
 	// fmt.Println("char width = ", c.width)
 	return *c

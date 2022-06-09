@@ -1,5 +1,11 @@
 package ui2
 
+import "github.com/Dmitry-dms/moon/pkg/ui2/fonts"
+
+const (
+	ImGuiNavInput_COUNT = 20
+)
+
 type ImIO struct {
 	DisplaySize             Vec2
 	DeltaTime               float32
@@ -41,6 +47,9 @@ type ImIO struct {
 
 	ConfigFlags  ImGuiConfigFlags
 	BackendFlags ImGuiBackendFlags
+
+	//font
+	DefaultFont *fonts.Font
 }
 
 type ImGuiConfigFlags int
@@ -67,9 +76,7 @@ const (
 	ImGuiConfigFlags_IsTouchScreen ImGuiConfigFlags = 1 << 21
 )
 
-const (
-	ImGuiNavInput_COUNT = 20
-)
+
 
 type ImGuiInputEvent struct {
 	Type   ImGuiInputEventType

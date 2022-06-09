@@ -1,7 +1,5 @@
 package ui2
 
-
-
 type ImGuiKey int
 
 const(

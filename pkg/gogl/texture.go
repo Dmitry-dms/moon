@@ -6,6 +6,7 @@ import (
 	"image/draw"
 	"image/png"
 	_ "image/png"
+	_ "image/jpeg"
 	"os"
 
 	"github.com/go-gl/gl/v4.2-core/gl"
@@ -157,22 +158,34 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 		return nil, err
 	}
 
-	w := img.Bounds().Max.X
-	h := img.Bounds().Max.Y
+	w := img.Bounds().Dx()
+	h := img.Bounds().Dy()
 
 	pixels := make([]byte, w*h*4)
-	bIndex := 0
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			r, g, b, a := img.At(x, y).RGBA()
-			pixels[bIndex] = byte(r / 256)
-			bIndex++
-			pixels[bIndex] = byte(g / 256)
-			bIndex++
-			pixels[bIndex] = byte(b / 256)
-			bIndex++
-			pixels[bIndex] = byte(a / 256)
-			bIndex++
+	// bIndex := 0
+	// for y := 0; y < h; y++ {
+	// 	for x := 0; x < w; x++ {
+	// 		r, g, b, a := img.At(x, y).RGBA()
+	// 		pixels[bIndex] = byte(r / 256)
+	// 		bIndex++
+	// 		pixels[bIndex] = byte(g / 256)
+	// 		bIndex++
+	// 		pixels[bIndex] = byte(b / 256)
+	// 		bIndex++
+	// 		pixels[bIndex] = byte(a / 256)
+	// 		bIndex++
+	// 	}
+	// }
+	i := 0
+	for y := img.Bounds().Dy() - 1; y >= 0; y-- {
+		for x := 0; x < img.Bounds().Dx(); x++ {
+			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
+			pixels[i] = c.R
+			pixels[i+1] = c.G
+			pixels[i+2] = c.B
+			pixels[i+3] = c.A
+
+			i += 4
 		}
 	}
 
@@ -180,9 +193,10 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
-	//gl.GenerateMipmap(gl.TEXTURE_2D)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
+	// gl.GenerateMipmap(gl.TEXTURE_2D)
 
 	textureStruct := Texture{
 		filepath:  filepath,
