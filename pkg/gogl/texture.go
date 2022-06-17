@@ -207,30 +207,6 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 	return &textureStruct, nil
 }
 
-func genBindTexture() uint32 {
-	var texId uint32
-	gl.GenTextures(1, &texId)
-	gl.BindTexture(gl.TEXTURE_2D, texId)
-	return texId
-}
-
-func (t *Texture) Bind() {
-	gl.BindTexture(gl.TEXTURE_2D, t.textureId)
-}
-func (t *Texture) Unbind() {
-	gl.BindTexture(gl.TEXTURE_2D, 0)
-}
-
-func (t *Texture) GetWidth() int32 {
-	return t.width
-}
-func (t *Texture) GetHeight() int32 {
-	return t.height
-}
-
-func (t *Texture) GetId() uint32 {
-	return t.textureId
-}
 
 
 func ImageToBytes(img image.Image) []byte {
@@ -294,5 +270,31 @@ func imageToBytesSlow(img image.Image) []byte {
 	}
 	draw.Draw(dstImg, image.Rect(0, 0, w, h), img, img.Bounds().Min, draw.Src)
 	return bs
+}
+
+
+func genBindTexture() uint32 {
+	var texId uint32
+	gl.GenTextures(1, &texId)
+	gl.BindTexture(gl.TEXTURE_2D, texId)
+	return texId
+}
+
+func (t *Texture) Bind() {
+	gl.BindTexture(gl.TEXTURE_2D, t.textureId)
+}
+func (t *Texture) Unbind() {
+	gl.BindTexture(gl.TEXTURE_2D, 0)
+}
+
+func (t *Texture) GetWidth() int32 {
+	return t.width
+}
+func (t *Texture) GetHeight() int32 {
+	return t.height
+}
+
+func (t *Texture) GetId() uint32 {
+	return t.textureId
 }
 
