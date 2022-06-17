@@ -16,6 +16,7 @@ var defaultColor = mgl.Vec4{1, 1, 1, 1}
 func DefSpriteRenderer() *SpriteRenderer {
 	return &SpriteRenderer{
 		color: defaultColor,
+		// sprite: gogl.DefSprite(),
 	}
 }
 

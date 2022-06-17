@@ -31,6 +31,7 @@ func ImGui_ImplOpenGL3_Init(version string) bool {
 	io.BackendRendererUserData = &data
 
 	io.BackendRendererName = "impl_opengl42"
+	data.Version = version
 
 	var current_tex int32
 	//для проверки
@@ -208,8 +209,8 @@ func RenderDrawData(draw_data *ImDrawData) {
 		for _, draw_cmd := range list.CmdBuffer {
 
 			// Project scissor/clipping rectangles into framebuffer space
-			clip_min := Vec2{(draw_cmd.ClipRect.X - clip_off.X) * clip_scale.X, (draw_cmd.ClipRect.Y - clip_off.Y) * clip_scale.Y}
-			clip_max := Vec2{(draw_cmd.ClipRect.Z - clip_off.X) * clip_scale.X, (draw_cmd.ClipRect.W - clip_off.Y) * clip_scale.Y}
+			clip_min := ImVec2{(draw_cmd.ClipRect.X - clip_off.X) * clip_scale.X, (draw_cmd.ClipRect.Y - clip_off.Y) * clip_scale.Y}
+			clip_max := ImVec2{(draw_cmd.ClipRect.Z - clip_off.X) * clip_scale.X, (draw_cmd.ClipRect.W - clip_off.Y) * clip_scale.Y}
 
 			if clip_max.X <= clip_min.X || clip_max.Y <= clip_min.Y {
 				continue
@@ -220,7 +221,7 @@ func RenderDrawData(draw_data *ImDrawData) {
 			gl.BindTexture(gl.TEXTURE_2D, uint32(draw_cmd.TextureId))
 			// gl.DrawElements(gl.TRIANGLES, int32(draw_cmd.ElemCount), gl.UNSIGNED_INT, )
 			gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(draw_cmd.ElemCount), gl.UNSIGNED_INT,
-					uintptr(64), int32(4))
+				uintptr(64), int32(4))
 		}
 
 	}
@@ -260,3 +261,8 @@ func RenderDrawData(draw_data *ImDrawData) {
 	gl.Scissor(lastScissorBox[0], lastScissorBox[1], lastScissorBox[2], lastScissorBox[3])
 
 }
+
+// func ImGui_ImplOpenGL3_CreateFontsTexture() bool {
+// 	io := GetCurrentContext().Io
+// 	bd := ImplOpenGL3_GetBackendData()
+// }

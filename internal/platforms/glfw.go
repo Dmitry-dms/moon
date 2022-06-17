@@ -62,7 +62,7 @@ func NewGLFW(clientAPI GLFWClientAPI, width, height *int32) (*GLFW, error) {
 	glfw.DefaultWindowHints()
 	glfw.WindowHint(glfw.Visible, glfw.False) //пока окно не скофигугрировано, не показываем его
 	glfw.WindowHint(glfw.Resizable, glfw.True)
-	glfw.WindowHint(glfw.Maximized, glfw.True) // открывается сразу в windowed fullscreen
+	//glfw.WindowHint(glfw.Maximized, glfw.True) // открывается сразу в windowed fullscreen
 
 
 	//Создание окна

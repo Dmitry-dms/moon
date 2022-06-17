@@ -18,7 +18,7 @@ type ImplGlfw_Data struct {
 	Time               float32
 	MouseWindow        *glfw.Window
 	MouseCursorse      [9]*glfw.Cursor
-	LastValidMousePos  Vec2
+	LastValidMousePos  ImVec2
 	InstalledCallbacks bool
 
 	//callbacks
@@ -340,7 +340,6 @@ func ImGui_ImplGlfw_Init(window *glfw.Window, install_callbacks bool, client_api
 
 	io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange
 
-
 	io.Name = "imgui_impl_glfw"
 
 	bd.GlfwWindow = window
@@ -370,9 +369,9 @@ func ImplGlfw_NewFrame(window *glfw.Window) {
 	w, h := window.GetSize()
 	display_w, display_h := window.GetFramebufferSize()
 
-	io.DisplaySize = Vec2{float32(w), float32(h)}
+	io.DisplaySize = ImVec2{float32(w), float32(h)}
 	if w > 0 && h > 0 {
-		io.DisplayFramebufferScale = Vec2{float32(display_w / w), float32(display_h / h)}
+		io.DisplayFramebufferScale = ImVec2{float32(display_w / w), float32(display_h / h)}
 	}
 
 	// Setup time step
@@ -424,7 +423,8 @@ func ImplGlfw_UpdateMouseData(window *glfw.Window) {
 			mouseX, mouseY := window.GetCursorPos()
 
 			io.AddMousePosEvent(float32(mouseX), float32(mouseY))
-			bd.LastValidMousePos = Vec2{float32(mouseX), float32(mouseY)}
+			bd.LastValidMousePos = ImVec2{float32(mouseX), float32(mouseY)}
 		}
 	}
+
 }

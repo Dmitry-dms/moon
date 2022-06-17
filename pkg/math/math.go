@@ -1,6 +1,7 @@
 package math
 
 import (
+
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -38,7 +39,15 @@ func CompareVec2(vec1, vec2 mgl32.Vec2) bool {
 }
 
 func MulVec(src, vec mgl32.Vec2) mgl32.Vec2 {
-	src[0] *= vec[0] 
-	src[1] *= vec[1] 
+	src[0] *= vec[0]
+	src[1] *= vec[1]
 	return src
+}
+
+func Max[T float32 | int | uint](x1, x2 T) T {
+	if x1 > x2 {
+		return x1
+	} else {
+		return x2
+	}
 }

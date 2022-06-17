@@ -14,7 +14,7 @@ type TextureId int32
 type ImDrawIdx int16
 
 type ImDrawVert struct {
-	pos, uv Vec2
+	pos, uv ImVec2
 	col     uint32
 }
 
@@ -34,24 +34,24 @@ type ImDrawList struct {
 
 	clipRectStack  []Vec4
 	textureIdStack []int32
-	path           []Vec2
+	path           []ImVec2
 
 	cmdHeader ImDrawCmdHeader
 }
 
 func NewImDrawList() *ImDrawList {
 	l := ImDrawList{
-		CmdBuffer: make([]ImDrawCmd, 0),
-		IdxBuffer: make([]ImDrawIdx, 0),
-		VtxBuffer: make([]ImDrawVert, 0),
-		clipRectStack: make([]Vec4, 0),
+		CmdBuffer:      make([]ImDrawCmd, 0),
+		IdxBuffer:      make([]ImDrawIdx, 0),
+		VtxBuffer:      make([]ImDrawVert, 0),
+		clipRectStack:  make([]Vec4, 0),
 		textureIdStack: make([]int32, 0),
-		path: make([]Vec2, 0),
+		path:           make([]ImVec2, 0),
 	}
 	return &l
 }
 
-func (l *ImDrawList) AddRect(p_min, p_max Vec2, col uint32) {
+func (l *ImDrawList) AddRect(p_min, p_max ImVec2, col uint32) {
 
 }
 
@@ -59,9 +59,15 @@ type ImDrawData struct {
 	Valid                                       bool
 	CmdListsCount, TotalIdxCount, TotalVtxCount int
 	CmdLists                                    [2]*ImDrawList
-	DisplayPos, DisplaySize, FramebufferScale   Vec2
+	DisplayPos, DisplaySize, FramebufferScale   ImVec2
 }
 
 type ImDrawDataBuilder struct {
 	Layers []*ImDrawList
+}
+
+//TODO check this
+func (d *ImDrawData) Clear() {
+	n := &ImDrawData{}
+	d = n
 }

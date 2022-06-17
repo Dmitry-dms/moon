@@ -1,6 +1,7 @@
 package ui
 
 import (
+
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
 )
@@ -142,12 +143,14 @@ func (b *UiRenderer) Render(camera *gogl.Camera) {
 		b.textures[i].Unbind()
 	}
 	b.shader.Detach()
+	
 }
 
 func (b *UiRenderer) AddUIComponent(c Renderable) {
 	index := b.numSprites
 	b.objects = append(b.objects, c)
 	b.numSprites++
+
 	if c.Spr() != nil {
 		tex := c.Spr().GetTexture()
 
@@ -206,6 +209,7 @@ func (b *UiRenderer) loadVertexProperties(index int) {
 		//load position
 		x := obj.Transform().GetPosition().X() + (xAdd * obj.Transform().GetScale().X())
 		y := obj.Transform().GetPosition().Y() + (yAdd * obj.Transform().GetScale().Y())
+
 		// fmt.Printf("BATCH - %.1f %.1f \n",x, y)
 		b.vertices[offset] = x
 		b.vertices[offset+1] = y

@@ -96,19 +96,19 @@ func (c *Core) Run() {
 
 		// renderers.DebugDraw.BeginFrame()
 
-		c.framebuffer.Bind()
+		// c.framebuffer.Bind()
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		if dt >= 0 {
+		// if dt >= 0 {
 			// renderers.DebugDraw.Draw(c.currentScene.GetCamera())
 			c.currentScene.Update(dt)
-		}
+		// }
 		c.currentScene.Render()
-		c.framebuffer.Unbind()
+		// c.framebuffer.Unbind()
 
-		c.glfwWindow.NewFrame(dt)
-		c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
+		// c.glfwWindow.NewFrame(dt)
+		// c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
 
 		c.glfwWindow.PostRender()
 
