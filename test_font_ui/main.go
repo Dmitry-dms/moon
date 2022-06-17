@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"runtime"
-	"unsafe"
+
 
 	// "github.com/Dmitry-dms/moon/pkg/ui2"
 	// "github.com/Dmitry-dms/moon/pkg/ui2/fonts"
+	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"golang.org/x/image/colornames"
 	// "golang.org/x/image/colornames"
 )
 
@@ -37,12 +39,6 @@ func main() {
 	// ui2.ImGui_ImplGlfw_InitForOpenGL(window, true)
 	// ui2.ImGui_ImplOpenGL3_Init("42")
 // 
-	var flags int32
-	gl.GetIntegerv(gl.CONTEXT_FLAGS, &flags)
-	gl.Enable(gl.DEBUG_OUTPUT)
-	gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)
-	gl.DebugMessageCallback(glDebug, nil)
-	gl.DebugMessageControl(gl.DONT_CARE, gl.DONT_CARE, gl.DONT_CARE, 0, nil, true)
 
 	
 
@@ -58,10 +54,10 @@ func main() {
 	// font := fonts.NewFont("assets/fonts/rany.otf", 60)
 	// font := fonts.NewFont("assets/fonts/mono.ttf", 60)
 	// font := fonts.NewFont("assets/fonts/Roboto.ttf", 60)
-	// font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 40, true)
+	font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 40, true)
 
-	// batch := fonts.NewTextBatch(font)
-	// batch.Init()
+	batch := fonts.NewTextBatch(font)
+	batch.Init()
 
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -74,8 +70,8 @@ func main() {
 		// ui2.ImplOpenGL3_NewFrame()
 		// ui2.ImplGlfw_NewFrame(window)
 
-		// batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
-		// batch.AddText("My name is Dmitry", 100, 340, 1, colornames.Magenta)
+		batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
+		batch.AddText("My name is Dmitry", 100, 340, 1, colornames.Magenta)
 
 		// batch.FlushBatch()
 
@@ -83,55 +79,3 @@ func main() {
 	}
 }
 
-func glDebug(source uint32, gltype uint32, id uint32, severity uint32, length int32, message string, userParam unsafe.Pointer) {
-	// ignore non-significant error/warning codes
-	if id == 131169 || id == 131185 || id == 131218 || id == 131204 {
-		return
-	}
-	fmt.Printf("Debug message (%d): %s \n", id, message)
-	switch source {
-	case gl.DEBUG_SOURCE_API:
-		fmt.Println("Source: API")
-	case gl.DEBUG_SOURCE_WINDOW_SYSTEM:
-		fmt.Println("Source: Window System")
-	case gl.DEBUG_SOURCE_SHADER_COMPILER:
-		fmt.Println("Source: Shader Compiler")
-	case gl.DEBUG_SOURCE_THIRD_PARTY:
-		fmt.Println("Source: Third Party")
-	case gl.DEBUG_SOURCE_APPLICATION:
-		fmt.Println("Source: Application")
-	case gl.DEBUG_SOURCE_OTHER:
-		fmt.Println("Source: Other")
-	}
-
-	switch gltype {
-	case gl.DEBUG_TYPE_ERROR:
-		fmt.Println("Type: Error")
-	case gl.DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-		fmt.Println("Type: Deprecated Behaviour")
-	case gl.DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-		fmt.Println("Type: Undefined Behaviour")
-	case gl.DEBUG_TYPE_PORTABILITY:
-		fmt.Println("Type: Portability")
-	case gl.DEBUG_TYPE_PERFORMANCE:
-		fmt.Println("Type: Performance")
-	case gl.DEBUG_TYPE_MARKER:
-		fmt.Println("Type: Marker")
-	case gl.DEBUG_TYPE_PUSH_GROUP:
-		fmt.Println("Type: Push Group")
-	case gl.DEBUG_TYPE_POP_GROUP:
-		fmt.Println("Type: Pop Group")
-	case gl.DEBUG_TYPE_OTHER:
-		fmt.Println("Type: Other")
-	}
-	switch severity {
-	case gl.DEBUG_SEVERITY_HIGH:
-		fmt.Println("Severity: high")
-	case gl.DEBUG_SEVERITY_MEDIUM:
-		fmt.Println("Severity: medium")
-	case gl.DEBUG_SEVERITY_LOW:
-		fmt.Println("Severity: low")
-	case gl.DEBUG_SEVERITY_NOTIFICATION:
-		fmt.Println("Severity: notification")
-	}
-}
