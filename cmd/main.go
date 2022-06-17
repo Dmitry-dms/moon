@@ -19,9 +19,12 @@ func main() {
 	// 	fmt.Println(errors.Unwrap(err))
 	// 	os.Exit(1)
 	// }
-	//core.Window.Run()
-	defer core.Window.Dispose()
+	core.Window.Run()
+	// defer core.Window.Dispose()
 
 	//Main loop
-	core.Window.Run()
+	// core.Window.Run()
+
+
+	// core.RunRaylib()
 }

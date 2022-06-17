@@ -93,7 +93,7 @@ func (w *GameWorld) Init() {
 	spr := ui.DefSpriteRenderer()
 
 	sprite1 := gogl.DefSprite()
-	sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/blend2.png"))
+	sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/mario.png"))
 	spr.SetSprite(sprite1)
 	com := ui.Button{
 		UiObject: ui.UiObject{

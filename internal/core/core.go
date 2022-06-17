@@ -14,6 +14,8 @@ import (
 	//"github.com/go-gl/glfw/v3.3/glfw"
 	//imgui "github.com/inkyblackness/imgui-go/v4"
 	//"github.com/pkg/errors"
+
+
 )
 
 var Window *Core
@@ -52,12 +54,12 @@ func newCore(width, height int32, glVersion platforms.GLFWClientAPI, scene int) 
 		height:     &height,
 		glfwWindow: platform,
 	}
-	// buffer, err := renderers.NewFramebuffer(width, height)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// gl.Viewport(0, 0, width, height)
-	// c.framebuffer = buffer
+	buffer, err := renderers.NewFramebuffer(200, 200)
+	if err != nil {
+		panic(err)
+	}
+	gl.Viewport(0, 0, width, height)
+	c.framebuffer = buffer
 	c.changeScene(0)
 	return &c
 }
@@ -98,10 +100,10 @@ func (c *Core) Run() {
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		if dt >= 0 {
+		// if dt >= 0 {
 			// renderers.DebugDraw.Draw(c.currentScene.GetCamera())
 			c.currentScene.Update(dt)
-		}
+		// }
 		c.currentScene.Render()
 		// c.framebuffer.Unbind()
 
@@ -115,3 +117,5 @@ func (c *Core) Run() {
 		beginTime = endTime
 	}
 }
+
+

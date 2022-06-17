@@ -28,6 +28,7 @@ var defaultTexCoords = []mgl32.Vec2{
 func DefSprite() *Sprite {
 	return &Sprite{
 		texCoords: defaultTexCoords,
+		// texture: &Texture{},
 	}
 }
 
