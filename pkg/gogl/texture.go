@@ -10,10 +10,10 @@ import (
 )
 
 type Texture struct {
-	filepath  string  `json:"filepath"`
-	textureId uint32  `json:"texture_id"`
-	width     int32 `json:"texture_width"`
-	height    int32 `json:"texture_height"`
+	Filepath  string  `json:"filepath"`
+	TextureId uint32  `json:"texture_id"`
+	Width     int32 `json:"texture_width"`
+	Height    int32 `json:"texture_height"`
 }
 
 type TextureExported struct {
@@ -24,15 +24,15 @@ type TextureExported struct {
 }
 
 func (t *Texture) GetFilepath() string {
-	return t.filepath
+	return t.Filepath
 }
 
 func CreateTexture(filepath string, texId uint32, width, height int32) *Texture {
 	t := &Texture{
-		filepath: filepath,
-		width: width,
-		height: height,
-		textureId: texId,
+		Filepath: filepath,
+		Width: width,
+		Height: height,
+		TextureId: texId,
 	}
 	// t.Init(filepath)
 	return t
@@ -47,10 +47,10 @@ func NewTextureFramebuffer(width, height int32) *Texture {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	textureStruct := Texture{
-		filepath:  "generated",
-		textureId: texture,
-		width:     width,
-		height:    height,
+		Filepath:  "generated",
+		TextureId: texture,
+		Width:     width,
+		Height:    height,
 	}
 	return &textureStruct
 }
@@ -95,10 +95,10 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 	//gl.GenerateMipmap(gl.TEXTURE_2D)
 
 	textureStruct := Texture{
-		filepath:  filepath,
-		textureId: texture,
-		width:     int32(w),
-		height:    int32(h),
+		Filepath:  filepath,
+		TextureId: texture,
+		Width:     int32(w),
+		Height:    int32(h),
 	}
 	return &textureStruct, nil
 }
@@ -111,19 +111,19 @@ func genBindTexture() uint32 {
 }
 
 func (t *Texture) Bind() {
-	gl.BindTexture(gl.TEXTURE_2D, t.textureId)
+	gl.BindTexture(gl.TEXTURE_2D, t.TextureId)
 }
 func (t *Texture) Unbind() {
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 }
 
 func (t *Texture) GetWidth() int32 {
-	return t.width
+	return t.Width
 }
 func (t *Texture) GetHeight() int32 {
-	return t.height
+	return t.Height
 }
 
 func (t *Texture) GetId() uint32 {
-	return t.textureId
+	return t.TextureId
 }

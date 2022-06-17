@@ -6,6 +6,10 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+type Vec2 struct {
+	X, Y float32
+}
+
 const epsilon float64 = 10e-6
 
 func Rotate(vec *mgl32.Vec2, angleDeg float32, origin mgl32.Vec2) {
@@ -38,7 +42,7 @@ func CompareVec2(vec1, vec2 mgl32.Vec2) bool {
 }
 
 func MulVec(src, vec mgl32.Vec2) mgl32.Vec2 {
-	src[0] *= vec[0] 
-	src[1] *= vec[1] 
+	src[0] *= vec[0]
+	src[1] *= vec[1]
 	return src
 }
