@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"runtime"
 
-
 	// "github.com/Dmitry-dms/moon/pkg/ui2"
 	// "github.com/Dmitry-dms/moon/pkg/ui2/fonts"
 	// "github.com/Dmitry-dms/moon/pkg/fonts"
+	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"golang.org/x/image/colornames"
 	// "golang.org/x/image/colornames"
 	// "golang.org/x/image/colornames"
 )
@@ -52,10 +53,10 @@ func main() {
 	// font := fonts.NewFont("assets/fonts/rany.otf", 60)
 	// font := fonts.NewFont("assets/fonts/mono.ttf", 60)
 	// font := fonts.NewFont("assets/fonts/Roboto.ttf", 60)
-	// font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 40, true)
+	font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 40, true)
 
-	// batch := fonts.NewTextBatch(font)
-	// batch.Init()
+	batch := fonts.NewTextBatch(font)
+	batch.Init()
 
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -68,10 +69,10 @@ func main() {
 		// ui2.ImplOpenGL3_NewFrame()
 		// ui2.ImplGlfw_NewFrame(window)
 
-		// batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
+		batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
 		// batch.AddText("My name is Dmitry", 100, 340, 1, colornames.Magenta)
 
-		// batch.FlushBatch()
+		batch.FlushBatch()
 
 		window.SwapBuffers()
 	}
