@@ -9,6 +9,7 @@ require (
 	github.com/inkyblackness/imgui-go/v4 v4.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/veandco/go-sdl2 v0.4.21
+	golang.org/x/text v0.3.6
 )
 
-require golang.org/x/image v0.0.0-20220302094943-723b81ca9867 // indirect
+require golang.org/x/image v0.0.0-20220302094943-723b81ca9867

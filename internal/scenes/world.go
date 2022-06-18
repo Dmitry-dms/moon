@@ -9,11 +9,13 @@ import (
 
 	"github.com/Dmitry-dms/moon/internal/components"
 	"github.com/Dmitry-dms/moon/internal/listeners"
+	"golang.org/x/image/colornames"
 
 	// "github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/Dmitry-dms/moon/internal/renderers"
+	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui"
 )
@@ -64,12 +66,17 @@ func (w *GameWorld) loadResources() {
 
 
 var button *ui.Button
+var batch *fonts.TextBatch
 
 func (w *GameWorld) Init() {
 	w.loadResources()
 	fmt.Printf("Init game world - %s \n", w.Name)
 	sprsheet = gogl.AssetPool.GetSpriteSheet("assets/images/decorations.png")
 	uir.Start()
+
+	font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 40, true)
+	batch = fonts.NewTextBatch(font)
+	batch.Init()
 
 	// for _, v := range w.gameObjects {
 	// 	if v.Spr != nil {
@@ -93,7 +100,7 @@ func (w *GameWorld) Init() {
 	spr := ui.DefSpriteRenderer()
 
 	sprite1 := gogl.DefSprite()
-	sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/blend2.png"))
+	sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/mario.png"))
 	spr.SetSprite(sprite1)
 	com := ui.Button{
 		UiObject: ui.UiObject{
@@ -193,5 +200,8 @@ func (w *GameWorld) Update(dt float32, camera *gogl.Camera) {
 }
 func (w *GameWorld) Render(camera *gogl.Camera) {
 	uir.Render(camera)
+	batch.AddText("My name is Dmitry", 0, 100, 2, colornames.Black)
+	batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
+	batch.FlushBatch()
 	w.renderer.Render(camera)
 }

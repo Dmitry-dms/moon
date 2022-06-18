@@ -5,6 +5,9 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 )
+type Vec2 struct {
+	X,Y float32
+}
 
 const epsilon float64 = 10e-6
 

@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 
 	"github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/go-gl/mathgl/mgl32"
@@ -29,7 +28,7 @@ func (b *Button) Update(dt float32) {
 
 	if listeners.RegionHit(pos.X(), pos.Y(), scale.X(), scale.Y()) {
 		b.UiObject.Spr.SetColor(mgl32.Vec4{1,0,0,1})
-		fmt.Println("a ...any")
+
 	} else {
 		b.UiObject.Spr.SetColor(mgl32.Vec4{0,1,0,1})
 	}
