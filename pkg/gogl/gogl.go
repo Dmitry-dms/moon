@@ -4,9 +4,9 @@ import (
 	_ "bufio"
 	"errors"
 	"fmt"
+	"unsafe"
 
 	//	"regexp"
-	"unsafe"
 
 	"time"
 
@@ -89,6 +89,10 @@ func CreateShader(source string, shaderType uint32) (uint32, error) {
 	return shaderId, nil
 }
 
+func Str(src string) *uint8 {
+	return gl.Str(src + "\x00")
+}
+
 func CreateProgram(path string) (uint32, error) {
 
 	vert, frag, err := LoadShaders(path)
@@ -131,6 +135,7 @@ func GenBindVAO() uint32 {
 func GenEBO() uint32 {
 	var ebo uint32
 	gl.GenBuffers(1, &ebo)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	return ebo
 }
 
@@ -147,7 +152,7 @@ func SetVertexAttribPointer(index uint32, size int32, xtype uint32, stride, offs
 	case gl.FLOAT:
 		memSize = 4
 	}
-	gl.VertexAttribPointer(index, size, xtype, false, int32(stride*memSize), gl.PtrOffset(offset*memSize))
+	gl.VertexAttribPointer(index, size, xtype, false, int32(stride), gl.PtrOffset(offset*memSize))
 	gl.EnableVertexAttribArray(index)
 }
 
@@ -157,4 +162,72 @@ func useProgram(progId uint32) {
 
 func BindVertexArray(vaoId uint32) {
 	gl.BindVertexArray(vaoId)
+}
+
+
+func InitGLdebug() {
+	var flags int32
+	gl.GetIntegerv(gl.CONTEXT_FLAGS, &flags)
+	gl.Enable(gl.DEBUG_OUTPUT)
+	gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)
+	gl.DebugMessageCallback(glDebug, nil)
+	gl.DebugMessageControl(gl.DONT_CARE, gl.DONT_CARE, gl.DONT_CARE, 0, nil, true)
+
+
+	var sizeTex int32
+	gl.GetIntegerv(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS, &sizeTex)
+	fmt.Println(sizeTex)
+}
+
+func glDebug(source uint32, gltype uint32, id uint32, severity uint32, length int32, message string, userParam unsafe.Pointer) {
+	// ignore non-significant error/warning codes
+	if id == 131169 || id == 131185 || id == 131218 || id == 131204 {
+		return
+	}
+	fmt.Printf("Debug message (%d): %s \n", id, message)
+	switch source {
+	case gl.DEBUG_SOURCE_API:
+		fmt.Println("Source: API")
+	case gl.DEBUG_SOURCE_WINDOW_SYSTEM:
+		fmt.Println("Source: Window System")
+	case gl.DEBUG_SOURCE_SHADER_COMPILER:
+		fmt.Println("Source: Shader Compiler")
+	case gl.DEBUG_SOURCE_THIRD_PARTY:
+		fmt.Println("Source: Third Party")
+	case gl.DEBUG_SOURCE_APPLICATION:
+		fmt.Println("Source: Application")
+	case gl.DEBUG_SOURCE_OTHER:
+		fmt.Println("Source: Other")
+	}
+
+	switch gltype {
+	case gl.DEBUG_TYPE_ERROR:
+		fmt.Println("Type: Error")
+	case gl.DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+		fmt.Println("Type: Deprecated Behaviour")
+	case gl.DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+		fmt.Println("Type: Undefined Behaviour")
+	case gl.DEBUG_TYPE_PORTABILITY:
+		fmt.Println("Type: Portability")
+	case gl.DEBUG_TYPE_PERFORMANCE:
+		fmt.Println("Type: Performance")
+	case gl.DEBUG_TYPE_MARKER:
+		fmt.Println("Type: Marker")
+	case gl.DEBUG_TYPE_PUSH_GROUP:
+		fmt.Println("Type: Push Group")
+	case gl.DEBUG_TYPE_POP_GROUP:
+		fmt.Println("Type: Pop Group")
+	case gl.DEBUG_TYPE_OTHER:
+		fmt.Println("Type: Other")
+	}
+	switch severity {
+	case gl.DEBUG_SEVERITY_HIGH:
+		fmt.Println("Severity: high")
+	case gl.DEBUG_SEVERITY_MEDIUM:
+		fmt.Println("Severity: medium")
+	case gl.DEBUG_SEVERITY_LOW:
+		fmt.Println("Severity: low")
+	case gl.DEBUG_SEVERITY_NOTIFICATION:
+		fmt.Println("Severity: notification")
+	}
 }
