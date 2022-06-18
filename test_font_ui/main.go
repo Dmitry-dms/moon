@@ -62,7 +62,8 @@ func main() {
 		// ui2.ImplOpenGL3_NewFrame()
 		// ui2.ImplGlfw_NewFrame(window)
 
-		batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
+		// batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
+		batch.AddText("Привет, мир!", 50, 600, 1, colornames.Magenta)
 		// batch.AddText("My name is Dmitry", 100, 340, 1, colornames.Magenta)
 
 		batch.FlushBatch()

@@ -158,6 +158,7 @@ func UploadTextureFromMemory(data *image.Gray) *Texture {
 	}
 
 	texture := genBindTexture()
+
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
@@ -165,6 +166,7 @@ func UploadTextureFromMemory(data *image.Gray) *Texture {
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
 	// gl.GenerateMipmap(gl.TEXTURE_2D)
 
+// gl.BindTexture(gl.TEXTURE_2D, 0)
 	textureStruct := Texture{
 		textureId: texture,
 		width:     int32(w),

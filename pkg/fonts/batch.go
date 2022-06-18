@@ -63,11 +63,11 @@ func generateEbo() {
 	// gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
 	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER,len(elementBuffer)*4,gl.Ptr(elementBuffer),gl.STATIC_DRAW)
 
-	gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
+	ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
 	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 }
-
+var ebo uint32
 func (t *TextBatch) Init() {
 	t.projection = mgl32.Ortho(0, 1280, 0, 720, 1, 100)
 
@@ -138,14 +138,16 @@ func (t *TextBatch) FlushBatch() {
 	//draw
 	t.Shader.Use()
 	gl.ActiveTexture(gl.TEXTURE0)
-	// gl.BindTexture(gl.TEXTURE_BUFFER, t.Font.TextureId)
+
 	gl.BindTexture(gl.TEXTURE_2D, t.Font.TextureId)
 	t.Shader.UploadTexture("uFontTexture", 0)
 	t.Shader.UploadMat4("uProjection", t.projection)
 
 	gl.BindVertexArray(t.Vao)
 
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.DrawElements(gl.TRIANGLES, int32(t.Size*6), gl.UNSIGNED_INT, nil)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 
 	gl.BindVertexArray(0)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
