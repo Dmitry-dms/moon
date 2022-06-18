@@ -28,6 +28,7 @@ func (c *CharInfo) calcTexCoords(fontWidth, fontHeight int) {
 	c.TexCoords[1] = math.Vec2{X: x1, Y: y0}
 }
 
+
 func (f *Font) GetCharacter(chr rune) CharInfo {
 	c, ok := f.CharMap[int(chr)]
 	if !ok {
