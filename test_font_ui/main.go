@@ -24,7 +24,7 @@ func main() {
 	glfw.DefaultWindowHints()
 	// glfw.WindowHint(glfw.OpenGLDebugContext, 1)
 
-	window, err := glfw.CreateWindow(1280, 720, "example", nil, nil)
+	window, err := glfw.CreateWindow(1280, 720, "example test", nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -33,8 +33,6 @@ func main() {
 	glfw.SwapInterval(1)
 
 	gl.Init()
-
-
 
 	size := func(w *glfw.Window, width int, height int) {
 		gl.Viewport(0, 0, int32(width), int32(height))
@@ -53,8 +51,8 @@ func main() {
 	batch := fonts.NewTextBatch(font)
 	batch.Init()
 
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	// gl.Enable(gl.BLEND)
+	// gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	for !window.ShouldClose() {
 		glfw.PollEvents()
@@ -64,8 +62,8 @@ func main() {
 		// ui2.ImplOpenGL3_NewFrame()
 		// ui2.ImplGlfw_NewFrame(window)
 
-		// batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
-		batch.AddText("My name is Dmitry", 100, 340, 1, colornames.Magenta)
+		batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
+		// batch.AddText("My name is Dmitry", 100, 340, 1, colornames.Magenta)
 
 		batch.FlushBatch()
 
