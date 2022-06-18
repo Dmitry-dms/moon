@@ -24,7 +24,7 @@ var indeces = []int32{
 
 const (
 	vertexSize = 7
-	batchSize  = 200 // 50 quads
+	batchSize  = 100 // 25 quads
 )
 
 type TextBatch struct {
@@ -59,9 +59,13 @@ func generateEbo() {
 		elementBuffer[i] = indeces[(i%6)] + ((i / 6) * 4)
 	}
 
-	gogl.GenEBO()
-	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
+	// gogl.GenEBO()
+	// gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
 	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER,len(elementBuffer)*4,gl.Ptr(elementBuffer),gl.STATIC_DRAW)
+
+	gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
+	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 }
 
 func (t *TextBatch) Init() {
