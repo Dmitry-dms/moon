@@ -3,6 +3,7 @@ package fonts
 import (
 	// "log"
 
+	"fmt"
 	"image/color"
 	"log"
 
@@ -37,10 +38,7 @@ type TextBatch struct {
 }
 
 func NewTextBatch(font *Font) *TextBatch {
-	fontShader, err := gogl.NewShader("assets/shaders/fonts.glsl")
-	if err != nil {
-		panic(err)
-	}
+	fontShader, _ := gogl.NewShader("assets/shaders/fonts.glsl")
 	tb := TextBatch{
 		Vertices:   make([]float32, batchSize*vertexSize),
 		Shader:     fontShader,
@@ -61,13 +59,12 @@ func generateEbo() {
 
 	// gogl.GenEBO()
 	// gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
-	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER,len(elementBuffer)*4,gl.Ptr(elementBuffer),gl.STATIC_DRAW)
-
-	ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
+	ebo  = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
 	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 }
 var ebo uint32
+
 func (t *TextBatch) Init() {
 	t.projection = mgl32.Ortho(0, 1280, 0, 720, 1, 100)
 
@@ -97,7 +94,6 @@ func (t *TextBatch) AddText(text string, x, y int, scale float32, rgb color.RGBA
 	faceHeight := t.Font.Face.Metrics().Height
 	// fmt.Println("-------------------------------")
 	for _, r := range text {
-
 		info := t.Font.GetCharacter(r)
 		if info.width == 0 {
 			log.Printf("Unknown char = %q", r)
@@ -138,7 +134,7 @@ func (t *TextBatch) FlushBatch() {
 	//draw
 	t.Shader.Use()
 	gl.ActiveTexture(gl.TEXTURE0)
-
+	// gl.BindTexture(gl.TEXTURE_BUFFER, t.Font.TextureId)
 	gl.BindTexture(gl.TEXTURE_2D, t.Font.TextureId)
 	t.Shader.UploadTexture("uFontTexture", 0)
 	t.Shader.UploadMat4("uProjection", t.projection)
@@ -147,7 +143,7 @@ func (t *TextBatch) FlushBatch() {
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.DrawElements(gl.TRIANGLES, int32(t.Size*6), gl.UNSIGNED_INT, nil)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	gl.BindVertexArray(0)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
@@ -156,7 +152,7 @@ func (t *TextBatch) FlushBatch() {
 	//reset batch for use on next draw call
 	t.Size = 0
 }
-
+var count int
 func (t *TextBatch) addCharacter(x, y float32, scale float32, info CharInfo, rgb color.RGBA) {
 	//Если нет места, удаляем и начинаем заного
 	if t.Size >= batchSize-4 {
@@ -172,12 +168,13 @@ func (t *TextBatch) addCharacter(x, y float32, scale float32, info CharInfo, rgb
 	x1 := x + scale*float32(info.width)
 	y1 := y + scale*float32(info.heigth)
 
-
 	ux0, uy0 := info.TexCoords[0].X, info.TexCoords[0].Y
 	ux1, uy1 := info.TexCoords[1].X, info.TexCoords[1].Y
 
-
-
+	if count < 10 {
+		fmt.Println(ux0, uy0)
+		count++
+	}
 	index := t.Size * 7
 	t.Vertices[index] = x1
 	t.Vertices[index+1] = y0
