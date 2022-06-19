@@ -126,11 +126,11 @@ func GetOrthoX() float64 { //мировые координаты
 	return currentX
 }
 func GetOrthoY() float64 {
-	// currentY := GetY() - float64(mMouseListener.gameViewPortPos[1])
-	currentY := float64(mWinListener.height) - GetY()
+	currentY := GetY() - float64(mMouseListener.gameViewPortPos[1])
+	// currentY := float64(mWinListener.height) - GetY()
 	// fmt.Printf("VIEWPORT SIZE %.1f %.1f \n", mMouseListener.gameViewPortSize[0], mMouseListener.gameViewPortSize[1])
 
-	currentY = ((currentY/float64(mMouseListener.gameViewPortSize[1]))*2 - 1)
+	currentY = -((currentY/float64(mWinListener.height))*2 - 1)
 
 	tmp := mgl32.Vec4{0, float32(currentY), 0, 1}
 	inv := mMouseListener.camera.GetInverseProjection().Mul4x1(tmp)
@@ -159,9 +159,12 @@ func MouseButtonDown(button glfw.MouseButton) bool {
 		return false
 	}
 }
+func VecPos() mgl32.Vec2 {
+	return mgl32.Vec2{float32(GetOrthoX()), float32(GetOrthoY())}
+}
 
 func RegionHit(x, y, w, h float32) bool {
 
-	ys := float32(mWinListener.height)-float32(GetY())
+	ys := float32(mWinListener.height) - float32(GetY())
 	return float32(GetX()) >= x && ys >= y && float32(GetX()) <= x+w && ys <= y+h
 }

@@ -196,7 +196,7 @@ func (platform *GLFW) mouseButtonChange(window *glfw.Window, rawButton glfw.Mous
 		platform.mouseJustPressed[buttonIndex] = true
 	}
 	// if !platform.ImguiIO.CurrentIO().WantCaptureMouse() {
-	// 	listeners.MouseButtonCallback(window, rawButton, action, mods)
+		listeners.MouseButtonCallback(window, rawButton, action, mods)
 	// }
 }
 

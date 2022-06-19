@@ -11,7 +11,7 @@ import (
 	"github.com/Dmitry-dms/moon/internal/listeners"
 	// "golang.org/x/image/colornames"
 
-	"golang.org/x/image/colornames"
+	// "golang.org/x/image/colornames"
 
 	// "github.com/Dmitry-dms/moon/internal/listeners"
 	"github.com/go-gl/mathgl/mgl32"
@@ -76,9 +76,9 @@ func (w *GameWorld) Init() {
 	sprsheet = gogl.AssetPool.GetSpriteSheet("assets/images/decorations.png")
 	uir.Start()
 
-	font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 20, true)
-	batch = fonts.NewTextBatch(font)
-	batch.Init()
+	// font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 20, true)
+	// batch = fonts.NewTextBatch(font)
+	// batch.Init()
 
 	// for _, v := range w.gameObjects {
 	// 	if v.Spr != nil {
@@ -105,7 +105,7 @@ func (w *GameWorld) Init() {
 	sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/blend1.png"))
 	spr.SetSprite(sprite1)
 	com := ui.Button{
-		UiObject: ui.UiObject{
+		UiObject: &ui.UiObject{
 			Transform: ui.NewTransform(mgl32.Vec2{300, 200}, mgl32.Vec2{100, 100}),
 			Name: "1",
 			Spr: spr,
@@ -205,7 +205,7 @@ func (w *GameWorld) Update(dt float32, camera *gogl.Camera) {
 func (w *GameWorld) Render(camera *gogl.Camera) {
 	uir.Render(camera)
 	// batch.AddText("My name is Dmitry", 0, 100, 2, colornames.Black)
-	batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 450, 600, 1, colornames.Magenta)
-	batch.FlushBatch()
+	// batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 450, 600, 1, colornames.Magenta)
+	// batch.FlushBatch()
 	// w.renderer.Render(camera)
 }

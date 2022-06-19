@@ -9,8 +9,9 @@ type UiObject struct {
 	Transform *Transform
 	Spr       *SpriteRenderer
 
-	ZIndex int
-	uid    int
+	ZIndex    int
+	uid       int
+	isMovable bool
 }
 
 type Renderable interface {
@@ -18,4 +19,3 @@ type Renderable interface {
 	Spr() *SpriteRenderer
 	Transform() *Transform
 }
-
