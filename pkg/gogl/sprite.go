@@ -19,10 +19,10 @@ type SpriteExported struct {
 }
 
 var defaultTexCoords = []mgl32.Vec2{
-	{1, 0},
-	{1, 1},
 	{0, 1},
 	{0, 0},
+	{1, 0},
+	{1, 1},
 }
 
 func DefSprite() *Sprite {

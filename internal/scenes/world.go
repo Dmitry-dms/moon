@@ -9,6 +9,8 @@ import (
 
 	"github.com/Dmitry-dms/moon/internal/components"
 	"github.com/Dmitry-dms/moon/internal/listeners"
+	// "golang.org/x/image/colornames"
+
 	"golang.org/x/image/colornames"
 
 	// "github.com/Dmitry-dms/moon/internal/listeners"
@@ -74,7 +76,7 @@ func (w *GameWorld) Init() {
 	sprsheet = gogl.AssetPool.GetSpriteSheet("assets/images/decorations.png")
 	uir.Start()
 
-	font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 40, true)
+	font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 20, true)
 	batch = fonts.NewTextBatch(font)
 	batch.Init()
 
@@ -100,11 +102,11 @@ func (w *GameWorld) Init() {
 	spr := ui.DefSpriteRenderer()
 
 	sprite1 := gogl.DefSprite()
-	sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/mario.png"))
+	sprite1.SetTexture(gogl.AssetPool.GetTexture("assets/images/blend1.png"))
 	spr.SetSprite(sprite1)
 	com := ui.Button{
 		UiObject: ui.UiObject{
-			Transform: ui.NewTransform(mgl32.Vec2{0, 0}, mgl32.Vec2{100, 100}),
+			Transform: ui.NewTransform(mgl32.Vec2{300, 200}, mgl32.Vec2{100, 100}),
 			Name: "1",
 			Spr: spr,
 			ZIndex: 1,
@@ -126,6 +128,8 @@ func (w *GameWorld) Init() {
 
 
 	// w.AddGameObjToWorld(g2)
+
+	
 
 }
 
@@ -196,12 +200,12 @@ func (w *GameWorld) Update(dt float32, camera *gogl.Camera) {
 	// g.AddPosition(mgl32.Vec2{dt*10,0})
 	// renderers.DebugDraw.AddBox2D(mgl32.Vec2{1000,500}, mgl32.Vec2{100,100}, 0, mgl32.Vec3{1,0,0}, 200000)
 	// renderers.UpdateGridLines(camera) // Debug draw
-	w.renderer.Update(dt)
+	// w.renderer.Update(dt)
 }
 func (w *GameWorld) Render(camera *gogl.Camera) {
 	uir.Render(camera)
-	batch.AddText("My name is Dmitry", 0, 100, 2, colornames.Black)
-	batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
+	// batch.AddText("My name is Dmitry", 0, 100, 2, colornames.Black)
+	batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 450, 600, 1, colornames.Magenta)
 	batch.FlushBatch()
-	w.renderer.Render(camera)
+	// w.renderer.Render(camera)
 }

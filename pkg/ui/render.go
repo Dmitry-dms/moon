@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
 )
@@ -49,24 +51,37 @@ func NewUIRenderer(maxBatchSize, zIndex int) *UiRenderer {
 		maxBatchSize: maxBatchSize,
 		vertices:     vt,
 		textures:     make([]*gogl.Texture, 0),
-		texSlots:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+		texSlots:     []int32{ 1, 2, 3, 4, 5, 6, 7},
 		zIndex:       zIndex,
 		objects:      make([]Renderable, 0),
 	}
 	rb.indeces = rb.generateIndeces()
+	var size int32
 
+	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &size)
+	fmt.Println(size)
 	return &rb
 }
-
+var indeces = []int32{
+	0, 1, 3,
+	1, 2, 3,
+}
 func (b *UiRenderer) generateIndeces() []int32 {
 	//6 вершин на 1 квадрат
-	elements := make([]int32, 6*b.maxBatchSize)
+	// elements := make([]int32, 6*b.maxBatchSize)
 
-	for i := 0; i < b.maxBatchSize; i++ {
-		b.loadElementIndeces(elements, int32(i))
+	// for i := 0; i < b.maxBatchSize; i++ {
+	// 	b.loadElementIndeces(elements, int32(i))
+	// }
+	elementSize := b.maxBatchSize * 3
+	elementBuffer := make([]int32, elementSize)
+
+	for i, _ := range elementBuffer {
+		i := int32(i)
+		elementBuffer[i] = indeces[(i%6)] + ((i / 6) * 4)
 	}
 
-	return elements
+	return elementBuffer
 }
 func (b *UiRenderer) loadElementIndeces(elements []int32, index int32) {
 	var offsetArrayIndex int32 = 6 * index
@@ -91,10 +106,10 @@ func (b *UiRenderer) Start() {
 	gogl.BufferData(gl.ARRAY_BUFFER, b.vertices, gl.DYNAMIC_DRAW)
 
 	//включаем layout
-	gogl.SetVertexAttribPointer(0, posSize, gl.FLOAT, vertexSize, posOffset)
-	gogl.SetVertexAttribPointer(1, colorSize, gl.FLOAT, vertexSize, colorOffset)
-	gogl.SetVertexAttribPointer(2, texCoordsSize, gl.FLOAT, vertexSize, texCoordsOffset)
-	gogl.SetVertexAttribPointer(3, texIdSize, gl.FLOAT, vertexSize, texIdOffset)
+	gogl.SetVertexAttribPointer(0, posSize, gl.FLOAT, vertexSize*4, posOffset)
+	gogl.SetVertexAttribPointer(1, colorSize, gl.FLOAT, vertexSize*4, colorOffset)
+	gogl.SetVertexAttribPointer(2, texCoordsSize, gl.FLOAT, vertexSize*4, texCoordsOffset)
+	gogl.SetVertexAttribPointer(3, texIdSize, gl.FLOAT, vertexSize*4, texIdOffset)
 
 	b.ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
 	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, b.indeces, gl.STATIC_DRAW)
@@ -117,8 +132,9 @@ func (b *UiRenderer) Render(camera *gogl.Camera) {
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
 
 	for i := 0; i < len(b.textures); i++ {
-		gl.ActiveTexture(gl.TEXTURE0 + uint32(i) + 1)
-		b.textures[i].Bind()
+		// gl.ActiveTexture(gl.TEXTURE0 + uint32(i)+1)
+		// b.textures[i].Bind()
+		b.textures[i].BindActive(gl.TEXTURE0+uint32(b.texSlots[i]+1))
 	}
 	b.shader.UploadIntArray("uTextures", b.texSlots)
 

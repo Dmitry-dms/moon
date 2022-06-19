@@ -91,15 +91,15 @@ func NewGLFW(clientAPI GLFWClientAPI, width, height *int32) (*GLFW, error) {
 	}
 	platform.renderer = renderer
 
-	imGui := NewImgui()
-	platform.ImguiIO = imGui
+	// imGui := NewImgui()
+	// platform.ImguiIO = imGui
 
 	return platform, nil
 }
 
 // Dispose cleans up the resources.
 func (platform *GLFW) Dispose() {
-	platform.ImguiIO.Dispose()
+	// platform.ImguiIO.Dispose()
 	platform.window.Destroy()
 	glfw.Terminate()
 	
@@ -195,9 +195,9 @@ func (platform *GLFW) mouseButtonChange(window *glfw.Window, rawButton glfw.Mous
 	if known && (action == glfw.Press) {
 		platform.mouseJustPressed[buttonIndex] = true
 	}
-	if !platform.ImguiIO.CurrentIO().WantCaptureMouse() {
-		listeners.MouseButtonCallback(window, rawButton, action, mods)
-	}
+	// if !platform.ImguiIO.CurrentIO().WantCaptureMouse() {
+	// 	listeners.MouseButtonCallback(window, rawButton, action, mods)
+	// }
 }
 
 func (platform *GLFW) sizeCllback(w *glfw.Window, width int, height int) {
@@ -210,34 +210,34 @@ func (platform *GLFW) sizeCllback(w *glfw.Window, width int, height int) {
 }
 
 func (platform *GLFW) mouseScrollChange(window *glfw.Window, x, y float64) {
-	platform.ImguiIO.CurrentIO().AddMouseWheelDelta(float32(x), float32(y))
+	// platform.ImguiIO.CurrentIO().AddMouseWheelDelta(float32(x), float32(y))
 
-	if !platform.ImguiIO.CurrentIO().WantCaptureMouse() {
-		listeners.MouseScrollCallback(window, x,  y)
-	}
+	// if !platform.ImguiIO.CurrentIO().WantCaptureMouse() {
+	// 	listeners.MouseScrollCallback(window, x,  y)
+	// }
 }
 
 func (platform *GLFW) keyChange(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	if action == glfw.Press {
-		platform.ImguiIO.CurrentIO().KeyPress(int(key))
-	}
-	if action == glfw.Release {
-		platform.ImguiIO.CurrentIO().KeyRelease(int(key))
-	}
+	// if action == glfw.Press {
+		// platform.ImguiIO.CurrentIO().KeyPress(int(key))
+	// }
+	// if action == glfw.Release {
+		// platform.ImguiIO.CurrentIO().KeyRelease(int(key))
+	// }
 
 	// Modifiers are not reliable across systems
-	platform.ImguiIO.CurrentIO().KeyCtrl(int(glfw.KeyLeftControl), int(glfw.KeyRightControl))
-	platform.ImguiIO.CurrentIO().KeyShift(int(glfw.KeyLeftShift), int(glfw.KeyRightShift))
-	platform.ImguiIO.CurrentIO().KeyAlt(int(glfw.KeyLeftAlt), int(glfw.KeyRightAlt))
-	platform.ImguiIO.CurrentIO().KeySuper(int(glfw.KeyLeftSuper), int(glfw.KeyRightSuper))
+	// platform.ImguiIO.CurrentIO().KeyCtrl(int(glfw.KeyLeftControl), int(glfw.KeyRightControl))
+	// platform.ImguiIO.CurrentIO().KeyShift(int(glfw.KeyLeftShift), int(glfw.KeyRightShift))
+	// platform.ImguiIO.CurrentIO().KeyAlt(int(glfw.KeyLeftAlt), int(glfw.KeyRightAlt))
+	// platform.ImguiIO.CurrentIO().KeySuper(int(glfw.KeyLeftSuper), int(glfw.KeyRightSuper))
 
-	if !platform.ImguiIO.CurrentIO().WantCaptureKeyboard() {
+	// if !platform.ImguiIO.CurrentIO().WantCaptureKeyboard() {
 		listeners.KeyCallback(window, key, scancode, action, mods)
-	}
+	// }
 }
 
 func (platform *GLFW) charChange(window *glfw.Window, char rune) {
-	platform.ImguiIO.CurrentIO().AddInputCharacters(string(char))
+	// platform.ImguiIO.CurrentIO().AddInputCharacters(string(char))
 }
 
 // ClipboardText returns the current clipboard text, if available.

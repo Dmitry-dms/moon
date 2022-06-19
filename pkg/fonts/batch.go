@@ -3,7 +3,7 @@ package fonts
 import (
 	// "log"
 
-	"fmt"
+
 	"image/color"
 	"log"
 
@@ -59,10 +59,11 @@ func generateEbo() {
 
 	// gogl.GenEBO()
 	// gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
-	ebo  = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
+	ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
 	gogl.BufferData(gl.ELEMENT_ARRAY_BUFFER, elementBuffer, gl.STATIC_DRAW)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 }
+
 var ebo uint32
 
 func (t *TextBatch) Init() {
@@ -114,7 +115,7 @@ func (t *TextBatch) AddText(text string, x, y int, scale float32, rgb color.RGBA
 		yPos := float32(dy)
 
 		if info.Descend != 0 {
-			yPos -= float32(info.Descend)*scale
+			yPos -= float32(info.Descend) * scale
 		}
 
 		t.addCharacter(xPos, yPos, scale, info, rgb)
@@ -133,10 +134,10 @@ func (t *TextBatch) FlushBatch() {
 
 	//draw
 	t.Shader.Use()
-	gl.ActiveTexture(gl.TEXTURE0)
+	gl.ActiveTexture(gl.TEXTURE15)
 	// gl.BindTexture(gl.TEXTURE_BUFFER, t.Font.TextureId)
 	gl.BindTexture(gl.TEXTURE_2D, t.Font.TextureId)
-	t.Shader.UploadTexture("uFontTexture", 0)
+	t.Shader.UploadTexture("uFontTexture", 15)
 	t.Shader.UploadMat4("uProjection", t.projection)
 
 	gl.BindVertexArray(t.Vao)
@@ -148,11 +149,13 @@ func (t *TextBatch) FlushBatch() {
 	gl.BindVertexArray(0)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 
-
+	t.Shader.Detach()
 	//reset batch for use on next draw call
 	t.Size = 0
 }
-var count int
+
+
+
 func (t *TextBatch) addCharacter(x, y float32, scale float32, info CharInfo, rgb color.RGBA) {
 	//Если нет места, удаляем и начинаем заного
 	if t.Size >= batchSize-4 {
@@ -171,10 +174,6 @@ func (t *TextBatch) addCharacter(x, y float32, scale float32, info CharInfo, rgb
 	ux0, uy0 := info.TexCoords[0].X, info.TexCoords[0].Y
 	ux1, uy1 := info.TexCoords[1].X, info.TexCoords[1].Y
 
-	if count < 10 {
-		fmt.Println(ux0, uy0)
-		count++
-	}
 	index := t.Size * 7
 	t.Vertices[index] = x1
 	t.Vertices[index+1] = y0

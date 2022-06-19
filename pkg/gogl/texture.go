@@ -69,6 +69,10 @@ func genBindTexture() uint32 {
 func (t *Texture) Bind() {
 	gl.BindTexture(gl.TEXTURE_2D, t.TextureId)
 }
+func (t *Texture) BindActive(texture uint32) {
+	gl.ActiveTexture(texture)
+	gl.BindTexture(gl.TEXTURE_2D, t.TextureId)
+}
 func (t *Texture) Unbind() {
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 }
@@ -121,6 +125,7 @@ func UploadTextureFromMemory(data *image.Gray) *Texture {
 		Width:     int32(w),
 		Height:    int32(h),
 	}
+	textureStruct.Unbind()
 	return &textureStruct
 }
 
@@ -170,6 +175,7 @@ func TextureFromPNG(filepath string) (*Texture, error) {
 		Width:     int32(w),
 		Height:    int32(h),
 	}
+	textureStruct.Unbind()
 	return &textureStruct, nil
 }
 
@@ -189,23 +195,9 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 	h := img.Bounds().Dy()
 
 	pixels := make([]byte, w*h*4)
-	// bIndex := 0
-	// for y := 0; y < h; y++ {
-	// 	for x := 0; x < w; x++ {
-	// 		r, g, b, a := img.At(x, y).RGBA()
-	// 		pixels[bIndex] = byte(r / 256)
-	// 		bIndex++
-	// 		pixels[bIndex] = byte(g / 256)
-	// 		bIndex++
-	// 		pixels[bIndex] = byte(b / 256)
-	// 		bIndex++
-	// 		pixels[bIndex] = byte(a / 256)
-	// 		bIndex++
-	// 	}
-	// }
 	i := 0
-	for y := img.Bounds().Dy() - 1; y >= 0; y-- {
-		for x := 0; x < img.Bounds().Dx(); x++ {
+	for y := h - 1; y >= 0; y-- {
+		for x := 0; x < w; x++ {
 			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
 			pixels[i] = c.R
 			pixels[i+1] = c.G
@@ -231,6 +223,7 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 		Width:     int32(w),
 		Height:    int32(h),
 	}
+	textureStruct.Unbind()
 	return &textureStruct, nil
 }
 
