@@ -206,7 +206,7 @@ func (platform *GLFW) sizeCllback(w *glfw.Window, width int, height int) {
 	platform.width = &w1
 	platform.height = &h
 
-	listeners.SizeCllback(w, int32(width), int32(height))
+	listeners.SizeCllback(w, width, height)
 }
 
 func (platform *GLFW) mouseScrollChange(window *glfw.Window, x, y float64) {

@@ -31,11 +31,11 @@ func GetWindowHeight() int32 {
 	return mWinListener.height
 }
 
-func SizeCllback(w *glfw.Window, width int32, height int32) {
-	mWinListener.width = width
-	mWinListener.height = height
+func SizeCllback(w *glfw.Window, width int, height int) {
+	mWinListener.width = int32(width)
+	mWinListener.height = int32(height)
 
-	gl.Viewport(0,0,width,height)
+	gl.Viewport(0,0,int32(width),int32(height))
 
 	
 

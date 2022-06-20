@@ -292,3 +292,16 @@ func imageToBytesSlow(img image.Image) []byte {
 	return bs
 }
 
+func flipImageY(stride, height int, pixels []byte) {
+	// Flip image in y-direction. OpenGL's origin is in the lower
+	// left corner.
+	row := make([]uint8, stride)
+	for y := 0; y < height/2; y++ {
+		y1 := height - y - 1
+		dest := y1 * stride
+		src := y * stride
+		copy(row, pixels[dest:])
+		copy(pixels[dest:], pixels[src:src+len(row)])
+		copy(pixels[src:], row)
+	}
+}

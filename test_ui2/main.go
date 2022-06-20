@@ -1,18 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"runtime"
 
-
-
+	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui"
+	"github.com/Dmitry-dms/moon/pkg/ui/render"
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
-
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 func init() {
 	runtime.LockOSThread()
 }
+
+var cam *gogl.Camera
+var uiCtx *ui.UiContext
 
 func main() {
 	err := glfw.Init()
@@ -20,7 +25,7 @@ func main() {
 		panic(err)
 	}
 	glfw.DefaultWindowHints()
-	glfw.WindowHint(glfw.OpenGLDebugContext, 1)
+	// glfw.WindowHint(glfw.OpenGLDebugContext, 1)
 
 	window, err := glfw.CreateWindow(1280, 720, "example", nil, nil)
 	if err != nil {
@@ -30,11 +35,14 @@ func main() {
 
 	glfw.SwapInterval(1)
 
-
 	size := func(w *glfw.Window, width int, height int) {
+		cam.UpdateProjection(mgl32.Vec2{float32(width), float32(height)})
 		gl.Viewport(0, 0, int32(width), int32(height))
+		fmt.Println(width, height)
 	}
+
 	window.SetSizeCallback(size)
+	window.SetKeyCallback(onKey)
 
 	// gogl.InitGLdebug()
 
@@ -48,26 +56,50 @@ func main() {
 
 	// batch := fonts.NewTextBatch(font)
 	// batch.Init()
+	gl.Init()
 
+	cam = gogl.NewCamera(mgl32.Vec2{0, 0})
+
+	cam.UpdateProjection(mgl32.Vec2{1280, 720})
+
+	rend := render.NewGlRenderer()
+	uiCtx = ui.NewContext(rend, cam)
 
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
-
-	
 
 	beginTime := float32(glfw.GetTime())
 	var endTime float32
 	var dt float32
 	dt = dt
 
+	var p bool
 	for !window.ShouldClose() {
 		glfw.PollEvents()
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-	
 
-	
+		uiCtx.NewFrame()
+
+		uiCtx.Button("name string", &p, [4]float32{1, 0, 0, 1})
+
+		uiCtx.EndFrame()
+
+		// rend.NewFrame()
+
+		// rend.Rectangle(100, 100, 100, 100, [4]float32{1, 0, 0, 1})
+		// rend.Rectangle(300, 400, 50, 300, [4]float32{0, 1, 0, 1})
+		// rend.Rectangle(700, 400, 300, 300, [4]float32{0, 0, 0, 1})
+
+		// rend.Circle(100, 200, 140, 30, [4]float32{1, 0, 0, 1})
+
+		// rend.RoundedRectangle(700, 200, 100, 50, 10, [4]float32{1, 0, 0, 1})
+
+		// rend.Line(800, 10, 900, 50, 7, [4]float32{0, 0, 0, 1})
+
+		// rend.Draw(cam)
+
+		// rend.End()
 
 		// batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
 		// batch.AddText("My name is Dmitry", 100, 340, 1, colornames.Magenta)
@@ -78,5 +110,12 @@ func main() {
 		endTime = float32(glfw.GetTime())
 		dt = endTime - beginTime
 		beginTime = endTime
+	}
+}
+
+func onKey(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+
+	if key == glfw.KeyEscape && action == glfw.Press {
+		window.SetShouldClose(true)
 	}
 }

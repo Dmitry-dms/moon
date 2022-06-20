@@ -22,7 +22,7 @@ func NewCamera(position mgl.Vec2) *Camera {
 		invProj:  mgl.Mat4{},
 		invView:  mgl.Mat4{},
 		// projSize: mgl.Vec2{32*40, 32*21},
-		projSize: mgl.Vec2{1920, 1080},
+		projSize: mgl.Vec2{1280, 720},
 		zoom:     1,
 	}
 	c.AdjustProjection()
