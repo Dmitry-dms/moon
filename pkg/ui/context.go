@@ -1,0 +1,85 @@
+package ui
+
+import (
+	"github.com/Dmitry-dms/moon/pkg/gogl"
+)
+
+type UiContext struct {
+	rq       *RenderQueue
+	renderer UiRenderer
+	camera   *gogl.Camera
+	io       *Io
+}
+
+func NewContext(renderer UiRenderer, camera *gogl.Camera) *UiContext {
+	c := UiContext{
+		rq:       NewRenderQueue(),
+		renderer: renderer,
+		camera:   camera,
+		io: NewIo(),
+	}
+	return &c
+}
+
+func (c *UiContext) NewFrame() {
+	c.renderer.NewFrame()
+}
+
+func (c *UiContext) EndFrame() {
+
+	cmds := c.rq.Commands()
+
+	for i := 0; i < c.rq.CmdCount; i++ {
+		v := cmds[i]
+		switch v.t {
+		case Rect:
+			r := v.rect
+			c.renderer.Rectangle(r.x, r.y, r.w, r.h, r.clr)
+		case Triangle:
+			tr := v.triangle
+			c.renderer.Trinagle(tr.x0, tr.y0, tr.x1, tr.y1, tr.x2, tr.y2, tr.clr)
+		case RoundedRect:
+			rr := v.rRect
+			c.renderer.RoundedRectangle(rr.x, rr.y, rr.w, rr.h, rr.radius, rr.clr)
+		default:
+		}
+	}
+	c.rq.clearCommands()
+	c.renderer.Draw(c.camera)
+	c.renderer.End()
+}
+
+func (c *UiContext) Button(name string, pushed *bool, clr [4]float32) bool {
+	cmd := command{
+		rRect: &rounded_rect{
+			x:      100,
+			y:      100,
+			w:      200,
+			h:      100,
+			radius: 5,
+			clr:    clr,
+		},
+		t: RoundedRect,
+		rect: &rect_command{
+			x:   100,
+			y:   100,
+			w:   200,
+			h:   100,
+			clr: clr,
+		},
+	}
+	c.rq.AddCommand(cmd)
+
+	return false
+}
+
+type UiRenderer interface {
+	NewFrame()
+	Rectangle(x, y, w, h float32, clr [4]float32)
+	Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32)
+	Circle(x, y, radius float32, steps int, clr [4]float32)
+	Line(x0, y0, x1, y1 float32, thick int, clr [4]float32)
+	RoundedRectangle(x, y, w, h float32, radius int, clr [4]float32)
+	Draw(camera *gogl.Camera)
+	End()
+}
