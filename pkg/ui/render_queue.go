@@ -1,7 +1,5 @@
 package ui
 
-
-
 const MAX_COMMANDS_COUNT = 1000
 
 type RenderQueue struct {
@@ -27,7 +25,7 @@ func (r *RenderQueue) Commands() []command {
 }
 
 func (r *RenderQueue) clearCommands() {
-	for i, _ := range r.commands {
+	for i := range r.commands {
 		r.commands[i] = command{}
 	}
 	r.CmdCount = 0
@@ -38,6 +36,7 @@ type command struct {
 	rect     *rect_command
 	triangle *triangle_command
 	rRect    *rounded_rect
+	window   *window_command
 }
 
 type rect_command struct {
@@ -47,6 +46,15 @@ type rect_command struct {
 type triangle_command struct {
 	x0, y0, x1, y1, x2, y2 float32
 	clr                    [4]float32
+}
+type window_command struct {
+	x, y, w, h float32
+	clr        [4]float32
+	toolbar    toolbar_command
+}
+type toolbar_command struct {
+	h float32
+	clr        [4]float32
 }
 type rounded_rect struct {
 	x, y, w, h float32
@@ -62,4 +70,6 @@ const (
 	Line
 	Circle
 	RoundedRect
+	WindowCmd
+	ToolbarCmd
 )

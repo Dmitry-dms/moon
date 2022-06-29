@@ -1,11 +1,11 @@
 package render
 
 import (
-
 	"math"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type GLRender struct {
@@ -104,15 +104,44 @@ func (r *GLRender) Rectangle(x, y, w, h float32, clr [4]float32) {
 	r.lastIndc = last + 1
 	r.render(vert, ind, 4)
 }
+func (r *GLRender) RectangleR(x, y, w, h float32, clr [4]float32) {
+	// r.Trinagle(x, y, x, y+h, x+w, y+h, clr)
+	// r.Trinagle(x+w, y+h, x+w, y, x, y, clr)
+	vert := make([]float32, 9*4)
+	ind := make([]int32, 6)
+
+	ind0 := r.lastIndc
+	ind1 := ind0 + 1
+	ind2 := ind1 + 1
+	offset := 0
+
+	fillVertices(vert, &offset, x, y, 0, 0, 0, clr)
+	fillVertices(vert, &offset, x, y-h, 0, 0, 0, clr)
+	fillVertices(vert, &offset, x+w, y-h, 0, 0, 0, clr)
+
+	ind[0] = int32(ind0)
+	ind[1] = int32(ind1)
+	ind[2] = int32(ind2)
+
+	last := ind2 + 1
+
+	fillVertices(vert, &offset, x+w, y, 0, 0, 0, clr)
+	ind[3] = int32(ind0)
+	ind[4] = int32(ind2)
+	ind[5] = int32(last)
+
+	r.lastIndc = last + 1
+	r.render(vert, ind, 4)
+}
 
 func fillVertices(vert []float32, startOffset *int, x, y, uv0, uv1, texId float32, clr [4]float32) {
 	offset := *startOffset
 	vert[offset] = x
 	vert[offset+1] = y
 
-	vert[offset+2] = clr[0]
-	vert[offset+3] = clr[1]
-	vert[offset+4] = clr[2]
+	vert[offset+2] = clr[0] / 255
+	vert[offset+3] = clr[1] / 255
+	vert[offset+4] = clr[2] / 255
 	vert[offset+5] = clr[3]
 
 	vert[offset+6] = uv0
@@ -124,6 +153,19 @@ func fillVertices(vert []float32, startOffset *int, x, y, uv0, uv1, texId float3
 }
 
 type CircleSector int
+type RoundedRectShape int
+
+const (
+	TopLeftRect RoundedRectShape = 1 << iota
+	TopRigthRect
+	BotLeftRect
+	BotRightRect
+
+	TopRect = TopLeftRect | TopRigthRect
+	BotRect = BotLeftRect | BotRightRect
+
+	AllRounded = TopRect | BotRect
+)
 
 const (
 	BotLeft CircleSector = iota
@@ -283,7 +325,6 @@ func (r *GLRender) Circle(x, y, radius float32, steps int, clr [4]float32) {
 	prevX = x
 	prevY = y + radius
 
-	
 	fillVertices(vert, &offset, x, y, 0, 0, 0, clr)
 	fillVertices(vert, &offset, prevX, prevY, 0, 0, 0, clr)
 	newx := x + radius*float32(math.Sin(float64(ang)))
@@ -331,6 +372,54 @@ func (r *GLRender) Line(x0, y0, x1, y1 float32, thick int, clr [4]float32) {
 }
 
 var steps = 30
+
+// top to down
+func (r *GLRender) RoundedRectangleR(x, y, w, h float32, radius int, shape RoundedRectShape, clr [4]float32) {
+
+	topLeft := mgl32.Vec2{x + float32(radius), y - float32(radius)} //origin of arc
+	topRight := mgl32.Vec2{x + w - float32(radius), y - float32(radius)}
+	botLeft := mgl32.Vec2{x + float32(radius), y - h + float32(radius)}
+	botRight := mgl32.Vec2{x + w - float32(radius), y - h + float32(radius)}
+
+	switch shape {
+	case TopLeftRect:
+		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+		r.RectangleR(x, y-float32(radius), w, h-float32(radius), clr)               //main rect
+		r.RectangleR(x+float32(radius), y, w-float32(radius), float32(radius), clr) //top rect
+	case TopRigthRect:
+		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+		r.RectangleR(x, y-float32(radius), w, h-float32(radius), clr) //main
+		r.RectangleR(x, y, w-float32(radius), float32(radius), clr)
+	case BotLeftRect:
+		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+		r.RectangleR(x, y, w, h-float32(radius), clr) //main
+		r.RectangleR(botLeft.X(), botLeft.Y(), w-float32(radius), float32(radius), clr)
+	case BotRightRect:
+		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+		r.RectangleR(x, y, w, h-float32(radius), clr) //main
+		r.RectangleR(x, botLeft.Y(), w-float32(radius), float32(radius), clr)
+	case TopRect:
+		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+		r.RectangleR(x, y-float32(radius), w, h-float32(radius), clr) 
+		r.RectangleR(x+float32(radius), y, w-float32(radius)*2, float32(radius), clr)
+	case BotRect:
+		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+		r.RectangleR(x, y, w, h-float32(radius), clr) //main
+		r.RectangleR(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), clr)
+	case AllRounded:
+		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+
+		r.RectangleR(topLeft.X(), topLeft.Y()+float32(radius), w-float32(radius)*2, float32(radius), clr) //top
+		r.RectangleR(x, topLeft.Y(), w, h-float32(radius)*2, clr)                                         //center
+		r.RectangleR(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), clr)                 //bottom
+	}
+
+}
 
 func (r *GLRender) RoundedRectangle(x, y, w, h float32, radius int, clr [4]float32) {
 
@@ -382,7 +471,6 @@ func (b *GLRender) Draw(camera *gogl.Camera) {
 	gl.BufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, len(b.Indeces)*4, gl.Ptr(b.Indeces))
 	gl.DrawElements(gl.TRIANGLES, int32(b.triangles), gl.UNSIGNED_INT, nil)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
-
 
 	gl.DisableVertexAttribArray(0)
 	gl.DisableVertexAttribArray(1)

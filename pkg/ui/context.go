@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui/render"
 )
 
 type UiContext struct {
@@ -9,6 +10,9 @@ type UiContext struct {
 	renderer UiRenderer
 	camera   *gogl.Camera
 	io       *Io
+
+	//Widgets
+	windows []Window
 }
 
 func NewContext(renderer UiRenderer, camera *gogl.Camera) *UiContext {
@@ -16,7 +20,8 @@ func NewContext(renderer UiRenderer, camera *gogl.Camera) *UiContext {
 		rq:       NewRenderQueue(),
 		renderer: renderer,
 		camera:   camera,
-		io: NewIo(),
+		io:       NewIo(),
+		windows:  []Window{},
 	}
 	return &c
 }
@@ -41,12 +46,19 @@ func (c *UiContext) EndFrame() {
 		case RoundedRect:
 			rr := v.rRect
 			c.renderer.RoundedRectangle(rr.x, rr.y, rr.w, rr.h, rr.radius, rr.clr)
+		case WindowCmd:
+			wnd := v.window
+			size := c.camera.GetProjectionSize()
+			// c.renderer.Rectangle(wnd.x, wnd.y, wnd.w, wnd.h,  wnd.clr)
+			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, wnd.clr)
+			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, wnd.toolbar.clr)
 		default:
 		}
 	}
 	c.rq.clearCommands()
 	c.renderer.Draw(c.camera)
 	c.renderer.End()
+	c.windows = []Window{}
 }
 
 func (c *UiContext) Button(name string, pushed *bool, clr [4]float32) bool {
@@ -60,13 +72,6 @@ func (c *UiContext) Button(name string, pushed *bool, clr [4]float32) bool {
 			clr:    clr,
 		},
 		t: RoundedRect,
-		rect: &rect_command{
-			x:   100,
-			y:   100,
-			w:   200,
-			h:   100,
-			clr: clr,
-		},
 	}
 	c.rq.AddCommand(cmd)
 
@@ -76,10 +81,12 @@ func (c *UiContext) Button(name string, pushed *bool, clr [4]float32) bool {
 type UiRenderer interface {
 	NewFrame()
 	Rectangle(x, y, w, h float32, clr [4]float32)
+	RectangleR(x, y, w, h float32, clr [4]float32)
 	Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32)
 	Circle(x, y, radius float32, steps int, clr [4]float32)
 	Line(x0, y0, x1, y1 float32, thick int, clr [4]float32)
 	RoundedRectangle(x, y, w, h float32, radius int, clr [4]float32)
+	RoundedRectangleR(x, y, w, h float32, radius int, shape render.RoundedRectShape, clr [4]float32)
 	Draw(camera *gogl.Camera)
 	End()
 }

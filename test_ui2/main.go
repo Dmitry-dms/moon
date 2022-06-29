@@ -79,30 +79,25 @@ func main() {
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		// uiCtx.NewFrame()
+		uiCtx.NewFrame()
 
 		// uiCtx.Button("name string", &p, [4]float32{1, 0, 0, 1})
+		uiCtx.AddWindow()
 
-		// uiCtx.EndFrame()
+		uiCtx.EndFrame()
 
-		rend.NewFrame()
+		// rend.NewFrame()
 
-		rend.Rectangle(500, 500, 100, 100, [4]float32{1, 0, 0, 1})
+		// rend.Rectangle(500, 500, 100, 100, [4]float32{1, 0, 0, 1})
 		// rend.Rectangle(300, 400, 50, 300, [4]float32{0, 1, 0, 1})
 		// rend.Rectangle(700, 400, 300, 300, [4]float32{0, 0, 0, 1})
-
-		rend.Circle(100, 200, 140, 30, [4]float32{1, 0, 0, 1})
-
-		rend.DrawArc(200,200, 100, 30, render.TopLeft, [4]float32{1, 0, 0, 1})
-		rend.Trinagle(500, 100, 600, 250, 700, 100, [4]float32{1, 0, 0, 1})
-
-		rend.RoundedRectangle(700, 400, 300, 200, 20, [4]float32{1, 0, 0, 1})
-
-		rend.Line(800, 10, 900, 50, 7, [4]float32{0, 0, 0, 1})
-
-		rend.Draw(cam)
-
-		rend.End()
+		// rend.Circle(100, 200, 140, 30, [4]float32{1, 0, 0, 1})
+		// rend.DrawArc(200,200, 100, 30, render.TopLeft, [4]float32{1, 0, 0, 1})
+		// rend.Trinagle(500, 100, 600, 250, 700, 100, [4]float32{1, 0, 0, 1})
+		// rend.RoundedRectangle(700, 400, 300, 200, 20, [4]float32{1, 0, 0, 1})
+		// rend.Line(800, 10, 900, 50, 7, [4]float32{0, 0, 0, 1})
+		// rend.Draw(cam)
+		// rend.End()
 
 		// batch.AddText("Привет, мир!\n920043 ~hghguij Progress #$@\n[A-Za-z] {0-9_20-33}", 50, 600, 1, colornames.Black)
 		// batch.AddText("My name is Dmitry", 100, 340, 1, colornames.Magenta)

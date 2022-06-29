@@ -16,7 +16,7 @@ type Io struct {
 
 type Key int
 
-func (io *Io) KeyCallback(key int) {
+func (io *Io) KeyCallback(key Key) {
 
 	
 }
