@@ -21,7 +21,7 @@ import (
 	"github.com/Dmitry-dms/moon/internal/renderers"
 	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
-	"github.com/Dmitry-dms/moon/pkg/ui"
+
 )
 
 type GameWorld struct {
@@ -69,7 +69,7 @@ func (w *GameWorld) loadResources() {
 
 
 
-var button *ui.Button
+
 var batch *fonts.TextBatch
 
 func (w *GameWorld) Init() {

@@ -43,6 +43,8 @@ func main() {
 
 	window.SetSizeCallback(size)
 	window.SetKeyCallback(onKey)
+	window.SetCursorPosCallback(cursorPosCallback)
+	window.SetMouseButtonCallback(mouseBtnCallback)
 
 	// gogl.InitGLdebug()
 
@@ -86,6 +88,13 @@ func main() {
 
 		uiCtx.EndFrame()
 
+		if uiCtx.Io().IsKeyPressed(ui.GuiKey_H) {
+
+			// fmt.Println(uiCtx.Io().MousePos)
+			// fmt.Println(uiCtx.ActiveWindow)
+			fmt.Println(uiCtx.Io().IsDragging)
+		}
+
 		// rend.NewFrame()
 
 		// rend.Rectangle(500, 500, 100, 100, [4]float32{1, 0, 0, 1})
@@ -111,8 +120,22 @@ func main() {
 	}
 }
 
+func cursorPosCallback(w *glfw.Window, xpos float64, ypos float64) {
+	uiCtx.Io().MousePosCallback(float32(xpos), float32(ypos))
+}
+
+func mouseBtnCallback(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
+	uiCtx.Io().MouseBtnCallback(ui.GlfwMouseKey(button), ui.GlfwAction(action))
+}
+
 func onKey(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 
+	switch action {
+	case glfw.Press:
+		uiCtx.Io().KeyCallback(ui.GlfwKeyToGuiKey(key), true)
+	case glfw.Release:
+		uiCtx.Io().KeyCallback(ui.GlfwKeyToGuiKey(key), false)
+	}
 	if key == glfw.KeyEscape && action == glfw.Press {
 		window.SetShouldClose(true)
 	}

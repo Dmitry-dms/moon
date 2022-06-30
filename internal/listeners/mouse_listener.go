@@ -164,7 +164,6 @@ func VecPos() mgl32.Vec2 {
 }
 
 func RegionHit(x, y, w, h float32) bool {
-
 	ys := float32(mWinListener.height) - float32(GetY())
 	return float32(GetX()) >= x && ys >= y && float32(GetX()) <= x+w && ys <= y+h
 }

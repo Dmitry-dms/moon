@@ -15,8 +15,8 @@ func NewRamCache[T any]() *RamCache[T] {
 	return &c
 }
 
-func (c *RamCache[T]) Add(key string, val T) {
-	c.m[key] = &val
+func (c *RamCache[T]) Add(key string, val *T) {
+	c.m[key] = val
 }
 
 func (c *RamCache[T]) Get(key string) (*T, bool) {

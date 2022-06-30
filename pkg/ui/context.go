@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/render"
 )
 
@@ -12,7 +13,12 @@ type UiContext struct {
 	io       *Io
 
 	//Widgets
-	windows []Window
+	windows      []Window
+	activeWidget string
+	ActiveWindow *Window
+
+	//cache
+	idCache *cache.RamCache[Window]
 }
 
 func NewContext(renderer UiRenderer, camera *gogl.Camera) *UiContext {
@@ -22,11 +28,17 @@ func NewContext(renderer UiRenderer, camera *gogl.Camera) *UiContext {
 		camera:   camera,
 		io:       NewIo(),
 		windows:  []Window{},
+		idCache:  cache.NewRamCache[Window](),
 	}
 	return &c
 }
 
+func (c *UiContext) Io() *Io {
+	return c.io
+}
+
 func (c *UiContext) NewFrame() {
+
 	c.renderer.NewFrame()
 }
 
@@ -49,7 +61,20 @@ func (c *UiContext) EndFrame() {
 		case WindowCmd:
 			wnd := v.window
 			size := c.camera.GetProjectionSize()
-			// c.renderer.Rectangle(wnd.x, wnd.y, wnd.w, wnd.h,  wnd.clr)
+
+			tolbar := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.toolbar.h)
+			w := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.h)
+
+			if tolbar {
+
+			}
+			if w {
+				w1, _ := c.idCache.Get("debug")
+				c.ActiveWindow = w1
+			} else {
+				c.ActiveWindow = nil
+			}
+
 			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, wnd.clr)
 			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, wnd.toolbar.clr)
 		default:

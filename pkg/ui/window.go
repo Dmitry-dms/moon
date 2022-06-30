@@ -4,6 +4,8 @@ type Window struct {
 	toolbar       Toolbar
 	xPos, yPos    float32 // top-left corner
 	width, height float32
+	active        bool
+	id            string
 }
 
 func NewWindow(x, y, w, h float32) Window {
@@ -11,19 +13,21 @@ func NewWindow(x, y, w, h float32) Window {
 	wnd := Window{
 		toolbar: tb,
 		xPos:    x,
-		yPos:    y - tb.height,
+		yPos:    y,
 		width:   w,
 		height:  h,
 	}
 	return wnd
 }
 
-func clrConverter(clr float32) float32 {
-	return clr * 100 / 255
+func generateId() string {
+	return "debug"
 }
 
-func (c *UiContext) AddWindow() {
+func (c *UiContext) AddWindow() *Window {
+	id := generateId()
 	window := NewWindow(300, 100, 400, 500)
+	c.idCache.Add(id, &window)
 	var r float32 = 231
 	var g float32 = 158
 	var b float32 = 162
@@ -39,7 +43,6 @@ func (c *UiContext) AddWindow() {
 			h:   30,
 			clr: [4]float32{255, 0, 0, 1},
 		},
-		// clr: [4]float32{1, 0, 0, 0.8},
 	}
 	cmd := command{
 		t:      WindowCmd,
@@ -47,4 +50,9 @@ func (c *UiContext) AddWindow() {
 	}
 	c.windows = append(c.windows, window)
 	c.rq.AddCommand(cmd)
+	return &window
+}
+
+func RegionHit(mouseX, mouseY, x, y, w, h float32) bool {
+	return mouseX >= x && mouseY >= y && mouseX <= x+w && mouseY <= y+h
 }
