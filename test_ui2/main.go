@@ -64,8 +64,9 @@ func main() {
 
 	cam.UpdateProjection(mgl32.Vec2{1280, 720})
 
-	rend := render.NewGlRenderer()
-	uiCtx = ui.NewContext(rend, cam)
+
+	front := render.NewGlRenderer()
+	uiCtx = ui.NewContext(front, cam)
 
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -83,16 +84,18 @@ func main() {
 
 		uiCtx.NewFrame()
 
-		// uiCtx.Button("name string", &p, [4]float32{1, 0, 0, 1})
-		uiCtx.AddWindow()
+
+		firstWindow()
+		secondWindow()
 
 		uiCtx.EndFrame()
 
-		if uiCtx.Io().IsKeyPressed(ui.GuiKey_H) {
+		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 
 			// fmt.Println(uiCtx.Io().MousePos)
 			// fmt.Println(uiCtx.ActiveWindow)
-			fmt.Println(uiCtx.Io().IsDragging)
+			fmt.Println(uiCtx.HoveredWindow)
+			// fmt.Println(uiCtx.Io().IsDragging)
 		}
 
 		// rend.NewFrame()
@@ -118,6 +121,18 @@ func main() {
 		dt = endTime - beginTime
 		beginTime = endTime
 	}
+}
+
+func firstWindow() {
+	uiCtx.BeginWindow()
+
+	uiCtx.EndWindow()
+}
+
+func secondWindow() {
+	uiCtx.BeginWindow()
+
+	uiCtx.EndWindow()
 }
 
 func cursorPosCallback(w *glfw.Window, xpos float64, ypos float64) {

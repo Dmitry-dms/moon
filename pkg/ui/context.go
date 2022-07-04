@@ -1,35 +1,45 @@
 package ui
 
 import (
+	// "fmt"
+
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/render"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type UiContext struct {
-	rq       *RenderQueue
+	rq *RenderQueue
+
 	renderer UiRenderer
 	camera   *gogl.Camera
 	io       *Io
 
 	//Widgets
-	windows      []Window
-	activeWidget string
-	ActiveWindow *Window
+	windows       []*Window
+	activeWidget  string
+	ActiveWindow  *Window
+	currentWindow int
+	PriorWindow   *Window
+	HoveredWindow *Window
 
 	//cache
-	idCache *cache.RamCache[Window]
+	idCache     *cache.RamCache[Window]
+	windowStack stack[*Window]
 }
 
-func NewContext(renderer UiRenderer, camera *gogl.Camera) *UiContext {
+func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
 	c := UiContext{
-		rq:       NewRenderQueue(),
-		renderer: renderer,
-		camera:   camera,
-		io:       NewIo(),
-		windows:  []Window{},
-		idCache:  cache.NewRamCache[Window](),
+		rq:          NewRenderQueue(),
+		renderer:    frontRenderer,
+		camera:      camera,
+		io:          NewIo(),
+		windows:     make([]*Window, 0),
+		idCache:     cache.NewRamCache[Window](),
+		windowStack: Stack[*Window](),
 	}
+
 	return &c
 }
 
@@ -39,12 +49,26 @@ func (c *UiContext) Io() *Io {
 
 func (c *UiContext) NewFrame() {
 
+
+
 	c.renderer.NewFrame()
+}
+
+func (c *UiContext) UpdateMouseInputs() {
+	
 }
 
 func (c *UiContext) EndFrame() {
 
+	// for _, wnd := range c.windows {
+	// 	hovered := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.h)
+	// 	if hovered {
+	// 		c.ActiveWindow = wnd
+	// 	}
+	// }
+
 	cmds := c.rq.Commands()
+
 
 	for i := 0; i < c.rq.CmdCount; i++ {
 		v := cmds[i]
@@ -60,47 +84,75 @@ func (c *UiContext) EndFrame() {
 			c.renderer.RoundedRectangle(rr.x, rr.y, rr.w, rr.h, rr.radius, rr.clr)
 		case WindowCmd:
 			wnd := v.window
+
+			// fmt.Println(wnd.id, wnd.active)
+
 			size := c.camera.GetProjectionSize()
 
-			tolbar := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.toolbar.h)
-			w := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.h)
-
-			if tolbar {
-
-			}
-			if w {
-				w1, _ := c.idCache.Get("debug")
-				c.ActiveWindow = w1
-			} else {
-				c.ActiveWindow = nil
-			}
-
-			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, wnd.clr)
-			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, wnd.toolbar.clr)
+			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, v.window.clr)
+			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, v.window.toolbar.clr)
 		default:
 		}
 	}
 	c.rq.clearCommands()
+
 	c.renderer.Draw(c.camera)
 	c.renderer.End()
-	c.windows = []Window{}
+	// c.windows = []*Window{}
+
+	c.currentWindow = 0
+
+	// if !c.checkMousePos() {
+	// 	c.HoveredWindow = nil
+	// }
+
+	//io
+	c.io.dragDelta = mgl32.Vec2{0, 0}
+
+	// lastWindow := len(c.windows)
+	// c.PriorWindow = c.windows[lastWindow-1]
+	// c.checkWindowPriority()
 }
 
-func (c *UiContext) Button(name string, pushed *bool, clr [4]float32) bool {
-	cmd := command{
-		rRect: &rounded_rect{
-			x:      100,
-			y:      100,
-			w:      200,
-			h:      100,
-			radius: 5,
-			clr:    clr,
-		},
-		t: RoundedRect,
+func repl(m []int, x1, x2 int) []int {
+	var res []int
+	if x1 == 0 {
+		f := m[x1 : x2+1]
+		r := m[x2+1:]
+		r = append(r, f...)
+		res = r
+	} else {
+		f := m[x1 : x2+1]
+		ost := []int{}
+		ost = append(ost, m[:x1]...)
+		ost = append(ost, m[x2+1:]...)
+		ost = append(ost, f...)
+		res = ost
 	}
-	c.rq.AddCommand(cmd)
+	return res
+}
 
-	return false
+func (c *UiContext) checkWindowPriority() {
+
+	var lastWindow = NewWindow(0, 0, 0, 0)
+	for _, v := range c.windows {
+		if lastWindow.x == v.x && lastWindow.y == v.y &&
+			lastWindow.h == v.h && lastWindow.w == v.w {
+			c.ActiveWindow = v
+		}
+		lastWindow = v
+	}
+}
+
+func (c *UiContext) checkMousePos() bool {
+	hovered := false
+	for _, wnd := range c.windows {
+		check := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.h)
+		if check != hovered {
+			hovered = true
+		}
+	}
+	return hovered
 }
 
 type UiRenderer interface {
