@@ -93,9 +93,22 @@ func main() {
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 
 			// fmt.Println(uiCtx.Io().MousePos)
-			// fmt.Println(uiCtx.ActiveWindow)
-			fmt.Println(uiCtx.HoveredWindow)
+			if uiCtx.ActiveWindow != nil {
+				fmt.Println("ACTIVE: ",uiCtx.ActiveWindow.Id)
+			} else {
+				fmt.Println("ACTIVE: nil")
+			}
+			if uiCtx.HoveredWindow != nil {
+				fmt.Println("HOVERED: ",uiCtx.HoveredWindow.Id)
+			} else {
+				fmt.Println("HOVERED: nil")
+			}
+			// for _, v := range uiCtx.Windows {
+				
+			// 	fmt.Println(v.Id)
+			// }
 			// fmt.Println(uiCtx.Io().IsDragging)
+			// fmt.Println(uiCtx.Io().MouseDelta)
 		}
 
 		// rend.NewFrame()

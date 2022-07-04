@@ -1,7 +1,5 @@
 package ui
 
-
-
 const MAX_COMMANDS_COUNT = 1000
 
 type RenderQueue struct {
@@ -41,13 +39,13 @@ func (r *RenderQueue) AddCommand(cmd command) {
 		// r.LastPar = pair{k.x, y}
 		r.bufferWindow = append(r.bufferWindow, cmd)
 		r.CmdCount++
-		if cmd.window.active {
+		// if cmd.window.active {
 			// fmt.Println("a ...any")
-			r.activeBuffer = append(r.activeBuffer, r.bufferWindow...)
+			// r.activeBuffer = append(r.activeBuffer, r.bufferWindow...)
 			// r.commands = append(r.commands, r.bufferWindow...)
-		} else {
+		// } else {
 			r.commands = append(r.commands, r.bufferWindow...)
-		}
+		// }
 		// r.bufferWindow = []command{}
 		return
 	}
@@ -120,7 +118,7 @@ type rounded_rect struct {
 type CmdType int
 
 const (
-	Rect CmdType = iota
+	RectType CmdType = iota
 	Triangle
 	Line
 	Circle

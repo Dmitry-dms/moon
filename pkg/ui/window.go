@@ -1,7 +1,6 @@
 package ui
 
 import (
-
 	"math/rand"
 
 	"github.com/google/uuid"
@@ -9,23 +8,37 @@ import (
 )
 
 type Window struct {
-	toolbar Toolbar
-	x, y    float32 // top-left corner
-	w, h    float32
-	active  bool
-	id      string
+	toolbar   Toolbar
+	x, y      float32 // top-left corner
+	w, h      float32
+	active    bool
+	Id        string
+	drawList  []command
+	rq        *RenderQueue
+	outerRect Rect
 }
 
 func NewWindow(x, y, w, h float32) *Window {
 	tb := NewToolbar(x, y, w, 30)
 	wnd := Window{
-		toolbar: tb,
-		x:       x,
-		y:       y,
-		w:       w,
-		h:       h,
+		toolbar:   tb,
+		x:         x,
+		y:         y,
+		w:         w,
+		h:         h,
+		drawList:  []command{},
+		outerRect: Rect{Min: Vec2{x, y}, Max: Vec2{x + w, y + h}},
+		rq:        NewRenderQueue(),
 	}
 	return &wnd
+}
+
+func (w *Window) AddCommand(cmd command) {
+	w.drawList = append(w.drawList, cmd)
+}
+
+func (w *Window) ClearDrawList() {
+	w.drawList = []command{}
 }
 
 func generateId() string {
@@ -40,14 +53,15 @@ const (
 
 func (c *UiContext) BeginWindow() {
 	var window *Window
-	if len(c.windows) <= c.currentWindow {
-		r := rand.Intn(100)
-		window = NewWindow(defx+float32(r), defy, defw, defh)
-		c.windows = append(c.windows, window)
-		window.id = generateId()
+	if len(c.Windows) <= c.currentWindow {
+		r := rand.Intn(500)
+		g := rand.Intn(300)
+		window = NewWindow(defx+float32(r), defy+float32(g), defw, defh)
+		c.Windows = append(c.Windows, window)
+		window.Id = generateId()
 		counter++
 	} else {
-		window = c.windows[c.currentWindow]
+		window = c.Windows[c.currentWindow]
 	}
 
 	c.windowStack.Push(window)
@@ -56,10 +70,11 @@ func (c *UiContext) BeginWindow() {
 		winStart: &window_start_command{
 			x:  window.x,
 			y:  window.y,
-			id: window.id,
+			id: window.Id,
 		},
 	}
-	c.rq.AddCommand(cmd)
+	window.rq.AddCommand(cmd)
+	// c.rq.AddCommand(cmd)
 }
 
 var r, g, b float32 = 231, 158, 162
@@ -88,7 +103,11 @@ func (c *UiContext) EndWindow() {
 	// dragBounds := RegionHit(c.io.dragStartedMain[0], c.io.dragStartedMain[1], wnd.x, wnd.y, wnd.w, wnd.h)
 
 	prior := 0
-	// if w && c.io.IsDragging && dragBounds && c.ActiveWindow == wnd {
+
+	if c.io.IsDragging && c.ActiveWindow == wnd && PointInRect(c.io.MousePos, wnd.outerRect) {
+		newX += c.io.MouseDelta.X
+		newY += c.io.MouseDelta.Y
+	}
 	// 	c.io.dragStartedMain = c.io.MousePos
 	// 	// wnd.active = true
 	// 	newX += c.io.dragDelta[0]
@@ -108,11 +127,13 @@ func (c *UiContext) EndWindow() {
 	wnd.y = newY
 	wnd.h = newH
 	wnd.w = newW
+	wnd.outerRect.Min = Vec2{wnd.x, wnd.y}
+	wnd.outerRect.Max = Vec2{wnd.x + wnd.w, wnd.y + wnd.h}
 
 	cl := [4]float32{r, g, b, 0.8}
 	cmdw := window_command{
 		active: wnd.active,
-		id:     wnd.id,
+		id:     wnd.Id,
 		x:      wnd.x,
 		y:      wnd.y,
 		h:      wnd.h,
@@ -130,7 +151,8 @@ func (c *UiContext) EndWindow() {
 	}
 	// c.windows = append(c.windows, window)
 
-	c.rq.AddCommand(cmd)
+	// c.rq.AddCommand(cmd)
+	wnd.rq.AddCommand(cmd)
 
 	// counter++
 	// c.ActiveWindow = nil
