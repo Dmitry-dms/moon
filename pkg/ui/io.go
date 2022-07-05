@@ -46,6 +46,11 @@ type Io struct {
 	DeltaTime               float32 // = 1.0f/60.0f
 	MouseDoubleClickTime    float32 // 0.3
 	MouseDoubleClickMaxDist float32 // 6.0
+
+	//callbacks
+	SetCursor func(c CursorType)
+
+	
 }
 
 type Key int
@@ -70,17 +75,17 @@ func (io *Io) MousePosCallback(x, y float32) {
 
 	// if io.IsDragging {
 
-		// if io.MousePos.X() - io.dragStarted.X()  <=2 && io.MousePos.Y() - io.dragStarted.Y()  <=2 {
-		// 	io.dragDelta = mgl32.Vec2{}
-		// 	io.dragStarted = io.MousePos
-		// }
-		// io.dragDelta = io.MousePos.Sub(io.dragStarted)
-		// io.dragStarted = io.MousePos
-		// fmt.Println(io.dragDelta)
-		// lastMousePos = io.MousePos
+	// if io.MousePos.X() - io.dragStarted.X()  <=2 && io.MousePos.Y() - io.dragStarted.Y()  <=2 {
+	// 	io.dragDelta = mgl32.Vec2{}
+	// 	io.dragStarted = io.MousePos
+	// }
+	// io.dragDelta = io.MousePos.Sub(io.dragStarted)
+	// io.dragStarted = io.MousePos
+	// fmt.Println(io.dragDelta)
+	// lastMousePos = io.MousePos
 	// } else {
 	// 	io.dragDelta = Vec2{0, 0}
-		// io.dragStarted = io.MousePos
+	// io.dragStarted = io.MousePos
 	// }
 	// fmt.Println(io.dragStarted, io.MousePos, io.dragDelta)
 	// fmt.Println(io.dragDelta)

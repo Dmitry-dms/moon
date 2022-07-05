@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"image"
+
+	"os"
 	"runtime"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
@@ -18,6 +21,7 @@ func init() {
 
 var cam *gogl.Camera
 var uiCtx *ui.UiContext
+var window *glfw.Window
 
 func main() {
 	err := glfw.Init()
@@ -27,7 +31,7 @@ func main() {
 	glfw.DefaultWindowHints()
 	// glfw.WindowHint(glfw.OpenGLDebugContext, 1)
 
-	window, err := glfw.CreateWindow(1280, 720, "example", nil, nil)
+	window, err = glfw.CreateWindow(1280, 720, "example", nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -64,9 +68,12 @@ func main() {
 
 	cam.UpdateProjection(mgl32.Vec2{1280, 720})
 
+	uiCtx = ui.UiCtx
 
 	front := render.NewGlRenderer()
-	uiCtx = ui.NewContext(front, cam)
+	uiCtx.Initialize(front, cam)
+	// uiCtx = ui.NewContext(front, cam)
+	uiCtx.Io().SetCursor = setCursor
 
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -84,31 +91,33 @@ func main() {
 
 		uiCtx.NewFrame()
 
-
 		firstWindow()
 		secondWindow()
 
 		uiCtx.EndFrame()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
-
+			
 			// fmt.Println(uiCtx.Io().MousePos)
-			if uiCtx.ActiveWindow != nil {
-				fmt.Println("ACTIVE: ",uiCtx.ActiveWindow.Id)
-			} else {
-				fmt.Println("ACTIVE: nil")
-			}
-			if uiCtx.HoveredWindow != nil {
-				fmt.Println("HOVERED: ",uiCtx.HoveredWindow.Id)
-			} else {
-				fmt.Println("HOVERED: nil")
-			}
+			// if uiCtx.ActiveWindow != nil {
+			// 	fmt.Println("ACTIVE: ", uiCtx.ActiveWindow.Id)
+			// } else {
+			// 	fmt.Println("ACTIVE: nil")
+			// }
+			// if uiCtx.HoveredWindow != nil {
+			// 	fmt.Println("HOVERED: ", uiCtx.HoveredWindow.Id)
+			// } else {
+			// 	fmt.Println("HOVERED: nil")
+			// }
 			// for _, v := range uiCtx.Windows {
-				
+
 			// 	fmt.Println(v.Id)
 			// }
+			// fmt.Println("==========")
 			// fmt.Println(uiCtx.Io().IsDragging)
 			// fmt.Println(uiCtx.Io().MouseDelta)
+
+			fmt.Println(uiCtx.ActiveWidget)
 		}
 
 		// rend.NewFrame()
@@ -136,8 +145,27 @@ func main() {
 	}
 }
 
+func setCursor(c ui.CursorType) {
+	defC := glfw.CreateStandardCursor(ui.Cursor(c))
+	window.SetCursor(defC)
+}
+
+func getImageFromFilePath(filePath string) (image.Image, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	image, _, err := image.Decode(f)
+	return image, err
+}
+
 func firstWindow() {
 	uiCtx.BeginWindow()
+
+	if uiCtx.Button() {
+		fmt.Println("button clicked")
+	}
 
 	uiCtx.EndWindow()
 }

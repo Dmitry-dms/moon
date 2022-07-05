@@ -1,7 +1,6 @@
 package render
 
 import (
-
 	"math"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
@@ -56,7 +55,7 @@ func NewGlRenderer() *GLRender {
 	gl.BufferData(gl.ARRAY_BUFFER, 4*1500, nil, gl.DYNAMIC_DRAW)
 
 	r.ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 400*4, nil, gl.DYNAMIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 500*4, nil, gl.DYNAMIC_DRAW)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	//включаем layout
@@ -106,8 +105,7 @@ func (r *GLRender) Rectangle(x, y, w, h float32, clr [4]float32) {
 	r.render(vert, ind, 4)
 }
 func (r *GLRender) RectangleR(x, y, w, h float32, clr [4]float32) {
-	// r.Trinagle(x, y, x, y+h, x+w, y+h, clr)
-	// r.Trinagle(x+w, y+h, x+w, y, x, y, clr)
+	
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)
 
@@ -280,7 +278,7 @@ func (r *GLRender) DrawArc(x, y, radius float32, steps int, sector CircleSector,
 	// indOffset += 3
 
 	r.lastIndc = ind2 + 1
-	r.render(vert, ind, 3*(numV+1))
+	r.render(vert, ind, 3*(numV+2))
 }
 
 func (r *GLRender) Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32) {
@@ -435,18 +433,10 @@ func (r *GLRender) RoundedRectangle(x, y, w, h float32, radius int, clr [4]float
 
 func (b *GLRender) Draw(camera *gogl.Camera) {
 
-	// if len(b.Vertices) == 0 {
-	// 	return
-	// }
 	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
-
 	gl.BufferData(gl.ARRAY_BUFFER, len(b.Vertices)*4, gl.Ptr(b.Vertices), gl.DYNAMIC_DRAW)
-	// gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(b.Vertices)*4, gl.Ptr(b.Vertices))
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
-	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
-	// gl.BufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, len(b.Indeces)*4, gl.Ptr(b.Indeces))
-	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	b.shader.Use()
 
@@ -461,27 +451,12 @@ func (b *GLRender) Draw(camera *gogl.Camera) {
 	// b.shader.UploadIntArray("uTextures", b.texSlots)
 
 	gogl.BindVertexArray(b.vaoId)
-	// gl.EnableVertexAttribArray(0)
-	// gl.EnableVertexAttribArray(1)
-	// gl.EnableVertexAttribArray(2)
-	// gl.EnableVertexAttribArray(3)
-
-	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
-	// gl.DrawArrays(gl.TRIANGLES, 0, int32(b.triangles))
-
-	// gl.DrawElements(gl.TRIANGLES, int32(b.numSprites)*6, gl.UNSIGNED_INT, nil)
-	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
-	// gl.BufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, len(b.Indeces)*4, gl.Ptr(b.Indeces))
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(b.Indeces)*4, gl.Ptr(b.Indeces), gl.DYNAMIC_DRAW)
-	gl.DrawElements(gl.TRIANGLES, 400, gl.UNSIGNED_INT, nil)
+	gl.DrawElements(gl.TRIANGLES, int32(b.triangles), gl.UNSIGNED_INT, nil)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
-	// gl.DisableVertexAttribArray(0)
-	// gl.DisableVertexAttribArray(1)
-	// gl.DisableVertexAttribArray(2)
-	// gl.DisableVertexAttribArray(3)
 
 	gl.BindVertexArray(0)
 	// for i := 0; i < len(b.textures); i++ {
@@ -491,8 +466,8 @@ func (b *GLRender) Draw(camera *gogl.Camera) {
 }
 
 func (r *GLRender) End() {
-	// r.Vertices = []float32{}
-	r.Vertices = make([]float32, 0)
+	r.Vertices = []float32{}
 	r.Indeces = []int32{}
 	r.lastIndc = 0
+	r.triangles = 0
 }

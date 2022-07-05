@@ -1,6 +1,7 @@
 package ui
 
 import (
+	// "fmt"
 	"math/rand"
 
 	"github.com/google/uuid"
@@ -8,14 +9,41 @@ import (
 )
 
 type Window struct {
-	toolbar   Toolbar
-	x, y      float32 // top-left corner
-	w, h      float32
-	active    bool
-	Id        string
-	drawList  []command
-	rq        *RenderQueue
-	outerRect Rect
+	toolbar    Toolbar
+	x, y       float32 // top-left corner
+	w, h       float32
+	active     bool
+	Id         string
+	drawList   []command
+	rq         *RenderQueue
+	outerRect  Rect
+	minW, minH float32
+
+	//inner widgets
+	srcX, srcY    float32
+	widgetCounter int
+	widgets       []widget
+}
+
+type widget interface {
+	GetColor() [4]float32
+	GetId() string
+}
+
+type button struct {
+	isActive     bool
+	currentColor [4]float32
+	id           string
+}
+
+func (b *button) GetColor() [4]float32 {
+	return b.currentColor
+}
+func (b *button) GetId() string {
+	return b.id
+}
+func (b *button) SetColor(clr [4]float32) {
+	b.currentColor = clr
 }
 
 func NewWindow(x, y, w, h float32) *Window {
@@ -29,6 +57,12 @@ func NewWindow(x, y, w, h float32) *Window {
 		drawList:  []command{},
 		outerRect: Rect{Min: Vec2{x, y}, Max: Vec2{x + w, y + h}},
 		rq:        NewRenderQueue(),
+		minW:      200,
+		minH:      200,
+		// srcX:      x,
+		// srcY:      y + tb.h + UiCtx.CurrentStyle.TopMargin,
+
+		widgets: []widget{},
 	}
 	return &wnd
 }
@@ -59,69 +93,53 @@ func (c *UiContext) BeginWindow() {
 		window = NewWindow(defx+float32(r), defy+float32(g), defw, defh)
 		c.Windows = append(c.Windows, window)
 		window.Id = generateId()
-		counter++
 	} else {
 		window = c.Windows[c.currentWindow]
 	}
+	// fmt.Println(c.Windows)
 
-	c.windowStack.Push(window)
-	cmd := command{
-		t: WindowStartCmd,
-		winStart: &window_start_command{
-			x:  window.x,
-			y:  window.y,
-			id: window.Id,
-		},
-	}
-	window.rq.AddCommand(cmd)
-	// c.rq.AddCommand(cmd)
-}
-
-var r, g, b float32 = 231, 158, 162
-
-func (c *UiContext) EndWindow() {
-
-	wnd := c.windowStack.Pop()
+	wnd := window
 
 	newX := wnd.x
 	newY := wnd.y
 	newH := wnd.h
 	newW := wnd.w
 
-	// tolbar := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.toolbar.h)
-	// w := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.h)
-
-	// if w {
-	// 	c.HoveredWindow = wnd
-	// 	if c.ActiveWindow == nil {
-	// 		wnd.active = true
-	// 		c.ActiveWindow = wnd
-	// 	}
-	// }
-
-	//  Проверка на начало перетаскивания за границами окна
-	// dragBounds := RegionHit(c.io.dragStartedMain[0], c.io.dragStartedMain[1], wnd.x, wnd.y, wnd.w, wnd.h)
-
 	prior := 0
 
-	if c.io.IsDragging && c.ActiveWindow == wnd && PointInRect(c.io.MousePos, wnd.outerRect) {
+	//Прямоугольник справа
+	vResizeRect := Rect{Min: Vec2{wnd.x + wnd.w - 15, wnd.y}, Max: Vec2{wnd.x + wnd.w + 15, wnd.y + wnd.h}}
+	hResizeRect := Rect{Min: Vec2{wnd.x, wnd.y + wnd.h - 15}, Max: Vec2{wnd.x + wnd.w, wnd.y + wnd.h + 15}}
+	if PointInRect(c.io.MousePos, hResizeRect) && c.ActiveWindow == wnd {
+		c.io.SetCursor(VResizeCursor)
+		c.wantResizeH = true
+	} else if PointInRect(c.io.MousePos, vResizeRect) && c.ActiveWindow == wnd {
+		c.io.SetCursor(HResizeCursor)
+		c.wantResizeV = true
+	} else {
+		c.io.SetCursor(ArrowCursor)
+	}
+
+	// Изменение размеров окна
+	if c.wantResizeH && c.io.IsDragging && c.ActiveWindow == wnd {
+		n := newH
+		n += c.io.MouseDelta.Y
+		if n > wnd.minH {
+			newH = n
+		}
+	} else if c.wantResizeV && c.io.IsDragging && c.ActiveWindow == wnd {
+		n := newW
+		n += c.io.MouseDelta.X
+		if n > wnd.minW {
+			newW = n
+		}
+	}
+
+	// Изменение положения окна
+	if c.io.IsDragging && c.ActiveWindow == wnd && PointInRect(c.io.MousePos, wnd.outerRect) && !c.wantResizeV && !c.wantResizeH {
 		newX += c.io.MouseDelta.X
 		newY += c.io.MouseDelta.Y
 	}
-	// 	c.io.dragStartedMain = c.io.MousePos
-	// 	// wnd.active = true
-	// 	newX += c.io.dragDelta[0]
-	// 	newY += c.io.dragDelta[1]
-	// 	prior = 7
-	// } else {
-	// 	// wnd.active = false
-	// 	prior = 1
-	// }
-	// if tolbar {
-	// 	// c.ActiveWindow = wnd
-	// } else {
-	// 	// c.ActiveWindow = nil
-	// }
 
 	wnd.x = newX
 	wnd.y = newY
@@ -146,17 +164,95 @@ func (c *UiContext) EndWindow() {
 	}
 	cmd := command{
 		priority: prior,
-		t:        WindowCmd,
+		t:        WindowStartCmd,
 		window:   &cmdw,
 	}
-	// c.windows = append(c.windows, window)
 
-	// c.rq.AddCommand(cmd)
+	wnd.srcX = wnd.x + UiCtx.CurrentStyle.LeftMargin
+	wnd.srcY = wnd.y + wnd.toolbar.h + UiCtx.CurrentStyle.TopMargin
 	wnd.rq.AddCommand(cmd)
 
-	// counter++
-	// c.ActiveWindow = nil
+	c.windowStack.Push(window)
+}
+
+var r, g, b float32 = 231, 158, 162
+
+func (w *Window) addWidget(widg widget) {
+	w.widgets = append(w.widgets, widg)
+	UiCtx.AddWidget(widg.GetId(), widg)
+}
+
+func (c *UiContext) Button() bool {
+
+	wnd := c.windowStack.GetTop()
+	var btn *button
+
+	if len(wnd.widgets) == 0 {
+		btn = &button{
+			id:           generateId(),
+			currentColor: [4]float32{67, 86, 205, 1},
+			isActive:     false,
+		}
+		wnd.addWidget(btn)
+	} else {
+		btn = wnd.widgets[wnd.widgetCounter].(*button)
+	}
+
+	x := wnd.srcX
+	y := wnd.srcY
+	w := float32(100)
+	h := float32(100)
+
+	clr := btn.currentColor
+
+	inRect := PointInRect(c.io.MousePos, NewRect(x, y, w, h))
+
+	if wnd == c.ActiveWindow && inRect {
+		c.ActiveWidget = btn.GetId()
+		if c.io.MouseClicked[0] {
+			btn.isActive = !btn.isActive
+		}
+	} else {
+		c.ActiveWidget = ""
+	}
+
+	if btn.isActive {
+		btn.SetColor([4]float32{150, clr[1], clr[2], clr[3]})
+	} else {
+		btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
+	}
+
+	clicked := c.io.MouseClicked[0] && inRect
+
+	rect := rounded_rect{
+		x:   x,
+		y:   y,
+		w:   w,
+		h:   h,
+		clr: clr,
+		radius: 5,
+	}
+	cmd := command{
+		t:    RoundedRect,
+		rRect: &rect,
+	}
+	wnd.rq.AddCommand(cmd)
+	wnd.widgetCounter++
+	return clicked
+}
+
+func (c *UiContext) EndWindow() {
+
+	wnd := c.windowStack.Pop()
+
+	cmd := command{
+		priority: 0,
+		t:        WindowCmd,
+		// window:   cmdw,
+	}
+	wnd.rq.AddCommand(cmd)
 	c.currentWindow++
+	wnd.widgetCounter = 0
 }
 
 func RegionHit(mouseX, mouseY, x, y, w, h float32) bool {

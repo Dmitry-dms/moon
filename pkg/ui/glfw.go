@@ -22,10 +22,16 @@ type glfwHandler struct {
 	PrevUserCallbackKey         glfw.KeyCallback
 	// 	PrevUserCallbackChar        GLFWcharfun
 	// 	PrevUserCallbackMonitor     GLFWmonitorfun
+	SetCursor func(c CursorType)
 }
 
 func NewData() *glfwHandler {
 	d := glfwHandler{}
+	f := func(c CursorType){
+		defC := glfw.CreateStandardCursor(Cursor(c))
+		d.GlfwWindow.SetCursor(defC)
+	}
+	d.SetCursor = f
 	return &d
 }
 
@@ -272,7 +278,23 @@ func GlfwAction(action glfw.Action) Action {
 	}
 }
 
+func Cursor(cur CursorType) glfw.StandardCursor {
+	switch cur {
+	case VResizeCursor:
+		return glfw.VResizeCursor
+	case ArrowCursor:
+		return glfw.ArrowCursor
+	case HResizeCursor:
+		return glfw.HResizeCursor
+	case EditCursor:
+		return glfw.CrosshairCursor
+	default:
+		return glfw.ArrowCursor
+	}
+}
+
 type PlatformHandler interface {
 	IsKeyPressed(key Key)
 	UpdateInputs()
+	SetCursor(c CursorType)
 }

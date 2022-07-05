@@ -136,3 +136,13 @@ const (
 	Repeat
 	UnknownAction
 )
+
+type CursorType int
+
+const (
+	ArrowCursor CursorType = iota
+	HResizeCursor 
+	VResizeCursor 
+	EditCursor 
+	UnknownCursor
+)

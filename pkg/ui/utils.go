@@ -3,6 +3,7 @@ package ui
 type stack[T any] struct {
 	Push   func(T)
 	Pop    func() T
+	GetTop func() T
 	Length func() int
 }
 
@@ -16,6 +17,9 @@ func Stack[T any]() stack[T] {
 			res := slice[len(slice)-1]
 			slice = slice[:len(slice)-1]
 			return res
+		},
+		GetTop: func() T {
+			return slice[len(slice)-1]
 		},
 		Length: func() int {
 			return len(slice)
@@ -49,6 +53,12 @@ func Max[T int | float32](x1, x2 T) T {
 
 type Rect struct {
 	Min, Max Vec2
+}
+
+func NewRect(x, y, w, h float32) Rect {
+	min := Vec2{x, y}
+	max := Vec2{x + w, y + h}
+	return Rect{min, max}
 }
 
 func (r Rect) Contains(p Vec2) bool {

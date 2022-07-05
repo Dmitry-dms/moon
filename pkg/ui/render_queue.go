@@ -26,49 +26,21 @@ func NewRenderQueue() *RenderQueue {
 
 func (r *RenderQueue) AddCommand(cmd command) {
 	if cmd.t == WindowStartCmd {
-
-		// k := len(r.commands)
-		// r.Windows[cmd.winStart.id] = pair{k, 0}
-		// r.bufferWindow = append(r.bufferWindow, cmd)
-		// return
 	}
 	if cmd.t == WindowCmd {
-		// k := r.Windows[cmd.window.id]
-		// y := len(r.commands)
-		// r.Windows[cmd.window.id] = pair{k.x, y}
-		// r.LastPar = pair{k.x, y}
-		r.bufferWindow = append(r.bufferWindow, cmd)
-		r.CmdCount++
-		// if cmd.window.active {
-			// fmt.Println("a ...any")
-			// r.activeBuffer = append(r.activeBuffer, r.bufferWindow...)
-			// r.commands = append(r.commands, r.bufferWindow...)
-		// } else {
-			r.commands = append(r.commands, r.bufferWindow...)
-		// }
-		// r.bufferWindow = []command{}
+		r.commands = append(r.commands, r.bufferWindow...)
 		return
 	}
-	// c := r.CmdCount
-	// r.commands[c] = cmd
 	r.bufferWindow = append(r.bufferWindow, cmd)
-	// r.commands = append(r.commands, cmd)
 	r.CmdCount++
 }
 
 func (r *RenderQueue) Commands() []command {
-	// for k, v := range r.windows {
-	// 	fmt.Println(k, v)
-	// }
 	r.commands = append(r.commands, r.activeBuffer...)
-
 	return r.commands
 }
 
 func (r *RenderQueue) clearCommands() {
-	// for i := range r.commands {
-	// r.commands[i] = command{}
-	// }
 	r.commands = []command{}
 	r.bufferWindow = []command{}
 	r.activeBuffer = []command{}
@@ -88,6 +60,7 @@ type command struct {
 type rect_command struct {
 	x, y, w, h float32
 	clr        [4]float32
+	id         string
 }
 type triangle_command struct {
 	x0, y0, x1, y1, x2, y2 float32

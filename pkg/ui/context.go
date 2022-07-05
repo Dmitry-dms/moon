@@ -8,6 +8,12 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/ui/render"
 )
 
+var UiCtx *UiContext
+
+func init() {
+	UiCtx = NewContext(nil, nil)
+}
+
 type UiContext struct {
 	rq *RenderQueue
 
@@ -17,7 +23,8 @@ type UiContext struct {
 
 	//Widgets
 	Windows           []*Window
-	activeWidget      string
+	sortedWindows     []*Window
+	ActiveWidget      string
 	ActiveWindow      *Window
 	currentWindow     int
 	PriorWindow       *Window
@@ -25,25 +32,49 @@ type UiContext struct {
 	LastHoveredWindow *Window
 
 	//cache
-	idCache     *cache.RamCache[Window]
-	windowStack stack[*Window]
+	idCache      *cache.RamCache[Window]
+	windowStack  stack[*Window]
+	widgetsCache *cache.RamCache[widget]
 
 	//refactor
 	Time float32
+
+	//intent
+	wantResizeH, wantResizeV bool
+
+	//style
+	CurrentStyle Style
 }
 
 func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
 	c := UiContext{
-		rq:          NewRenderQueue(),
-		renderer:    frontRenderer,
-		camera:      camera,
-		io:          NewIo(),
-		Windows:     make([]*Window, 0),
-		idCache:     cache.NewRamCache[Window](),
-		windowStack: Stack[*Window](),
+		rq:            NewRenderQueue(),
+		renderer:      frontRenderer,
+		camera:        camera,
+		io:            NewIo(),
+		Windows:       make([]*Window, 0),
+		sortedWindows: make([]*Window, 0),
+		idCache:       cache.NewRamCache[Window](),
+		widgetsCache:  cache.NewRamCache[widget](),
+		windowStack:   Stack[*Window](),
+		CurrentStyle: DefaultStyle,
 	}
 
 	return &c
+}
+
+func (c *UiContext) Initialize(frontRenderer UiRenderer, camera *gogl.Camera) {
+	c.renderer = frontRenderer
+	c.camera = camera
+}
+
+func (c *UiContext) AddWidget(id string, w widget) {
+	c.widgetsCache.Add(id, &w)
+}
+
+func (c *UiContext) GetWidget(id string) *widget {
+	w, _ := c.widgetsCache.Get(id)
+	return w
 }
 
 func (c *UiContext) Io() *Io {
@@ -51,19 +82,20 @@ func (c *UiContext) Io() *Io {
 }
 
 func (c *UiContext) NewFrame() {
+	// c.sortedWindows = c.Windows
 
 	c.UpdateMouseInputs()
-	c.findHoveredWindow()
+
 	c.renderer.NewFrame()
 }
 func (c *UiContext) pushWindowFront(w *Window) {
-	for i := len(c.Windows) - 1; i >= 0; i-- {
-		if c.Windows[i] == w {
-			if i == len(c.Windows)-1 {
+	for i := len(c.sortedWindows) - 1; i >= 0; i-- {
+		if c.sortedWindows[i] == w {
+			if i == len(c.sortedWindows)-1 {
 				return
 			}
-			c.Windows[i] = c.Windows[len(c.Windows)-1]
-			c.Windows[len(c.Windows)-1] = w
+			c.sortedWindows[i] = c.sortedWindows[len(c.sortedWindows)-1]
+			c.sortedWindows[len(c.sortedWindows)-1] = w
 			return
 		}
 	}
@@ -73,25 +105,17 @@ var initHover = false
 
 func (c *UiContext) findHoveredWindow() {
 	var hovered *Window
-	if len(c.Windows) == 0 {
+	if len(c.sortedWindows) == 0 {
 		return
 	}
 
-	for i := 0; i <= len(c.Windows)-1; i++ {
-		window := c.Windows[i]
-		// if i == len(c.Windows) - 1 && c.ActiveWindow == nil {
-		// 	window.active = true
-		// 	c.ActiveWindow = window
-		// }
-		// if !window.active {
-		// 	continue
-		// }
+	for i := 0; i <= len(c.sortedWindows)-1; i++ {
+		window := c.sortedWindows[i]
 		bb := window.outerRect
 
 		if !bb.Contains(c.io.MousePos) {
 			continue
 		}
-
 		if c.io.MouseClicked[0] && c.ActiveWindow != window {
 			if !PointInRect(c.io.MousePos, c.ActiveWindow.outerRect) {
 				c.ActiveWindow = window
@@ -108,7 +132,7 @@ func (c *UiContext) findHoveredWindow() {
 
 	}
 	if c.ActiveWindow == nil {
-		c.ActiveWindow = c.Windows[len(c.Windows)-1]
+		c.ActiveWindow = c.sortedWindows[len(c.sortedWindows)-1]
 	}
 	c.HoveredWindow = hovered
 
@@ -182,37 +206,48 @@ func (c *UiContext) UpdateMouseInputs() {
 
 }
 
+func copyWindows(w []*Window) []*Window {
+	r := make([]*Window, len(w))
+	for i, v := range w {
+		r[i] = v
+	}
+	return r
+}
+
+var lastWinL = 0
+
 func (c *UiContext) EndFrame() {
 
-	// for _, wnd := range c.windows {
-	// 	hovered := RegionHit(c.io.MousePos[0], c.io.MousePos[1], wnd.x, wnd.y, wnd.w, wnd.h)
-	// 	if hovered {
-	// 		c.ActiveWindow = wnd
-	// 	}
-	// }
-	for _, v := range c.Windows {
+	// Если количество окон не изменилось, в копировании нет нужды
+	if lastWinL != len(c.Windows) {
+		c.sortedWindows = copyWindows(c.Windows)
+		lastWinL = len(c.Windows)
+	}
+
+	c.findHoveredWindow()
+	if len(c.sortedWindows) == 0 {
+		return
+	}
+
+	for _, v := range c.sortedWindows {
 		cmds := v.rq.commands
-
 		for i := 0; i < v.rq.CmdCount; i++ {
-
 			comm := cmds[i]
 			switch comm.t {
 			case RectType:
 				r := comm.rect
-				c.renderer.Rectangle(r.x, r.y, r.w, r.h, r.clr)
+				size := c.camera.GetProjectionSize()
+				c.renderer.RectangleR(r.x, size.Y()-r.y, r.w, r.h, r.clr)
 			case Triangle:
 				tr := comm.triangle
 				c.renderer.Trinagle(tr.x0, tr.y0, tr.x1, tr.y1, tr.x2, tr.y2, tr.clr)
 			case RoundedRect:
 				rr := comm.rRect
-				c.renderer.RoundedRectangle(rr.x, rr.y, rr.w, rr.h, rr.radius, rr.clr)
-			case WindowCmd:
-				wnd := comm.window
-
-				// fmt.Println(wnd.id, wnd.active)
-
 				size := c.camera.GetProjectionSize()
-
+				c.renderer.RoundedRectangleR(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius,render.AllRounded, rr.clr)
+			case WindowStartCmd:
+				wnd := comm.window
+				size := c.camera.GetProjectionSize()
 				c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, comm.window.clr)
 				c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, comm.window.toolbar.clr)
 			default:
@@ -223,61 +258,16 @@ func (c *UiContext) EndFrame() {
 
 	c.renderer.Draw(c.camera)
 	c.renderer.End()
-	// c.windows = []*Window{}
 
 	c.currentWindow = 0
 
-	// if !c.checkMousePos() {
-	// 	c.HoveredWindow = nil
-	// }
+	if !c.io.IsDragging && c.wantResizeH == true {
+		c.wantResizeH = false
 
-	//io
-	c.io.dragDelta = Vec2{0, 0}
-
-	// lastWindow := len(c.windows)
-	// c.PriorWindow = c.windows[lastWindow-1]
-	// c.checkWindowPriority()
-}
-
-func repl(m []int, x1, x2 int) []int {
-	var res []int
-	if x1 == 0 {
-		f := m[x1 : x2+1]
-		r := m[x2+1:]
-		r = append(r, f...)
-		res = r
-	} else {
-		f := m[x1 : x2+1]
-		ost := []int{}
-		ost = append(ost, m[:x1]...)
-		ost = append(ost, m[x2+1:]...)
-		ost = append(ost, f...)
-		res = ost
+	} else if !c.io.IsDragging && c.wantResizeV == true {
+		c.wantResizeV = false
 	}
-	return res
-}
-
-func (c *UiContext) checkWindowPriority() {
-
-	var lastWindow = NewWindow(0, 0, 0, 0)
-	for _, v := range c.Windows {
-		if lastWindow.x == v.x && lastWindow.y == v.y &&
-			lastWindow.h == v.h && lastWindow.w == v.w {
-			c.ActiveWindow = v
-		}
-		lastWindow = v
-	}
-}
-
-func (c *UiContext) checkMousePos() bool {
-	hovered := false
-	for _, wnd := range c.Windows {
-		check := RegionHit(c.io.MousePos.X, c.io.MousePos.Y, wnd.x, wnd.y, wnd.w, wnd.h)
-		if check != hovered {
-			hovered = true
-		}
-	}
-	return hovered
+	// c.sortedWindows = []*Window{}
 }
 
 type UiRenderer interface {
