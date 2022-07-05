@@ -49,6 +49,7 @@ func main() {
 	window.SetKeyCallback(onKey)
 	window.SetCursorPosCallback(cursorPosCallback)
 	window.SetMouseButtonCallback(mouseBtnCallback)
+	window.SetScrollCallback(scrollCallback)
 
 	// gogl.InitGLdebug()
 
@@ -83,6 +84,8 @@ func main() {
 	var dt float32
 	dt = dt
 
+	tex, _ = tex.Init("assets/images/mario.png")
+
 	// var p bool
 	for !window.ShouldClose() {
 		glfw.PollEvents()
@@ -94,10 +97,10 @@ func main() {
 		firstWindow()
 		secondWindow()
 
-		uiCtx.EndFrame()
+		
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
-			
+
 			// fmt.Println(uiCtx.Io().MousePos)
 			// if uiCtx.ActiveWindow != nil {
 			// 	fmt.Println("ACTIVE: ", uiCtx.ActiveWindow.Id)
@@ -118,7 +121,10 @@ func main() {
 			// fmt.Println(uiCtx.Io().MouseDelta)
 
 			fmt.Println(uiCtx.ActiveWidget)
+			// fmt.Println(uiCtx.Io().ScrollX, uiCtx.Io().ScrollY)
 		}
+
+		uiCtx.EndFrame()
 
 		// rend.NewFrame()
 
@@ -150,6 +156,8 @@ func setCursor(c ui.CursorType) {
 	window.SetCursor(defC)
 }
 
+var tex *gogl.Texture
+
 func getImageFromFilePath(filePath string) (image.Image, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -163,8 +171,17 @@ func getImageFromFilePath(filePath string) (image.Image, error) {
 func firstWindow() {
 	uiCtx.BeginWindow()
 
-	if uiCtx.Button() {
-		fmt.Println("button clicked")
+	if uiCtx.Button(nil) {
+		fmt.Println("button clicked f 1")
+	}
+	uiCtx.VSpace()
+	if uiCtx.ButtonRR(tex) {
+		fmt.Println("button clicked f 2")
+	}
+
+	uiCtx.VSpace()
+	if uiCtx.Button(nil) {
+		fmt.Println("button clicked f 1")
 	}
 
 	uiCtx.EndWindow()
@@ -172,6 +189,10 @@ func firstWindow() {
 
 func secondWindow() {
 	uiCtx.BeginWindow()
+
+	if uiCtx.Image(tex) {
+		fmt.Println("image clicked s 1")
+	}
 
 	uiCtx.EndWindow()
 }
@@ -195,4 +216,9 @@ func onKey(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, 
 	if key == glfw.KeyEscape && action == glfw.Press {
 		window.SetShouldClose(true)
 	}
+}
+
+func scrollCallback(w *glfw.Window, xoff float64, yoff float64) {
+	uiCtx.Io().ScrollX = xoff
+	uiCtx.Io().ScrollY = yoff
 }

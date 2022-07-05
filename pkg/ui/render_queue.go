@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/Dmitry-dms/moon/pkg/gogl"
+
 const MAX_COMMANDS_COUNT = 1000
 
 type RenderQueue struct {
@@ -61,6 +63,7 @@ type rect_command struct {
 	x, y, w, h float32
 	clr        [4]float32
 	id         string
+	texture    *gogl.Texture
 }
 type triangle_command struct {
 	x0, y0, x1, y1, x2, y2 float32
@@ -86,16 +89,20 @@ type rounded_rect struct {
 	x, y, w, h float32
 	clr        [4]float32
 	radius     int
+	texture    *gogl.Texture
 }
 
 type CmdType int
 
 const (
 	RectType CmdType = iota
+	RectTypeT
 	Triangle
+	TriangleT
 	Line
 	Circle
 	RoundedRect
+	RoundedRectT
 	WindowCmd
 	ToolbarCmd
 	WindowStartCmd

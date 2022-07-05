@@ -2,8 +2,11 @@ package ui
 
 import (
 	// "fmt"
+	"fmt"
 	"math/rand"
 
+	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 	"github.com/google/uuid"
 	// "github.com/go-gl/mathgl/mgl32"
 )
@@ -22,28 +25,7 @@ type Window struct {
 	//inner widgets
 	srcX, srcY    float32
 	widgetCounter int
-	widgets       []widget
-}
-
-type widget interface {
-	GetColor() [4]float32
-	GetId() string
-}
-
-type button struct {
-	isActive     bool
-	currentColor [4]float32
-	id           string
-}
-
-func (b *button) GetColor() [4]float32 {
-	return b.currentColor
-}
-func (b *button) GetId() string {
-	return b.id
-}
-func (b *button) SetColor(clr [4]float32) {
-	b.currentColor = clr
+	widgets       []widgets.Widget
 }
 
 func NewWindow(x, y, w, h float32) *Window {
@@ -62,7 +44,7 @@ func NewWindow(x, y, w, h float32) *Window {
 		// srcX:      x,
 		// srcY:      y + tb.h + UiCtx.CurrentStyle.TopMargin,
 
-		widgets: []widget{},
+		widgets: []widgets.Widget{},
 	}
 	return &wnd
 }
@@ -177,25 +159,181 @@ func (c *UiContext) BeginWindow() {
 
 var r, g, b float32 = 231, 158, 162
 
-func (w *Window) addWidget(widg widget) {
+func (w *Window) addWidget(widg widgets.Widget) {
 	w.widgets = append(w.widgets, widg)
 	UiCtx.AddWidget(widg.GetId(), widg)
 }
 
-func (c *UiContext) Button() bool {
+var (
+	whiteColor = [4]float32{255, 255, 255, 1}
+)
+
+func (wnd *Window) getWidget(w widgets.WidgetType) widgets.Widget {
+	var widg widgets.Widget
+	if len(wnd.widgets) == 0 || len(wnd.widgets) <= wnd.widgetCounter {
+		switch w {
+		case widgets.ButtonWidget:
+			widg = &widgets.Button{
+				Id:           generateId(),
+				CurrentColor: [4]float32{67, 86, 205, 1},
+				IsActive:     false,
+				BoundingBox:  [4]float32{wnd.srcX, wnd.srcY, float32(100), float32(100)},
+			}
+		case widgets.ImageWidget:
+			widg = &widgets.Image{
+				Id:           generateId(),
+				CurrentColor: whiteColor,
+				BoundingBox:  [4]float32{wnd.srcX, wnd.srcY, float32(100), float32(100)},
+			}
+		case widgets.VerticalSpacingWidget:
+			widg = &widgets.VSpace{
+				Height: 20,
+			}
+		}
+		wnd.addWidget(widg)
+	} else {
+		widg = wnd.widgets[wnd.widgetCounter]
+	}
+	return widg
+}
+
+func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 
 	wnd := c.windowStack.GetTop()
-	var btn *button
+	var btn *widgets.Button
 
-	if len(wnd.widgets) == 0 {
-		btn = &button{
-			id:           generateId(),
-			currentColor: [4]float32{67, 86, 205, 1},
-			isActive:     false,
+	btn = wnd.getWidget(widgets.ButtonWidget).(*widgets.Button)
+
+	clr := btn.CurrentColor
+
+	inRect := PointInRect(c.io.MousePos, NewRectS(btn.BoundingBox))
+
+	if wnd == c.ActiveWindow && inRect {
+		c.ActiveWidget = btn.GetId()
+		// fmt.Println(btn.GetId())
+		if c.io.MouseClicked[0] {
+			btn.IsActive = !btn.IsActive
+		}
+	}
+
+	if btn.IsActive {
+		btn.SetColor([4]float32{150, btn.CurrentColor[1], btn.CurrentColor[2], btn.CurrentColor[3]})
+	} else {
+		btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
+		// btn.SetColor(whiteColor)
+	}
+
+	clicked := c.io.MouseClicked[0] && inRect
+
+	//DEBUG
+	scroll := float32(0)
+	if c.io.ScrollY != 0 && c.ActiveWidget == btn.Id {
+		scroll += float32(c.io.ScrollY) * 10
+		btn.AddWidth(scroll)
+		btn.AddHeight(scroll)
+	}
+
+	rect := rounded_rect{
+		x:      wnd.srcX,
+		y:      wnd.srcY,
+		w:      btn.Width(),
+		h:      btn.Height(),
+		clr:    clr,
+		radius: 5,
+	}
+
+
+	btn.BoundingBox = [4]float32{rect.x, rect.y, rect.w, rect.h}
+
+	cmd := command{
+		rRect: &rect,
+	}
+	if tex != nil {
+		rect.texture = tex
+		cmd.t = RoundedRectT
+		rect.clr = whiteColor
+	} else {
+		cmd.t = RectType
+	}
+
+	wnd.rq.AddCommand(cmd)
+	wnd.widgetCounter++
+
+	wnd.srcY += rect.h
+	return clicked
+}
+
+func (c *UiContext) Image(tex *gogl.Texture) bool {
+	if tex == nil {
+		fmt.Println("error")
+		return false
+	}
+
+	wnd := c.windowStack.GetTop()
+	var img *widgets.Image
+
+	img = wnd.getWidget(widgets.ImageWidget).(*widgets.Image)
+
+	clr := img.CurrentColor
+
+	inRect := PointInRect(c.io.MousePos, NewRectS(img.BoundingBox))
+
+	if wnd == c.ActiveWindow && inRect {
+		c.ActiveWidget = img.GetId()
+	}
+	clicked := c.io.MouseClicked[0] && inRect
+
+	// Create command and append it to slice
+	{
+		rect := rect_command{
+			x:   wnd.srcX,
+			y:   wnd.srcY,
+			w:   img.Width(),
+			h:   img.Height(),
+			texture: tex,
+			clr: clr,
+		}
+		cmd := command{
+			rect: &rect,
+			t: RectTypeT,
+		}
+		wnd.rq.AddCommand(cmd)
+	}
+	
+	img.BoundingBox = [4]float32{wnd.srcX, wnd.srcY, img.Width(), img.Height()}
+	wnd.widgetCounter++
+
+	wnd.srcY += img.Height()
+	return clicked
+}
+
+func (c *UiContext) VSpace()  {
+	
+	wnd := c.windowStack.GetTop()
+	var s *widgets.VSpace
+
+	s = wnd.getWidget(widgets.VerticalSpacingWidget).(*widgets.VSpace)
+
+	// img.BoundingBox = [4]float32{wnd.srcX, wnd.srcY, img.Width(), img.Height()}
+	wnd.widgetCounter++
+
+	wnd.srcY += s.Height
+}
+
+func (c *UiContext) Button(tex *gogl.Texture) bool {
+
+	wnd := c.windowStack.GetTop()
+	var btn *widgets.Button
+
+	if len(wnd.widgets) == 0 || len(wnd.widgets) <= wnd.widgetCounter {
+		btn = &widgets.Button{
+			Id:           generateId(),
+			CurrentColor: [4]float32{67, 86, 205, 1},
+			IsActive:     false,
 		}
 		wnd.addWidget(btn)
 	} else {
-		btn = wnd.widgets[wnd.widgetCounter].(*button)
+		btn = wnd.widgets[wnd.widgetCounter].(*widgets.Button)
 	}
 
 	x := wnd.srcX
@@ -203,41 +341,50 @@ func (c *UiContext) Button() bool {
 	w := float32(100)
 	h := float32(100)
 
-	clr := btn.currentColor
+	clr := btn.CurrentColor
 
 	inRect := PointInRect(c.io.MousePos, NewRect(x, y, w, h))
 
 	if wnd == c.ActiveWindow && inRect {
+
 		c.ActiveWidget = btn.GetId()
 		if c.io.MouseClicked[0] {
-			btn.isActive = !btn.isActive
+			btn.IsActive = !btn.IsActive
 		}
-	} else {
-		c.ActiveWidget = ""
 	}
 
-	if btn.isActive {
-		btn.SetColor([4]float32{150, clr[1], clr[2], clr[3]})
+	if btn.IsActive {
+		btn.SetColor([4]float32{150, btn.CurrentColor[1], btn.CurrentColor[2], btn.CurrentColor[3]})
 	} else {
 		btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
+		// btn.SetColor(whiteColor)
 	}
 
 	clicked := c.io.MouseClicked[0] && inRect
 
-	rect := rounded_rect{
+	rect := rect_command{
 		x:   x,
 		y:   y,
 		w:   w,
 		h:   h,
 		clr: clr,
-		radius: 5,
 	}
+
 	cmd := command{
-		t:    RoundedRect,
-		rRect: &rect,
+		rect: &rect,
 	}
+	if tex != nil {
+		rect.texture = tex
+		cmd.t = RectTypeT
+		rect.clr = whiteColor
+	} else {
+		cmd.t = RectType
+	}
+
 	wnd.rq.AddCommand(cmd)
 	wnd.widgetCounter++
+
+	wnd.srcY += rect.h
 	return clicked
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/render"
+	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
 
 var UiCtx *UiContext
@@ -34,7 +35,7 @@ type UiContext struct {
 	//cache
 	idCache      *cache.RamCache[Window]
 	windowStack  stack[*Window]
-	widgetsCache *cache.RamCache[widget]
+	widgetsCache *cache.RamCache[widgets.Widget]
 
 	//refactor
 	Time float32
@@ -55,9 +56,9 @@ func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
 		Windows:       make([]*Window, 0),
 		sortedWindows: make([]*Window, 0),
 		idCache:       cache.NewRamCache[Window](),
-		widgetsCache:  cache.NewRamCache[widget](),
+		widgetsCache:  cache.NewRamCache[widgets.Widget](),
 		windowStack:   Stack[*Window](),
-		CurrentStyle: DefaultStyle,
+		CurrentStyle:  DefaultStyle,
 	}
 
 	return &c
@@ -68,11 +69,11 @@ func (c *UiContext) Initialize(frontRenderer UiRenderer, camera *gogl.Camera) {
 	c.camera = camera
 }
 
-func (c *UiContext) AddWidget(id string, w widget) {
+func (c *UiContext) AddWidget(id string, w widgets.Widget) {
 	c.widgetsCache.Add(id, &w)
 }
 
-func (c *UiContext) GetWidget(id string) *widget {
+func (c *UiContext) GetWidget(id string) *widgets.Widget {
 	w, _ := c.widgetsCache.Get(id)
 	return w
 }
@@ -238,13 +239,21 @@ func (c *UiContext) EndFrame() {
 				r := comm.rect
 				size := c.camera.GetProjectionSize()
 				c.renderer.RectangleR(r.x, size.Y()-r.y, r.w, r.h, r.clr)
+			case RectTypeT:
+				r := comm.rect
+				size := c.camera.GetProjectionSize()
+				c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, r.clr)
 			case Triangle:
 				tr := comm.triangle
 				c.renderer.Trinagle(tr.x0, tr.y0, tr.x1, tr.y1, tr.x2, tr.y2, tr.clr)
+			case RoundedRectT:
+				rr := comm.rRect
+				size := c.camera.GetProjectionSize()
+				c.renderer.RoundedRectangleT(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.texture, rr.clr)
 			case RoundedRect:
 				rr := comm.rRect
 				size := c.camera.GetProjectionSize()
-				c.renderer.RoundedRectangleR(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius,render.AllRounded, rr.clr)
+				c.renderer.RoundedRectangleR(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.clr)
 			case WindowStartCmd:
 				wnd := comm.window
 				size := c.camera.GetProjectionSize()
@@ -268,6 +277,11 @@ func (c *UiContext) EndFrame() {
 		c.wantResizeV = false
 	}
 	// c.sortedWindows = []*Window{}
+
+	c.io.ScrollX = 0
+	c.io.ScrollY = 0
+
+	c.ActiveWidget = ""
 }
 
 type UiRenderer interface {
@@ -279,6 +293,8 @@ type UiRenderer interface {
 	Line(x0, y0, x1, y1 float32, thick int, clr [4]float32)
 	RoundedRectangle(x, y, w, h float32, radius int, clr [4]float32)
 	RoundedRectangleR(x, y, w, h float32, radius int, shape render.RoundedRectShape, clr [4]float32)
+	RectangleT(x, y, w, h float32, tex *gogl.Texture, clr [4]float32)
+	RoundedRectangleT(x, y, w, h float32, radius int, shape render.RoundedRectShape, tex *gogl.Texture, clr [4]float32)
 	Draw(camera *gogl.Camera)
 	End()
 }

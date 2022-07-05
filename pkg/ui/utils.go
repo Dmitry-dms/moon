@@ -1,5 +1,6 @@
 package ui
 
+
 type stack[T any] struct {
 	Push   func(T)
 	Pop    func() T
@@ -59,6 +60,28 @@ func NewRect(x, y, w, h float32) Rect {
 	min := Vec2{x, y}
 	max := Vec2{x + w, y + h}
 	return Rect{min, max}
+}
+
+func NewRectS(r [4]float32) Rect {
+	min := Vec2{r[0], r[1]}
+	max := Vec2{r[0] + r[2], r[1] + r[3]}
+	return Rect{min, max}
+}
+
+func (r Rect) Width() float32 {
+	return r.Max.X - r.Min.X
+}
+func (r *Rect) AddWidth(w float32) {
+	prev := r.Max
+	r.Max = Vec2{prev.X + w, prev.Y}
+}
+
+func (r *Rect) AddHeight(h float32) {
+	r.Max = Vec2{r.Max.X, r.Max.Y + h}
+}
+
+func (r Rect) Height() float32 {
+	return r.Max.Y - r.Min.Y
 }
 
 func (r Rect) Contains(p Vec2) bool {

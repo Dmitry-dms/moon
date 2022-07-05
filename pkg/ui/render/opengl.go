@@ -15,6 +15,9 @@ type GLRender struct {
 	shader            *gogl.Shader
 	triangles         int
 	lastIndc          int
+
+	textures []*gogl.Texture
+	texSlots []int32
 }
 
 const (
@@ -46,6 +49,8 @@ func NewGlRenderer() *GLRender {
 		ebo:       0,
 		shader:    s,
 		triangles: 0,
+		textures:  make([]*gogl.Texture, 0),
+		texSlots:  []int32{0, 1, 2, 3, 4, 5, 6, 7},
 	}
 	r.vaoId = gogl.GenBindVAO()
 
@@ -75,9 +80,20 @@ func (r *GLRender) render(vert []float32, indeces []int32, count int) {
 	r.Indeces = append(r.Indeces, indeces...)
 	r.triangles += count
 }
+
+func (r *GLRender) addTexture(tex *gogl.Texture) {
+	isAdded := false
+	for _, v := range r.textures {
+		if tex == v {
+			isAdded = true
+			break
+		}
+	}
+	if !isAdded {
+		r.textures = append(r.textures, tex)
+	}
+}
 func (r *GLRender) Rectangle(x, y, w, h float32, clr [4]float32) {
-	// r.Trinagle(x, y, x, y+h, x+w, y+h, clr)
-	// r.Trinagle(x+w, y+h, x+w, y, x, y, clr)
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)
 
@@ -105,7 +121,7 @@ func (r *GLRender) Rectangle(x, y, w, h float32, clr [4]float32) {
 	r.render(vert, ind, 4)
 }
 func (r *GLRender) RectangleR(x, y, w, h float32, clr [4]float32) {
-	
+
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)
 
@@ -125,6 +141,46 @@ func (r *GLRender) RectangleR(x, y, w, h float32, clr [4]float32) {
 	last := ind2 + 1
 
 	fillVertices(vert, &offset, x+w, y, 0, 0, 0, clr)
+	ind[3] = int32(ind0)
+	ind[4] = int32(ind2)
+	ind[5] = int32(last)
+
+	r.lastIndc = last + 1
+	r.render(vert, ind, 4)
+}
+
+func (r *GLRender) RectangleT(x, y, w, h float32, tex *gogl.Texture, clr [4]float32) {
+	founded := false
+	texId := 0
+	for i := 0; i < len(r.textures); i++ {
+		if r.textures[i] == tex {
+			texId = i + 1 // 0 - без текстуры
+			founded = true
+		}
+	}
+	if !founded {
+		r.addTexture(tex)
+	}
+
+	vert := make([]float32, 9*4)
+	ind := make([]int32, 6)
+
+	ind0 := r.lastIndc
+	ind1 := ind0 + 1
+	ind2 := ind1 + 1
+	offset := 0
+
+	fillVertices(vert, &offset, x, y, 1, 1, float32(texId), clr)
+	fillVertices(vert, &offset, x, y-h, 1, 0, float32(texId), clr)
+	fillVertices(vert, &offset, x+w, y-h, 0, 0, float32(texId), clr)
+
+	ind[0] = int32(ind0)
+	ind[1] = int32(ind1)
+	ind[2] = int32(ind2)
+
+	last := ind2 + 1
+
+	fillVertices(vert, &offset, x+w, y, 0, 1, float32(texId), clr)
 	ind[3] = int32(ind0)
 	ind[4] = int32(ind2)
 	ind[5] = int32(last)
@@ -278,6 +334,7 @@ func (r *GLRender) DrawArc(x, y, radius float32, steps int, sector CircleSector,
 	// indOffset += 3
 
 	r.lastIndc = ind2 + 1
+	// FIXME (not necessary): uncorrect number of triangles
 	r.render(vert, ind, 3*(numV+2))
 }
 
@@ -431,24 +488,72 @@ func (r *GLRender) RoundedRectangle(x, y, w, h float32, radius int, clr [4]float
 	r.Rectangle(x+float32(radius), y, w-float32(radius)*2, float32(radius), clr)                   //bottom
 }
 
+func (r *GLRender) RoundedRectangleT(x, y, w, h float32, radius int, shape RoundedRectShape, tex *gogl.Texture, clr [4]float32) {
+
+	topLeft := mgl32.Vec2{x + float32(radius), y - float32(radius)} //origin of arc
+	topRight := mgl32.Vec2{x + w - float32(radius), y - float32(radius)}
+	botLeft := mgl32.Vec2{x + float32(radius), y - h + float32(radius)}
+	botRight := mgl32.Vec2{x + w - float32(radius), y - h + float32(radius)}
+
+	switch shape {
+	case TopLeftRect:
+		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+		r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex, clr)               //main rect
+		r.RectangleT(x+float32(radius), y, w-float32(radius), float32(radius), tex, clr) //top rect
+	case TopRigthRect:
+		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+		r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex, clr) //main
+		r.RectangleT(x, y, w-float32(radius), float32(radius), tex, clr)
+	case BotLeftRect:
+		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+		r.RectangleT(x, y, w, h-float32(radius), tex, clr) //main
+		r.RectangleT(botLeft.X(), botLeft.Y(), w-float32(radius), float32(radius), tex, clr)
+	case BotRightRect:
+		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+		r.RectangleT(x, y, w, h-float32(radius), tex, clr) //main
+		r.RectangleT(x, botLeft.Y(), w-float32(radius), float32(radius), tex, clr)
+	case TopRect:
+		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+		r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex, clr)
+		r.RectangleT(x+float32(radius), y, w-float32(radius)*2, float32(radius), tex, clr)
+	case BotRect:
+		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+		r.RectangleT(x, y, w, h-float32(radius), tex, clr) //main
+		r.RectangleT(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), tex, clr)
+	case AllRounded:
+		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+
+		r.RectangleT(topLeft.X(), topLeft.Y(), w-float32(radius)*2, h-float32(radius)*2, tex, clr)                      //center
+		r.RectangleR(topLeft.X(), topLeft.Y()+float32(radius), w-float32(radius)*2, float32(radius), clr) //top
+		r.RectangleR(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), clr)                 //bottom
+		r.RectangleR(x, topLeft.Y(), float32(radius), h-float32(radius)*2, clr)                                       //left
+		r.RectangleR(topRight.X(), topRight.Y(), float32(radius), h-float32(radius)*2, clr)                                    //right
+	}
+
+}
+
 func (b *GLRender) Draw(camera *gogl.Camera) {
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
 	gl.BufferData(gl.ARRAY_BUFFER, len(b.Vertices)*4, gl.Ptr(b.Vertices), gl.DYNAMIC_DRAW)
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
-
 	b.shader.Use()
 
 	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
 
-	// for i := 0; i < len(b.textures); i++ {
-	// 	// gl.ActiveTexture(gl.TEXTURE0 + uint32(i)+1)
-	// 	// b.textures[i].Bind()
-	// 	b.textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
-	// }
-	// b.shader.UploadIntArray("uTextures", b.texSlots)
+	for i := 0; i < len(b.textures); i++ {
+		// gl.ActiveTexture(gl.TEXTURE0 + uint32(i)+1)
+		// b.textures[i].Bind()
+		b.textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
+	}
+	b.shader.UploadIntArray("uTextures", b.texSlots)
 
 	gogl.BindVertexArray(b.vaoId)
 
@@ -457,11 +562,10 @@ func (b *GLRender) Draw(camera *gogl.Camera) {
 	gl.DrawElements(gl.TRIANGLES, int32(b.triangles), gl.UNSIGNED_INT, nil)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
-
 	gl.BindVertexArray(0)
-	// for i := 0; i < len(b.textures); i++ {
-	// 	b.textures[i].Unbind()
-	// }
+	for i := 0; i < len(b.textures); i++ {
+		b.textures[i].Unbind()
+	}
 	b.shader.Detach()
 }
 

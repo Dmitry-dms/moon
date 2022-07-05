@@ -17,7 +17,7 @@ type Io struct {
 
 	keyPressed [570]bool
 
-	scrollX, scrollY float64
+	// scrollX, scrollY float64
 	WantCaptureMouse bool
 
 	MouseDown     [MOUSE_BTN_COUNT]bool
@@ -50,7 +50,8 @@ type Io struct {
 	//callbacks
 	SetCursor func(c CursorType)
 
-	
+	//scroll
+	ScrollX, ScrollY float64
 }
 
 type Key int
@@ -133,8 +134,6 @@ func NewIo() *Io {
 		MousePos:                Vec2{0, 0},
 		DisplaySize:             Vec2{0, 0},
 		keyPressed:              [570]bool{},
-		scrollX:                 0,
-		scrollY:                 0,
 		WantCaptureMouse:        false,
 		MouseDown:               [MOUSE_BTN_COUNT]bool{},
 		MouseReleased:           [5]bool{},
