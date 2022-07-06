@@ -31,6 +31,6 @@ func (b Button) GetColor() [4]float32 {
 func (b Button) GetId() string {
 	return b.Id
 }
-func (b Button) SetColor(clr [4]float32) {
+func (b *Button) SetColor(clr [4]float32) {
 	b.CurrentColor = clr
 }

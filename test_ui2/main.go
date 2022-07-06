@@ -171,7 +171,7 @@ func getImageFromFilePath(filePath string) (image.Image, error) {
 func firstWindow() {
 	uiCtx.BeginWindow()
 
-	if uiCtx.Button(nil) {
+	if uiCtx.Button() {
 		fmt.Println("button clicked f 1")
 	}
 	uiCtx.VSpace()
@@ -180,8 +180,8 @@ func firstWindow() {
 	}
 
 	uiCtx.VSpace()
-	if uiCtx.Button(nil) {
-		fmt.Println("button clicked f 1")
+	if uiCtx.Button() {
+		fmt.Println("button clicked f 3")
 	}
 
 	uiCtx.EndWindow()

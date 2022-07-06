@@ -26,6 +26,11 @@ type Window struct {
 	srcX, srcY    float32
 	widgetCounter int
 	widgets       []widgets.Widget
+
+	//scrollbar
+	isScrollShown bool
+	scrlBar       *Scrollbar
+	scrlY         float32
 }
 
 func NewWindow(x, y, w, h float32) *Window {
@@ -45,7 +50,9 @@ func NewWindow(x, y, w, h float32) *Window {
 		// srcY:      y + tb.h + UiCtx.CurrentStyle.TopMargin,
 
 		widgets: []widgets.Widget{},
+		scrlBar: NewScrolBar(NewRect(x+w-10, y, 20, h), NewRect(x+w-10, y, 10, 50), [4]float32{150, 155, 155, 1}),
 	}
+	wnd.scrlY = wnd.toolbar.h
 	return &wnd
 }
 
@@ -154,7 +161,64 @@ func (c *UiContext) BeginWindow() {
 	wnd.srcY = wnd.y + wnd.toolbar.h + UiCtx.CurrentStyle.TopMargin
 	wnd.rq.AddCommand(cmd)
 
+	//-----------------------------
+	c.srollbar(wnd)
+
 	c.windowStack.Push(window)
+}
+
+func (c *UiContext) srollbar(wnd *Window) {
+
+	wnd.scrlBar.x = wnd.x + wnd.w - wnd.scrlBar.w
+	wnd.scrlBar.y = wnd.y + wnd.toolbar.h
+	wnd.scrlBar.h = wnd.h - wnd.toolbar.h
+
+	scrollCommand := rounded_rect{
+		x:      wnd.scrlBar.x,
+		y:      wnd.scrlBar.y,
+		w:      wnd.scrlBar.w,
+		h:      wnd.scrlBar.h,
+		clr:    wnd.scrlBar.clr,
+		radius: 5,
+	}
+	sbCmd := command{
+		rRect: &scrollCommand,
+		t:     RoundedRect,
+	}
+	wnd.rq.AddCommand(sbCmd)
+
+	wnd.scrlBar.bX = wnd.x + wnd.w - wnd.scrlBar.w + 5
+	wnd.scrlBar.bY = wnd.y + wnd.toolbar.h + wnd.scrlY
+
+	if c.ActiveWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidget == "" {
+		factor := c.io.ScrollY * 10
+		n := wnd.scrlY - float32(factor)
+
+		if n+wnd.srcY < wnd.srcY {
+
+		} else if n+wnd.srcY >= wnd.srcY+wnd.h-wnd.toolbar.h-wnd.scrlBar.bH {
+
+		} else {
+
+			wnd.scrlY -= float32(factor)
+		}
+
+	}
+
+	scrollBtnCommand := rounded_rect{
+		x:      wnd.scrlBar.bX,
+		y:      wnd.scrlBar.bY,
+		w:      wnd.scrlBar.bW,
+		h:      wnd.scrlBar.bH,
+		clr:    [4]float32{255, 0, 0, 1},
+		radius: 5,
+	}
+
+	sbtnCmd := command{
+		rRect: &scrollBtnCommand,
+		t:     RoundedRect,
+	}
+	wnd.rq.AddCommand(sbtnCmd)
 }
 
 var r, g, b float32 = 231, 158, 162
@@ -242,7 +306,6 @@ func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 		radius: 5,
 	}
 
-
 	btn.BoundingBox = [4]float32{rect.x, rect.y, rect.w, rect.h}
 
 	cmd := command{
@@ -286,20 +349,20 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 	// Create command and append it to slice
 	{
 		rect := rect_command{
-			x:   wnd.srcX,
-			y:   wnd.srcY,
-			w:   img.Width(),
-			h:   img.Height(),
+			x:       wnd.srcX,
+			y:       wnd.srcY,
+			w:       img.Width(),
+			h:       img.Height(),
 			texture: tex,
-			clr: clr,
+			clr:     clr,
 		}
 		cmd := command{
 			rect: &rect,
-			t: RectTypeT,
+			t:    RectTypeT,
 		}
 		wnd.rq.AddCommand(cmd)
 	}
-	
+
 	img.BoundingBox = [4]float32{wnd.srcX, wnd.srcY, img.Width(), img.Height()}
 	wnd.widgetCounter++
 
@@ -307,8 +370,8 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 	return clicked
 }
 
-func (c *UiContext) VSpace()  {
-	
+func (c *UiContext) VSpace() {
+
 	wnd := c.windowStack.GetTop()
 	var s *widgets.VSpace
 
@@ -320,26 +383,17 @@ func (c *UiContext) VSpace()  {
 	wnd.srcY += s.Height
 }
 
-func (c *UiContext) Button(tex *gogl.Texture) bool {
+func (c *UiContext) Button() bool {
 
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
 
-	if len(wnd.widgets) == 0 || len(wnd.widgets) <= wnd.widgetCounter {
-		btn = &widgets.Button{
-			Id:           generateId(),
-			CurrentColor: [4]float32{67, 86, 205, 1},
-			IsActive:     false,
-		}
-		wnd.addWidget(btn)
-	} else {
-		btn = wnd.widgets[wnd.widgetCounter].(*widgets.Button)
-	}
+	btn = wnd.getWidget(widgets.ButtonWidget).(*widgets.Button)
 
 	x := wnd.srcX
 	y := wnd.srcY
-	w := float32(100)
-	h := float32(100)
+	w := btn.BoundingBox[2]
+	h := btn.BoundingBox[3]
 
 	clr := btn.CurrentColor
 
@@ -372,13 +426,7 @@ func (c *UiContext) Button(tex *gogl.Texture) bool {
 
 	cmd := command{
 		rect: &rect,
-	}
-	if tex != nil {
-		rect.texture = tex
-		cmd.t = RectTypeT
-		rect.clr = whiteColor
-	} else {
-		cmd.t = RectType
+		t:    RectType,
 	}
 
 	wnd.rq.AddCommand(cmd)
