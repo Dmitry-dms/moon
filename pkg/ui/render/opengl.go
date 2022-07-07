@@ -13,7 +13,7 @@ type GLRender struct {
 	Indeces           []int32
 	vaoId, vboId, ebo uint32
 	shader            *gogl.Shader
-	triangles         int
+	vertCount         int
 	lastIndc          int
 
 	textures []*gogl.Texture
@@ -48,20 +48,24 @@ func NewGlRenderer() *GLRender {
 		vboId:     0,
 		ebo:       0,
 		shader:    s,
-		triangles: 0,
+		vertCount: 0,
 		textures:  make([]*gogl.Texture, 0),
 		texSlots:  []int32{0, 1, 2, 3, 4, 5, 6, 7},
 	}
 	r.vaoId = gogl.GenBindVAO()
 
+	// gl.GenBuffers(1, &r.vboId)
+	// gl.GenBuffers(1, &r.ebo)
+
 	//аллоцируем место для vertices
 	r.vboId = gogl.GenBindBuffer(gl.ARRAY_BUFFER)
 	// gogl.BufferData(gl.ARRAY_BUFFER, r.vertices, gl.DYNAMIC_DRAW)
-	gl.BufferData(gl.ARRAY_BUFFER, 4*1500, nil, gl.DYNAMIC_DRAW)
+	// gl.BufferData(gl.ARRAY_BUFFER, 4*1500, nil, gl.DYNAMIC_DRAW)
 
 	r.ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 500*4, nil, gl.DYNAMIC_DRAW)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
+	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.ebo)
+	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 500*4, nil, gl.DYNAMIC_DRAW)
+	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	//включаем layout
 	gogl.SetVertexAttribPointer(0, posSize, gl.FLOAT, vertexSize*4, posOffset)
@@ -75,10 +79,10 @@ func NewGlRenderer() *GLRender {
 func (r *GLRender) NewFrame() {
 
 }
-func (r *GLRender) render(vert []float32, indeces []int32, count int) {
+func (r *GLRender) render(vert []float32, indeces []int32, vertCount int) {
 	r.Vertices = append(r.Vertices, vert...)
 	r.Indeces = append(r.Indeces, indeces...)
-	r.triangles += count
+	r.vertCount += vertCount
 }
 
 func (r *GLRender) addTexture(tex *gogl.Texture) {
@@ -146,7 +150,7 @@ func (r *GLRender) RectangleR(x, y, w, h float32, clr [4]float32) {
 	ind[5] = int32(last)
 
 	r.lastIndc = last + 1
-	r.render(vert, ind, 4)
+	r.render(vert, ind, 6)
 }
 
 func (r *GLRender) RectangleT(x, y, w, h float32, tex *gogl.Texture, clr [4]float32) {
@@ -310,6 +314,7 @@ func (r *GLRender) DrawArc(x, y, radius float32, steps int, sector CircleSector,
 	ind2++
 	ang += angle
 
+	vertC := 1
 	for ang <= 1.57 { // 90 degress ~= 1.57 radians
 		newx := sX(x, ang)
 		newY := sY(y, ang)
@@ -324,6 +329,7 @@ func (r *GLRender) DrawArc(x, y, radius float32, steps int, sector CircleSector,
 		ind2++
 
 		ang += angle
+		vertC++
 		// counterTriangles++
 	}
 	fillVertices(vert, &offset, lastX, lastY, 0, 0, 0, clr)
@@ -334,8 +340,8 @@ func (r *GLRender) DrawArc(x, y, radius float32, steps int, sector CircleSector,
 	// indOffset += 3
 
 	r.lastIndc = ind2 + 1
-	// FIXME (not necessary): uncorrect number of triangles
-	r.render(vert, ind, 3*(numV+2))
+
+	r.render(vert, ind, (numV+1)*3)
 }
 
 func (r *GLRender) Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32) {
@@ -528,44 +534,58 @@ func (r *GLRender) RoundedRectangleT(x, y, w, h float32, radius int, shape Round
 		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
 		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
 
-		r.RectangleT(topLeft.X(), topLeft.Y(), w-float32(radius)*2, h-float32(radius)*2, tex, clr)                      //center
+		r.RectangleT(topLeft.X(), topLeft.Y(), w-float32(radius)*2, h-float32(radius)*2, tex, clr)        //center
 		r.RectangleR(topLeft.X(), topLeft.Y()+float32(radius), w-float32(radius)*2, float32(radius), clr) //top
 		r.RectangleR(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), clr)                 //bottom
-		r.RectangleR(x, topLeft.Y(), float32(radius), h-float32(radius)*2, clr)                                       //left
-		r.RectangleR(topRight.X(), topRight.Y(), float32(radius), h-float32(radius)*2, clr)                                    //right
+		r.RectangleR(x, topLeft.Y(), float32(radius), h-float32(radius)*2, clr)                           //left
+		r.RectangleR(topRight.X(), topRight.Y(), float32(radius), h-float32(radius)*2, clr)               //right
 	}
 
 }
 
 func (b *GLRender) Draw(camera *gogl.Camera) {
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
-	gl.BufferData(gl.ARRAY_BUFFER, len(b.Vertices)*4, gl.Ptr(b.Vertices), gl.DYNAMIC_DRAW)
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	// gl.Enable(gl.BLEND)
+	// gl.BlendEquation(gl.FUNC_ADD)
+	// gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	// gl.Disable(gl.CULL_FACE)
+	// gl.Disable(gl.DEPTH_TEST)
+	// gl.Enable(gl.SCISSOR_TEST)
+	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
 
 	b.shader.Use()
+
+	gogl.BindVertexArray(b.vaoId)
+
+	// var vaoHandle uint32
+	// gl.GenVertexArrays(1, &vaoHandle)
+	// gl.BindVertexArray(vaoHandle)
+
+	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
+	gl.BufferData(gl.ARRAY_BUFFER, len(b.Vertices)*4, gl.Ptr(b.Vertices), gl.DYNAMIC_DRAW)
+	// gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(b.Indeces)*4, gl.Ptr(b.Indeces), gl.DYNAMIC_DRAW)
 
 	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
 
-	for i := 0; i < len(b.textures); i++ {
-		// gl.ActiveTexture(gl.TEXTURE0 + uint32(i)+1)
-		// b.textures[i].Bind()
-		b.textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
-	}
-	b.shader.UploadIntArray("uTextures", b.texSlots)
+	// for i := 0; i < len(b.textures); i++ {
+	// 	b.textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
+	// }
+	// b.shader.UploadIntArray("uTextures", b.texSlots)
 
-	gogl.BindVertexArray(b.vaoId)
+	//
 
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(b.Indeces)*4, gl.Ptr(b.Indeces), gl.DYNAMIC_DRAW)
-	gl.DrawElements(gl.TRIANGLES, int32(b.triangles), gl.UNSIGNED_INT, nil)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
+	gl.DrawElements(gl.TRIANGLES, int32(b.vertCount), gl.UNSIGNED_INT, nil)
+	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
-	gl.BindVertexArray(0)
-	for i := 0; i < len(b.textures); i++ {
-		b.textures[i].Unbind()
-	}
+	// gl.BindVertexArray(0)
+	// for i := 0; i < len(b.textures); i++ {
+	// 	b.textures[i].Unbind()
+	// }
+	// gl.DeleteVertexArrays(1, &vaoHandle)
 	b.shader.Detach()
 }
 
@@ -573,5 +593,5 @@ func (r *GLRender) End() {
 	r.Vertices = []float32{}
 	r.Indeces = []int32{}
 	r.lastIndc = 0
-	r.triangles = 0
+	r.vertCount = 0
 }

@@ -3,7 +3,7 @@ package ui
 import (
 	// "fmt"
 	"fmt"
-	"math/rand"
+	// "math/rand"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
@@ -26,6 +26,7 @@ type Window struct {
 	srcX, srcY    float32
 	widgetCounter int
 	widgets       []widgets.Widget
+	virtualHeight float32 // сумма высот всех виджетов (для скроллинга)
 
 	//scrollbar
 	isScrollShown bool
@@ -77,8 +78,8 @@ const (
 func (c *UiContext) BeginWindow() {
 	var window *Window
 	if len(c.Windows) <= c.currentWindow {
-		r := rand.Intn(500)
-		g := rand.Intn(300)
+		r := 0//rand.Intn(500)
+		g := 0//rand.Intn(300)
 		window = NewWindow(defx+float32(r), defy+float32(g), defw, defh)
 		c.Windows = append(c.Windows, window)
 		window.Id = generateId()
@@ -162,7 +163,11 @@ func (c *UiContext) BeginWindow() {
 	wnd.rq.AddCommand(cmd)
 
 	//-----------------------------
-	c.srollbar(wnd)
+	if wnd.isScrollShown {
+		c.srollbar(wnd)
+	} else {
+		
+	}
 
 	c.windowStack.Push(window)
 }
@@ -183,7 +188,8 @@ func (c *UiContext) srollbar(wnd *Window) {
 	}
 	sbCmd := command{
 		rRect: &scrollCommand,
-		t:     RoundedRect,
+		t:     ScrollbarCmd,
+		shown: wnd.isScrollShown,
 	}
 	wnd.rq.AddCommand(sbCmd)
 
@@ -216,12 +222,26 @@ func (c *UiContext) srollbar(wnd *Window) {
 
 	sbtnCmd := command{
 		rRect: &scrollBtnCommand,
-		t:     RoundedRect,
+		t:     ScrollButtonCmd,
+		shown: wnd.isScrollShown,
 	}
 	wnd.rq.AddCommand(sbtnCmd)
 }
 
 var r, g, b float32 = 231, 158, 162
+
+func (w *Window) isWindowEnd(widgHeight float32) (ratio float32, intersect bool) {
+	if w.srcY+widgHeight > w.h+w.y {
+		// w.scrlY = 0
+		w.isScrollShown = true
+		intersect = true
+		g := w.h + w.y - w.srcY
+		ratio = float32(g / widgHeight)
+	} else {
+		w.isScrollShown = false
+	}
+	return
+}
 
 func (w *Window) addWidget(widg widgets.Widget) {
 	w.widgets = append(w.widgets, widg)
@@ -310,6 +330,7 @@ func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 
 	cmd := command{
 		rRect: &rect,
+		shown: true,
 	}
 	if tex != nil {
 		rect.texture = tex
@@ -317,6 +338,12 @@ func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 		rect.clr = whiteColor
 	} else {
 		cmd.t = RectType
+	}
+
+	if r, ok := wnd.isWindowEnd(btn.Height()); ok && r > 0 {
+		rect.h = btn.Height() * r
+		fmt.Println(rect.h, r)
+
 	}
 
 	wnd.rq.AddCommand(cmd)
@@ -346,6 +373,8 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 	}
 	clicked := c.io.MouseClicked[0] && inRect
 
+	
+
 	// Create command and append it to slice
 	{
 		rect := rect_command{
@@ -359,12 +388,21 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 		cmd := command{
 			rect: &rect,
 			t:    RectTypeT,
+			shown: true,
+		}
+
+		if r, ok := wnd.isWindowEnd(img.Height()); ok && r > 0 {
+			rect.h = img.Height() * r
+			fmt.Println(rect.h, r)
+	
 		}
 		wnd.rq.AddCommand(cmd)
 	}
 
 	img.BoundingBox = [4]float32{wnd.srcX, wnd.srcY, img.Width(), img.Height()}
 	wnd.widgetCounter++
+
+
 
 	wnd.srcY += img.Height()
 	return clicked
@@ -411,10 +449,17 @@ func (c *UiContext) Button() bool {
 		btn.SetColor([4]float32{150, btn.CurrentColor[1], btn.CurrentColor[2], btn.CurrentColor[3]})
 	} else {
 		btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
-		// btn.SetColor(whiteColor)
 	}
 
 	clicked := c.io.MouseClicked[0] && inRect
+
+	//DEBUG
+	scroll := float32(0)
+	if c.io.ScrollY != 0 && c.ActiveWidget == btn.Id {
+		scroll += float32(c.io.ScrollY) * 10
+		btn.AddWidth(scroll)
+		btn.AddHeight(scroll)
+	}
 
 	rect := rect_command{
 		x:   x,
@@ -427,12 +472,27 @@ func (c *UiContext) Button() bool {
 	cmd := command{
 		rect: &rect,
 		t:    RectType,
+		shown: true,
 	}
 
-	wnd.rq.AddCommand(cmd)
-	wnd.widgetCounter++
+	if r, ok := wnd.isWindowEnd(rect.h); ok && r > 0 {
+		rect.h = h * r
+		// fmt.Println(rect.h, r)
+
+	} else {
+
+	}
+	if rect.y > wnd.y+wnd.h {
+
+	} else {
+
+	}
 
 	wnd.srcY += rect.h
+	wnd.rq.AddCommand(cmd)
+
+	wnd.widgetCounter++
+
 	return clicked
 }
 

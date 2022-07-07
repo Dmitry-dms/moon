@@ -3,6 +3,8 @@ package ui
 import (
 	// "fmt"
 
+	// "fmt"
+
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/render"
@@ -232,6 +234,8 @@ func (c *UiContext) EndFrame() {
 
 	for _, v := range c.sortedWindows {
 		cmds := v.rq.commands
+		// fmt.Println("---------------------------")
+
 		for i := 0; i < v.rq.CmdCount; i++ {
 			comm := cmds[i]
 			switch comm.t {
@@ -259,6 +263,9 @@ func (c *UiContext) EndFrame() {
 				size := c.camera.GetProjectionSize()
 				c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, comm.window.clr)
 				c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, comm.window.toolbar.clr)
+
+				// c.renderer.RectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h,  comm.window.clr)
+				// c.renderer.RectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, comm.window.toolbar.clr)
 			default:
 			}
 		}

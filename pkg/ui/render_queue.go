@@ -1,57 +1,61 @@
 package ui
 
-import "github.com/Dmitry-dms/moon/pkg/gogl"
+import (
+	// "fmt"
+
+	"github.com/Dmitry-dms/moon/pkg/gogl"
+)
 
 const MAX_COMMANDS_COUNT = 1000
 
 type RenderQueue struct {
 	commands     []command
 	bufferWindow []command
-	activeBuffer []command
-	lastBuffer   []command
-	CmdCount     int
-	Zindex       int
-	Windows      map[string]pair
-	LastPar      pair
-}
-type pair struct {
-	x, y int
+
+	CmdCount int
+	Zindex   int
 }
 
 func NewRenderQueue() *RenderQueue {
 	q := RenderQueue{
 		commands: make([]command, 0),
-		Windows:  make(map[string]pair),
 	}
 	return &q
 }
 
 func (r *RenderQueue) AddCommand(cmd command) {
+	// fmt.Printf("%s \n", cmd.t)
 	if cmd.t == WindowStartCmd {
 	}
 	if cmd.t == WindowCmd {
 		r.commands = append(r.commands, r.bufferWindow...)
+		// fmt.Println("End window ", r.CmdCount)
+		
 		return
+	}
+	if cmd.t == ScrollButtonCmd || cmd.t == ScrollbarCmd {
+		if cmd.shown {
+			cmd.t = RoundedRect
+		}
 	}
 	r.bufferWindow = append(r.bufferWindow, cmd)
 	r.CmdCount++
 }
 
 func (r *RenderQueue) Commands() []command {
-	r.commands = append(r.commands, r.activeBuffer...)
 	return r.commands
 }
 
 func (r *RenderQueue) clearCommands() {
 	r.commands = []command{}
 	r.bufferWindow = []command{}
-	r.activeBuffer = []command{}
 	r.CmdCount = 0
 }
 
 type command struct {
 	t        CmdType
 	priority int
+	shown    bool
 	rect     *rect_command
 	triangle *triangle_command
 	rRect    *rounded_rect
@@ -106,4 +110,6 @@ const (
 	WindowCmd
 	ToolbarCmd
 	WindowStartCmd
+	ScrollbarCmd
+	ScrollButtonCmd
 )

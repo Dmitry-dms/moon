@@ -86,6 +86,10 @@ func main() {
 
 	tex, _ = tex.Init("assets/images/mario.png")
 
+	// fb, err := NewFramebuffer(200, 200)
+	// if err != nil {
+	// 	panic(err)
+	// }
 	// var p bool
 	for !window.ShouldClose() {
 		glfw.PollEvents()
@@ -94,10 +98,10 @@ func main() {
 
 		uiCtx.NewFrame()
 
-		firstWindow()
-		secondWindow()
-
 		
+		firstWindow()
+	
+		// secondWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 
@@ -123,9 +127,9 @@ func main() {
 			fmt.Println(uiCtx.ActiveWidget)
 			// fmt.Println(uiCtx.Io().ScrollX, uiCtx.Io().ScrollY)
 		}
-
+		// fb.Bind()
 		uiCtx.EndFrame()
-
+		// fb.Unbind()
 		// rend.NewFrame()
 
 		// rend.Rectangle(500, 500, 100, 100, [4]float32{1, 0, 0, 1})
@@ -174,10 +178,10 @@ func firstWindow() {
 	if uiCtx.Button() {
 		fmt.Println("button clicked f 1")
 	}
-	uiCtx.VSpace()
-	if uiCtx.ButtonRR(tex) {
-		fmt.Println("button clicked f 2")
-	}
+	// uiCtx.VSpace()
+	// if uiCtx.ButtonRR(tex) {
+	// 	fmt.Println("button clicked f 2")
+	// }
 
 	uiCtx.VSpace()
 	if uiCtx.Button() {
@@ -222,3 +226,5 @@ func scrollCallback(w *glfw.Window, xoff float64, yoff float64) {
 	uiCtx.Io().ScrollX = xoff
 	uiCtx.Io().ScrollY = yoff
 }
+
+
