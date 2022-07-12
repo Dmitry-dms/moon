@@ -91,17 +91,19 @@ func main() {
 	// 	panic(err)
 	// }
 	// var p bool
+	// gl.Enable(gl.SCISSOR_TEST)
 	for !window.ShouldClose() {
 		glfw.PollEvents()
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
+		
 
 		uiCtx.NewFrame()
 
 		
 		firstWindow()
 	
-		// secondWindow()
+		secondWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 
@@ -149,6 +151,7 @@ func main() {
 		// batch.FlushBatch()
 
 		window.SwapBuffers()
+		
 		endTime = float32(glfw.GetTime())
 		dt = endTime - beginTime
 		beginTime = endTime
@@ -178,14 +181,20 @@ func firstWindow() {
 	if uiCtx.Button() {
 		fmt.Println("button clicked f 1")
 	}
-	// uiCtx.VSpace()
+	uiCtx.VSpace()
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
+	if uiCtx.Image(tex) {
+		fmt.Println("image clicked s 1")
+	}
 
 	uiCtx.VSpace()
-	if uiCtx.Button() {
-		fmt.Println("button clicked f 3")
+	// if uiCtx.Button() {
+	// 	fmt.Println("button clicked f 3")
+	// }
+	if uiCtx.Image(tex) {
+		fmt.Println("image clicked s 2")
 	}
 
 	uiCtx.EndWindow()

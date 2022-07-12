@@ -67,6 +67,7 @@ type rect_command struct {
 	x, y, w, h float32
 	clr        [4]float32
 	id         string
+	scaleFactor float32
 	texture    *gogl.Texture
 }
 type triangle_command struct {

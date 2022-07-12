@@ -23,15 +23,19 @@ type Window struct {
 	minW, minH float32
 
 	//inner widgets
-	srcX, srcY    float32
-	widgetCounter int
-	widgets       []widgets.Widget
-	virtualHeight float32 // сумма высот всех виджетов (для скроллинга)
+	cursorX, cursorY float32
+	widgetCounter    int
+	widgets          []widgets.Widget
+	virtualHeight    float32 // сумма высот всех виджетов (для скроллинга)
 
 	//scrollbar
 	isScrollShown bool
 	scrlBar       *Scrollbar
 	scrlY         float32
+
+	//shown space
+	startYshow float32
+	endYshow   float32
 }
 
 func NewWindow(x, y, w, h float32) *Window {
@@ -47,6 +51,9 @@ func NewWindow(x, y, w, h float32) *Window {
 		rq:        NewRenderQueue(),
 		minW:      200,
 		minH:      200,
+
+		startYshow: y+tb.h,
+		endYshow:   y + h,
 		// srcX:      x,
 		// srcY:      y + tb.h + UiCtx.CurrentStyle.TopMargin,
 
@@ -78,8 +85,8 @@ const (
 func (c *UiContext) BeginWindow() {
 	var window *Window
 	if len(c.Windows) <= c.currentWindow {
-		r := 0//rand.Intn(500)
-		g := 0//rand.Intn(300)
+		r := 0 //rand.Intn(500)
+		g := 0 //rand.Intn(300)
 		window = NewWindow(defx+float32(r), defy+float32(g), defw, defh)
 		c.Windows = append(c.Windows, window)
 		window.Id = generateId()
@@ -137,6 +144,8 @@ func (c *UiContext) BeginWindow() {
 	wnd.w = newW
 	wnd.outerRect.Min = Vec2{wnd.x, wnd.y}
 	wnd.outerRect.Max = Vec2{wnd.x + wnd.w, wnd.y + wnd.h}
+	// wnd.startYshow = newY
+	// wnd.endYshow = newH + newY
 
 	cl := [4]float32{r, g, b, 0.8}
 	cmdw := window_command{
@@ -158,16 +167,9 @@ func (c *UiContext) BeginWindow() {
 		window:   &cmdw,
 	}
 
-	wnd.srcX = wnd.x + UiCtx.CurrentStyle.LeftMargin
-	wnd.srcY = wnd.y + wnd.toolbar.h + UiCtx.CurrentStyle.TopMargin
+	wnd.cursorX = wnd.x + UiCtx.CurrentStyle.LeftMargin
+	wnd.cursorY = wnd.y + wnd.toolbar.h + UiCtx.CurrentStyle.TopMargin
 	wnd.rq.AddCommand(cmd)
-
-	//-----------------------------
-	if wnd.isScrollShown {
-		c.srollbar(wnd)
-	} else {
-		
-	}
 
 	c.windowStack.Push(window)
 }
@@ -199,10 +201,15 @@ func (c *UiContext) srollbar(wnd *Window) {
 	if c.ActiveWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidget == "" {
 		factor := c.io.ScrollY * 10
 		n := wnd.scrlY - float32(factor)
+		//===================
+		wnd.endYshow += float32(factor)
+		wnd.startYshow += float32(factor)
 
-		if n+wnd.srcY < wnd.srcY {
 
-		} else if n+wnd.srcY >= wnd.srcY+wnd.h-wnd.toolbar.h-wnd.scrlBar.bH {
+
+		if n+wnd.cursorY < wnd.cursorY {
+
+		} else if n+wnd.cursorY >= wnd.cursorY+wnd.h-wnd.toolbar.h-wnd.scrlBar.bH {
 
 		} else {
 
@@ -231,14 +238,14 @@ func (c *UiContext) srollbar(wnd *Window) {
 var r, g, b float32 = 231, 158, 162
 
 func (w *Window) isWindowEnd(widgHeight float32) (ratio float32, intersect bool) {
-	if w.srcY+widgHeight > w.h+w.y {
+	if w.cursorY+widgHeight > w.h+w.y {
 		// w.scrlY = 0
-		w.isScrollShown = true
+		// w.isScrollShown = true
 		intersect = true
-		g := w.h + w.y - w.srcY
+		g := w.h + w.y - w.cursorY
 		ratio = float32(g / widgHeight)
 	} else {
-		w.isScrollShown = false
+		// w.isScrollShown = false
 	}
 	return
 }
@@ -261,13 +268,13 @@ func (wnd *Window) getWidget(w widgets.WidgetType) widgets.Widget {
 				Id:           generateId(),
 				CurrentColor: [4]float32{67, 86, 205, 1},
 				IsActive:     false,
-				BoundingBox:  [4]float32{wnd.srcX, wnd.srcY, float32(100), float32(100)},
+				BoundingBox:  [4]float32{wnd.cursorX, wnd.cursorY, float32(100), float32(100)},
 			}
 		case widgets.ImageWidget:
 			widg = &widgets.Image{
 				Id:           generateId(),
 				CurrentColor: whiteColor,
-				BoundingBox:  [4]float32{wnd.srcX, wnd.srcY, float32(100), float32(100)},
+				BoundingBox:  [4]float32{wnd.cursorX, wnd.cursorY, float32(100), float32(100)},
 			}
 		case widgets.VerticalSpacingWidget:
 			widg = &widgets.VSpace{
@@ -318,8 +325,8 @@ func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 	}
 
 	rect := rounded_rect{
-		x:      wnd.srcX,
-		y:      wnd.srcY,
+		x:      wnd.cursorX,
+		y:      wnd.cursorY,
 		w:      btn.Width(),
 		h:      btn.Height(),
 		clr:    clr,
@@ -349,7 +356,7 @@ func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 	wnd.rq.AddCommand(cmd)
 	wnd.widgetCounter++
 
-	wnd.srcY += rect.h
+	wnd.cursorY += rect.h
 	return clicked
 }
 
@@ -373,38 +380,34 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 	}
 	clicked := c.io.MouseClicked[0] && inRect
 
-	
-
 	// Create command and append it to slice
 	{
 		rect := rect_command{
-			x:       wnd.srcX,
-			y:       wnd.srcY,
+			x:       wnd.cursorX,
+			y:       wnd.cursorY,
 			w:       img.Width(),
 			h:       img.Height(),
 			texture: tex,
 			clr:     clr,
 		}
 		cmd := command{
-			rect: &rect,
-			t:    RectTypeT,
+			rect:  &rect,
+			t:     RectTypeT,
 			shown: true,
 		}
 
 		if r, ok := wnd.isWindowEnd(img.Height()); ok && r > 0 {
 			rect.h = img.Height() * r
-			fmt.Println(rect.h, r)
-	
+			rect.scaleFactor = r
+			// fmt.Println(rect.h, r)
 		}
 		wnd.rq.AddCommand(cmd)
 	}
 
-	img.BoundingBox = [4]float32{wnd.srcX, wnd.srcY, img.Width(), img.Height()}
+	img.BoundingBox = [4]float32{wnd.cursorX, wnd.cursorY, img.Width(), img.Height()}
 	wnd.widgetCounter++
 
-
-
-	wnd.srcY += img.Height()
+	wnd.cursorY += img.Height()
 	return clicked
 }
 
@@ -418,50 +421,34 @@ func (c *UiContext) VSpace() {
 	// img.BoundingBox = [4]float32{wnd.srcX, wnd.srcY, img.Width(), img.Height()}
 	wnd.widgetCounter++
 
-	wnd.srcY += s.Height
+	wnd.cursorY += s.Height
 }
 
 func (c *UiContext) Button() bool {
 
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
+	var clicked, inRect bool
+	var cmd command
+	var rect rect_command
+
+	if wnd.startYshow >=  wnd.cursorY {
+		// fmt.Println(wnd.startYshow,wnd.cursorY)
+		// rect.h -= wnd.startYshow - wnd.cursorY
+		// rect.y += wnd.startYshow - wnd.cursorY
+		wnd.cursorY -= wnd.scrlY
+	}
+
 
 	btn = wnd.getWidget(widgets.ButtonWidget).(*widgets.Button)
 
-	x := wnd.srcX
-	y := wnd.srcY
+	x := wnd.cursorX
+	y := wnd.cursorY
 	w := btn.BoundingBox[2]
 	h := btn.BoundingBox[3]
-
 	clr := btn.CurrentColor
 
-	inRect := PointInRect(c.io.MousePos, NewRect(x, y, w, h))
-
-	if wnd == c.ActiveWindow && inRect {
-
-		c.ActiveWidget = btn.GetId()
-		if c.io.MouseClicked[0] {
-			btn.IsActive = !btn.IsActive
-		}
-	}
-
-	if btn.IsActive {
-		btn.SetColor([4]float32{150, btn.CurrentColor[1], btn.CurrentColor[2], btn.CurrentColor[3]})
-	} else {
-		btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
-	}
-
-	clicked := c.io.MouseClicked[0] && inRect
-
-	//DEBUG
-	scroll := float32(0)
-	if c.io.ScrollY != 0 && c.ActiveWidget == btn.Id {
-		scroll += float32(c.io.ScrollY) * 10
-		btn.AddWidth(scroll)
-		btn.AddHeight(scroll)
-	}
-
-	rect := rect_command{
+	rect = rect_command{
 		x:   x,
 		y:   y,
 		w:   w,
@@ -469,26 +456,62 @@ func (c *UiContext) Button() bool {
 		clr: clr,
 	}
 
-	cmd := command{
-		rect: &rect,
-		t:    RectType,
-		shown: true,
-	}
-
 	if r, ok := wnd.isWindowEnd(rect.h); ok && r > 0 {
 		rect.h = h * r
-		// fmt.Println(rect.h, r)
 
-	} else {
+	} 
 
+	// fmt.Println(wnd.h, wnd.endYshow - wnd.startYshow)
+	// fmt.Println( wnd.startYshow,wnd.cursorY)
+	
+
+	{
+		inRect = PointInRect(c.io.MousePos, NewRect(x, y, w, rect.h))
+
+		if wnd == c.ActiveWindow && inRect {
+
+			c.ActiveWidget = btn.GetId()
+			if c.io.MouseClicked[0] {
+				btn.IsActive = !btn.IsActive
+			}
+		}
+
+		if btn.IsActive {
+			btn.SetColor([4]float32{150, btn.CurrentColor[1], btn.CurrentColor[2], btn.CurrentColor[3]})
+		} else {
+			btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
+		}
+
+		clicked = c.io.MouseClicked[0] && inRect
+
+		//DEBUG
+		// scroll := float32(0)
+		// if c.io.ScrollY != 0 && c.ActiveWidget == btn.Id {
+		// 	scroll += float32(c.io.ScrollY) * 10
+		// 	btn.AddWidth(scroll)
+		// 	btn.AddHeight(scroll)
+		// }
+		cmd = command{
+			rect:  &rect,
+			t:     RectType,
+			shown: true,
+		}
 	}
+
+	if wnd.startYshow != wnd.y {
+		// wnd.startYshow += wnd.y - wnd.startYshow
+		// fmt.Println(wnd.startYshow,wnd.y)
+		// rect.h -= wnd.y - wnd.startYshow
+	}
+
+	
 	if rect.y > wnd.y+wnd.h {
 
 	} else {
 
 	}
 
-	wnd.srcY += rect.h
+	wnd.cursorY += btn.Height()
 	wnd.rq.AddCommand(cmd)
 
 	wnd.widgetCounter++
@@ -499,12 +522,28 @@ func (c *UiContext) Button() bool {
 func (c *UiContext) EndWindow() {
 
 	wnd := c.windowStack.Pop()
+	//-----------------------------
+	if wnd.isScrollShown {
+		c.srollbar(wnd)
+	} else {
+		wnd.startYshow = wnd.y + wnd.toolbar.h
+		wnd.endYshow = wnd.y + wnd.h
+		wnd.scrlY = 0
+	}
 
 	cmd := command{
 		priority: 0,
 		t:        WindowCmd,
 		// window:   cmdw,
 	}
+
+	if wnd.cursorY > wnd.y+wnd.h {
+		wnd.isScrollShown = true
+	} else {
+		// fmt.Println(wnd.y+wnd.h,wnd.cursorY)
+		wnd.isScrollShown = false
+	}
+
 	wnd.rq.AddCommand(cmd)
 	c.currentWindow++
 	wnd.widgetCounter = 0

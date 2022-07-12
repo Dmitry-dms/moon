@@ -153,7 +153,7 @@ func (r *GLRender) RectangleR(x, y, w, h float32, clr [4]float32) {
 	r.render(vert, ind, 6)
 }
 
-func (r *GLRender) RectangleT(x, y, w, h float32, tex *gogl.Texture, clr [4]float32) {
+func (r *GLRender) RectangleT(x, y, w, h float32, tex *gogl.Texture, uv0, uv1, f float32, clr [4]float32) {
 	founded := false
 	texId := 0
 	for i := 0; i < len(r.textures); i++ {
@@ -174,9 +174,25 @@ func (r *GLRender) RectangleT(x, y, w, h float32, tex *gogl.Texture, clr [4]floa
 	ind2 := ind1 + 1
 	offset := 0
 
-	fillVertices(vert, &offset, x, y, 1, 1, float32(texId), clr)
-	fillVertices(vert, &offset, x, y-h, 1, 0, float32(texId), clr)
-	fillVertices(vert, &offset, x+w, y-h, 0, 0, float32(texId), clr)
+	// var v00, v10, v11, v01 float32
+	// v00 = uv0
+	// v11 = uv1
+	// v10 = uv1
+	// v01 = uv0
+
+	// factor := float32(1)
+
+	if f != 0 {
+		// factor = f
+		// uv1 -= 0.4
+		// h = f
+	} else {
+		f = 1
+	}
+
+	fillVertices(vert, &offset, x, y, uv1, uv1, float32(texId), clr)
+	fillVertices(vert, &offset, x, y-h, uv1, uv0+(1-f), float32(texId), clr)
+	fillVertices(vert, &offset, x+w, y-h, uv0, uv0+(1-f), float32(texId), clr)
 
 	ind[0] = int32(ind0)
 	ind[1] = int32(ind1)
@@ -184,13 +200,13 @@ func (r *GLRender) RectangleT(x, y, w, h float32, tex *gogl.Texture, clr [4]floa
 
 	last := ind2 + 1
 
-	fillVertices(vert, &offset, x+w, y, 0, 1, float32(texId), clr)
+	fillVertices(vert, &offset, x+w, y, uv0, uv1, float32(texId), clr)
 	ind[3] = int32(ind0)
 	ind[4] = int32(ind2)
 	ind[5] = int32(last)
 
 	r.lastIndc = last + 1
-	r.render(vert, ind, 4)
+	r.render(vert, ind, 6)
 }
 
 func fillVertices(vert []float32, startOffset *int, x, y, uv0, uv1, texId float32, clr [4]float32) {
@@ -494,63 +510,62 @@ func (r *GLRender) RoundedRectangle(x, y, w, h float32, radius int, clr [4]float
 	r.Rectangle(x+float32(radius), y, w-float32(radius)*2, float32(radius), clr)                   //bottom
 }
 
-func (r *GLRender) RoundedRectangleT(x, y, w, h float32, radius int, shape RoundedRectShape, tex *gogl.Texture, clr [4]float32) {
+func (r *GLRender) RoundedRectangleT(x, y, w, h float32, radius int, shape RoundedRectShape, tex *gogl.Texture, uv1, uv0 float32, clr [4]float32) {
 
-	topLeft := mgl32.Vec2{x + float32(radius), y - float32(radius)} //origin of arc
-	topRight := mgl32.Vec2{x + w - float32(radius), y - float32(radius)}
-	botLeft := mgl32.Vec2{x + float32(radius), y - h + float32(radius)}
-	botRight := mgl32.Vec2{x + w - float32(radius), y - h + float32(radius)}
+	// topLeft := mgl32.Vec2{x + float32(radius), y - float32(radius)} //origin of arc
+	// topRight := mgl32.Vec2{x + w - float32(radius), y - float32(radius)}
+	// botLeft := mgl32.Vec2{x + float32(radius), y - h + float32(radius)}
+	// botRight := mgl32.Vec2{x + w - float32(radius), y - h + float32(radius)}
 
-	switch shape {
-	case TopLeftRect:
-		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
-		r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex, clr)               //main rect
-		r.RectangleT(x+float32(radius), y, w-float32(radius), float32(radius), tex, clr) //top rect
-	case TopRigthRect:
-		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
-		r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex, clr) //main
-		r.RectangleT(x, y, w-float32(radius), float32(radius), tex, clr)
-	case BotLeftRect:
-		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
-		r.RectangleT(x, y, w, h-float32(radius), tex, clr) //main
-		r.RectangleT(botLeft.X(), botLeft.Y(), w-float32(radius), float32(radius), tex, clr)
-	case BotRightRect:
-		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
-		r.RectangleT(x, y, w, h-float32(radius), tex, clr) //main
-		r.RectangleT(x, botLeft.Y(), w-float32(radius), float32(radius), tex, clr)
-	case TopRect:
-		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
-		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
-		r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex, clr)
-		r.RectangleT(x+float32(radius), y, w-float32(radius)*2, float32(radius), tex, clr)
-	case BotRect:
-		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
-		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
-		r.RectangleT(x, y, w, h-float32(radius), tex, clr) //main
-		r.RectangleT(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), tex, clr)
-	case AllRounded:
-		r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
-		r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
-		r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
-		r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+	// switch shape {
+	// case TopLeftRect:
+	// 	r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+	// 	r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex,uv0,uv1, clr)               //main rect
+	// 	r.RectangleT(x+float32(radius), y, w-float32(radius), float32(radius), tex,uv0,uv1, clr) //top rect
+	// case TopRigthRect:
+	// 	r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+	// 	r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex,uv0,uv1, clr) //main
+	// 	r.RectangleT(x, y, w-float32(radius), float32(radius), tex,uv0,uv1, clr)
+	// case BotLeftRect:
+	// 	r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+	// 	r.RectangleT(x, y, w, h-float32(radius), tex,uv0,uv1, clr) //main
+	// 	r.RectangleT(botLeft.X(), botLeft.Y(), w-float32(radius), float32(radius), tex,uv0,uv1, clr)
+	// case BotRightRect:
+	// 	r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+	// 	r.RectangleT(x, y, w, h-float32(radius), tex,uv0,uv1, clr) //main
+	// 	r.RectangleT(x, botLeft.Y(), w-float32(radius), float32(radius), tex,uv0,uv1, clr)
+	// case TopRect:
+	// 	r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+	// 	r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+	// 	r.RectangleT(x, y-float32(radius), w, h-float32(radius), tex,uv0,uv1, clr)
+	// 	r.RectangleT(x+float32(radius), y, w-float32(radius)*2, float32(radius), tex,uv0,uv1, clr)
+	// case BotRect:
+	// 	r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+	// 	r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
+	// 	r.RectangleT(x, y, w, h-float32(radius), tex, uv0,uv1,clr) //main
+	// 	r.RectangleT(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), tex,uv0,uv1, clr)
+	// case AllRounded:
+	// 	r.DrawArc(topLeft.X(), topLeft.Y(), float32(radius), steps, TopLeft, clr)
+	// 	r.DrawArc(topRight.X(), topRight.Y(), float32(radius), steps, TopRight, clr)
+	// 	r.DrawArc(botLeft.X(), botLeft.Y(), float32(radius), steps, BotLeft, clr)
+	// 	r.DrawArc(botRight.X(), botRight.Y(), float32(radius), steps, BotRight, clr)
 
-		r.RectangleT(topLeft.X(), topLeft.Y(), w-float32(radius)*2, h-float32(radius)*2, tex, clr)        //center
-		r.RectangleR(topLeft.X(), topLeft.Y()+float32(radius), w-float32(radius)*2, float32(radius), clr) //top
-		r.RectangleR(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), clr)                 //bottom
-		r.RectangleR(x, topLeft.Y(), float32(radius), h-float32(radius)*2, clr)                           //left
-		r.RectangleR(topRight.X(), topRight.Y(), float32(radius), h-float32(radius)*2, clr)               //right
-	}
+	// 	r.RectangleT(topLeft.X(), topLeft.Y(), w-float32(radius)*2, h-float32(radius)*2, tex, uv0,uv1,clr)        //center
+	// 	r.RectangleR(topLeft.X(), topLeft.Y()+float32(radius), w-float32(radius)*2, float32(radius), clr) //top
+	// 	r.RectangleR(botLeft.X(), botLeft.Y(), w-float32(radius)*2, float32(radius), clr)                 //bottom
+	// 	r.RectangleR(x, topLeft.Y(), float32(radius), h-float32(radius)*2, clr)                           //left
+	// 	r.RectangleR(topRight.X(), topRight.Y(), float32(radius), h-float32(radius)*2, clr)               //right
+	// }
 
 }
 
 func (b *GLRender) Draw(camera *gogl.Camera) {
-
 	// gl.Enable(gl.BLEND)
 	// gl.BlendEquation(gl.FUNC_ADD)
 	// gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	// gl.Disable(gl.CULL_FACE)
 	// gl.Disable(gl.DEPTH_TEST)
-	// gl.Enable(gl.SCISSOR_TEST)
+	gl.Enable(gl.SCISSOR_TEST)
 	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
 
 	b.shader.Use()
@@ -571,10 +586,10 @@ func (b *GLRender) Draw(camera *gogl.Camera) {
 	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
 
-	// for i := 0; i < len(b.textures); i++ {
-	// 	b.textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
-	// }
-	// b.shader.UploadIntArray("uTextures", b.texSlots)
+	for i := 0; i < len(b.textures); i++ {
+		b.textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
+	}
+	b.shader.UploadIntArray("uTextures", b.texSlots)
 
 	//
 
@@ -582,11 +597,17 @@ func (b *GLRender) Draw(camera *gogl.Camera) {
 	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	// gl.BindVertexArray(0)
-	// for i := 0; i < len(b.textures); i++ {
-	// 	b.textures[i].Unbind()
-	// }
+	for i := 0; i < len(b.textures); i++ {
+		b.textures[i].Unbind()
+	}
 	// gl.DeleteVertexArrays(1, &vaoHandle)
 	b.shader.Detach()
+
+	gl.Disable(gl.SCISSOR_TEST)
+}
+
+func (r *GLRender) Scissor(x, y, w, h int32) {
+	gl.Scissor(x, y, w, h)
 }
 
 func (r *GLRender) End() {

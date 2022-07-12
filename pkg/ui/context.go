@@ -5,6 +5,8 @@ import (
 
 	// "fmt"
 
+
+
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/render"
@@ -234,8 +236,11 @@ func (c *UiContext) EndFrame() {
 
 	for _, v := range c.sortedWindows {
 		cmds := v.rq.commands
+		// size := c.camera.GetProjectionSize()
 		// fmt.Println("---------------------------")
-
+		// fmt.Println(int32(v.y))
+		c.renderer.Scissor(int32(v.x),int32(v.y), int32(v.w), int32(v.h))
+		// gl.Scissor(int32(v.x), int32(v.y), int32(v.w), int32(v.h))
 		for i := 0; i < v.rq.CmdCount; i++ {
 			comm := cmds[i]
 			switch comm.t {
@@ -246,14 +251,18 @@ func (c *UiContext) EndFrame() {
 			case RectTypeT:
 				r := comm.rect
 				size := c.camera.GetProjectionSize()
-				c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, r.clr)
+				if r.scaleFactor == 0 {
+					c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, 0, 1, 0, r.clr)
+				} else {
+					c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, 0, 1, r.scaleFactor, r.clr)
+				}
 			case Triangle:
 				tr := comm.triangle
 				c.renderer.Trinagle(tr.x0, tr.y0, tr.x1, tr.y1, tr.x2, tr.y2, tr.clr)
 			case RoundedRectT:
 				rr := comm.rRect
 				size := c.camera.GetProjectionSize()
-				c.renderer.RoundedRectangleT(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.texture, rr.clr)
+				c.renderer.RoundedRectangleT(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.texture, 0, 1, rr.clr)
 			case RoundedRect:
 				rr := comm.rRect
 				size := c.camera.GetProjectionSize()
@@ -293,6 +302,7 @@ func (c *UiContext) EndFrame() {
 
 type UiRenderer interface {
 	NewFrame()
+	Scissor(x, y, w, h int32)
 	Rectangle(x, y, w, h float32, clr [4]float32)
 	RectangleR(x, y, w, h float32, clr [4]float32)
 	Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32)
@@ -300,8 +310,8 @@ type UiRenderer interface {
 	Line(x0, y0, x1, y1 float32, thick int, clr [4]float32)
 	RoundedRectangle(x, y, w, h float32, radius int, clr [4]float32)
 	RoundedRectangleR(x, y, w, h float32, radius int, shape render.RoundedRectShape, clr [4]float32)
-	RectangleT(x, y, w, h float32, tex *gogl.Texture, clr [4]float32)
-	RoundedRectangleT(x, y, w, h float32, radius int, shape render.RoundedRectShape, tex *gogl.Texture, clr [4]float32)
+	RectangleT(x, y, w, h float32, tex *gogl.Texture, uv1, uv0, f float32, clr [4]float32)
+	RoundedRectangleT(x, y, w, h float32, radius int, shape render.RoundedRectShape, tex *gogl.Texture, uv1, uv0 float32, clr [4]float32)
 	Draw(camera *gogl.Camera)
 	End()
 }
