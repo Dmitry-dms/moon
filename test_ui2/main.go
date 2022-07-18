@@ -185,18 +185,17 @@ func firstWindow() {
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
-	if uiCtx.Image(tex) {
-		fmt.Println("image clicked s 1")
+	if uiCtx.Button() {
+		fmt.Println("button clicked f 2")
 	}
 
 	uiCtx.VSpace()
 	// if uiCtx.Button() {
 	// 	fmt.Println("button clicked f 3")
 	// }
-	if uiCtx.Image(tex) {
-		fmt.Println("image clicked s 2")
+	if uiCtx.Button() {
+		fmt.Println("button clicked f 3")
 	}
-
 	uiCtx.EndWindow()
 }
 
@@ -205,6 +204,20 @@ func secondWindow() {
 
 	if uiCtx.Image(tex) {
 		fmt.Println("image clicked s 1")
+	}
+	uiCtx.VSpace()
+	// if uiCtx.ButtonRR(tex) {
+	// 	fmt.Println("button clicked f 2")
+	// }
+	if uiCtx.Button() {
+		fmt.Println("button clicked f 2")
+	}
+	uiCtx.VSpace()
+	// if uiCtx.ButtonRR(tex) {
+	// 	fmt.Println("button clicked f 2")
+	// }
+	if uiCtx.Button() {
+		fmt.Println("button clicked f 2")
 	}
 
 	uiCtx.EndWindow()

@@ -1,19 +1,18 @@
 package ui
 
-import (
-// "fmt"
+import "github.com/Dmitry-dms/moon/pkg/ui/utils"
 
 // "fmt"
 
-)
+// "fmt"
 
 const (
 	MOUSE_BTN_COUNT = 5
 )
 
 type Io struct {
-	MousePos    Vec2
-	DisplaySize Vec2
+	MousePos    utils.Vec2
+	DisplaySize utils.Vec2
 
 	keyPressed [570]bool
 
@@ -29,19 +28,19 @@ type Io struct {
 	MouseDownDuration       [MOUSE_BTN_COUNT]float32
 	MouseDownDurationPrev   [MOUSE_BTN_COUNT]float32
 	MouseDragMaxDistanceSqr [MOUSE_BTN_COUNT]float32 //Squared maximum distance of how much mouse has traveled from the clicking point (used for moving thresholds)
-	MouseClickedPos         [MOUSE_BTN_COUNT]Vec2
+	MouseClickedPos         [MOUSE_BTN_COUNT]utils.Vec2
 
 	MouseClickedCount     [MOUSE_BTN_COUNT]uint8 // == 0 (not clicked), == 1 (same as MouseClicked[]), == 2 (double-clicked), == 3 (triple-clicked)
 	MouseClickedLastCount [MOUSE_BTN_COUNT]uint8 //Count successive number of clicks. Stays valid after mouse release. Reset after another click is done.
 
 	IsDragging      bool
-	dragDelta       Vec2
-	dragStarted     Vec2
-	dragStartedMain Vec2
+	dragDelta       utils.Vec2
+	dragStarted     utils.Vec2
+	dragStartedMain utils.Vec2
 
 	//refactor
-	MousePosPrev Vec2
-	MouseDelta   Vec2
+	MousePosPrev utils.Vec2
+	MouseDelta   utils.Vec2
 
 	DeltaTime               float32 // = 1.0f/60.0f
 	MouseDoubleClickTime    float32 // 0.3
@@ -64,7 +63,7 @@ func (io *Io) KeyCallback(key GuiKey, pressed bool) {
 	}
 }
 
-var lastMousePos = Vec2{}
+var lastMousePos = utils.Vec2{}
 
 func (io *Io) MousePosCallback(x, y float32) {
 	io.MousePos.X = x
@@ -105,8 +104,8 @@ func (io *Io) MouseBtnCallback(mouseBtn MouseKey, action Action) {
 		if int(mouseBtn) < len(io.MouseDown) {
 			io.MouseDown[mouseBtn] = false
 			io.IsDragging = false
-			io.dragStarted = Vec2{}
-			io.dragStartedMain = Vec2{}
+			io.dragStarted = utils.Vec2{}
+			io.dragStartedMain = utils.Vec2{}
 		}
 	}
 }
@@ -119,8 +118,8 @@ const (
 	MOUSE_INVALID float32 = -256000.0
 )
 
-func (io *Io) IsMousePosValid(pos *Vec2) bool {
-	var r Vec2
+func (io *Io) IsMousePosValid(pos *utils.Vec2) bool {
+	var r utils.Vec2
 	if pos != nil {
 		r = *pos
 	} else {
@@ -131,8 +130,8 @@ func (io *Io) IsMousePosValid(pos *Vec2) bool {
 
 func NewIo() *Io {
 	i := Io{
-		MousePos:                Vec2{0, 0},
-		DisplaySize:             Vec2{0, 0},
+		MousePos:                utils.Vec2{0, 0},
+		DisplaySize:             utils.Vec2{0, 0},
 		keyPressed:              [570]bool{},
 		WantCaptureMouse:        false,
 		MouseDown:               [MOUSE_BTN_COUNT]bool{},
@@ -143,15 +142,15 @@ func NewIo() *Io {
 		MouseDownDuration:       [5]float32{},
 		MouseDownDurationPrev:   [5]float32{},
 		MouseDragMaxDistanceSqr: [5]float32{},
-		MouseClickedPos:         [5]Vec2{},
+		MouseClickedPos:         [5]utils.Vec2{},
 		MouseClickedCount:       [5]uint8{},
 		MouseClickedLastCount:   [5]uint8{},
 		IsDragging:              false,
-		dragDelta:               Vec2{},
-		dragStarted:             Vec2{},
-		dragStartedMain:         Vec2{},
-		MousePosPrev:            Vec2{},
-		MouseDelta:              Vec2{},
+		dragDelta:               utils.Vec2{},
+		dragStarted:             utils.Vec2{},
+		dragStartedMain:         utils.Vec2{},
+		MousePosPrev:            utils.Vec2{},
+		MouseDelta:              utils.Vec2{},
 		DeltaTime:               1 / 60,
 		MouseDoubleClickTime:    0.3,
 		MouseDoubleClickMaxDist: 6,

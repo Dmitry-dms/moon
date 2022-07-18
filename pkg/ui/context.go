@@ -1,15 +1,12 @@
 package ui
 
 import (
-	// "fmt"
-
-	// "fmt"
-
-
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
+	"github.com/Dmitry-dms/moon/pkg/ui/draw"
 	"github.com/Dmitry-dms/moon/pkg/ui/render"
+	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
 
@@ -20,7 +17,7 @@ func init() {
 }
 
 type UiContext struct {
-	rq *RenderQueue
+	// rq *RenderQueue
 
 	renderer UiRenderer
 	camera   *gogl.Camera
@@ -38,7 +35,7 @@ type UiContext struct {
 
 	//cache
 	idCache      *cache.RamCache[Window]
-	windowStack  stack[*Window]
+	windowStack  utils.Stack[*Window]
 	widgetsCache *cache.RamCache[widgets.Widget]
 
 	//refactor
@@ -49,11 +46,14 @@ type UiContext struct {
 
 	//style
 	CurrentStyle Style
+
+	Vertices []float32
+	Indeces  []int32
 }
 
 func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
 	c := UiContext{
-		rq:            NewRenderQueue(),
+		// rq:            NewRenderQueue(),
 		renderer:      frontRenderer,
 		camera:        camera,
 		io:            NewIo(),
@@ -61,7 +61,7 @@ func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
 		sortedWindows: make([]*Window, 0),
 		idCache:       cache.NewRamCache[Window](),
 		widgetsCache:  cache.NewRamCache[widgets.Widget](),
-		windowStack:   Stack[*Window](),
+		windowStack:   utils.NewStack[*Window](),
 		CurrentStyle:  DefaultStyle,
 	}
 
@@ -122,7 +122,7 @@ func (c *UiContext) findHoveredWindow() {
 			continue
 		}
 		if c.io.MouseClicked[0] && c.ActiveWindow != window {
-			if !PointInRect(c.io.MousePos, c.ActiveWindow.outerRect) {
+			if !utils.PointInRect(c.io.MousePos, c.ActiveWindow.outerRect) {
 				c.ActiveWindow = window
 				c.pushWindowFront(window)
 			}
@@ -150,7 +150,7 @@ func (c *UiContext) UpdateMouseInputs() {
 	if io.IsMousePosValid(&io.MousePos) && io.IsMousePosValid(&io.MousePosPrev) {
 		io.MouseDelta = io.MousePos.Sub(io.MousePosPrev)
 	} else {
-		io.MouseDelta = Vec2{0, 0}
+		io.MouseDelta = utils.Vec2{0, 0}
 	}
 
 	io.MousePosPrev = io.MousePos
@@ -172,11 +172,11 @@ func (c *UiContext) UpdateMouseInputs() {
 		if io.MouseClicked[i] {
 			isRepeatedClick := false
 			if c.Time-float32(io.MouseClickedTime[i]) < io.MouseDoubleClickTime {
-				var delta Vec2
+				var delta utils.Vec2
 				if io.IsMousePosValid(&io.MousePos) {
 					delta = io.MousePos.Sub(io.MouseClickedPos[i])
 				} else {
-					delta = Vec2{0, 0}
+					delta = utils.Vec2{0, 0}
 				}
 
 				if delta.LengthSqr() < io.MouseDoubleClickMaxDist*io.MouseDoubleClickMaxDist {
@@ -202,7 +202,7 @@ func (c *UiContext) UpdateMouseInputs() {
 			} else {
 				deltaSqrPos = 0
 			}
-			io.MouseDragMaxDistanceSqr[i] = Max(io.MouseDragMaxDistanceSqr[i], deltaSqrPos)
+			io.MouseDragMaxDistanceSqr[i] = utils.Max(io.MouseDragMaxDistanceSqr[i], deltaSqrPos)
 		}
 		// We provide io.MouseDoubleClicked[] as a legacy service
 		io.MouseDoubleClicked[i] = (io.MouseClickedCount[i] == 2)
@@ -234,54 +234,77 @@ func (c *UiContext) EndFrame() {
 		return
 	}
 
-	for _, v := range c.sortedWindows {
-		cmds := v.rq.commands
-		// size := c.camera.GetProjectionSize()
-		// fmt.Println("---------------------------")
-		// fmt.Println(int32(v.y))
-		c.renderer.Scissor(int32(v.x),int32(v.y), int32(v.w), int32(v.h))
-		// gl.Scissor(int32(v.x), int32(v.y), int32(v.w), int32(v.h))
-		for i := 0; i < v.rq.CmdCount; i++ {
-			comm := cmds[i]
-			switch comm.t {
-			case RectType:
-				r := comm.rect
-				size := c.camera.GetProjectionSize()
-				c.renderer.RectangleR(r.x, size.Y()-r.y, r.w, r.h, r.clr)
-			case RectTypeT:
-				r := comm.rect
-				size := c.camera.GetProjectionSize()
-				if r.scaleFactor == 0 {
-					c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, 0, 1, 0, r.clr)
-				} else {
-					c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, 0, 1, r.scaleFactor, r.clr)
-				}
-			case Triangle:
-				tr := comm.triangle
-				c.renderer.Trinagle(tr.x0, tr.y0, tr.x1, tr.y1, tr.x2, tr.y2, tr.clr)
-			case RoundedRectT:
-				rr := comm.rRect
-				size := c.camera.GetProjectionSize()
-				c.renderer.RoundedRectangleT(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.texture, 0, 1, rr.clr)
-			case RoundedRect:
-				rr := comm.rRect
-				size := c.camera.GetProjectionSize()
-				c.renderer.RoundedRectangleR(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.clr)
-			case WindowStartCmd:
-				wnd := comm.window
-				size := c.camera.GetProjectionSize()
-				c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, comm.window.clr)
-				c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, comm.window.toolbar.clr)
+	// for _, v := range c.sortedWindows {
+	// 	cmds := v.rq.commands
+	// 	// size := c.camera.GetProjectionSize()
+	// 	// fmt.Println("---------------------------")
+	// 	// fmt.Println(int32(v.y))
 
-				// c.renderer.RectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h,  comm.window.clr)
-				// c.renderer.RectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, comm.window.toolbar.clr)
-			default:
-			}
+	// 	// gl.Scissor(int32(v.x), int32(v.y), int32(v.w), int32(v.h))
+	// 	for i := 0; i < v.rq.CmdCount; i++ {
+	// 		comm := cmds[i]
+	// 		switch comm.t {
+	// 		case RectType:
+	// 			r := comm.rect
+
+	// 			size := c.camera.GetProjectionSize()
+	// 			c.renderer.RectangleR(r.x, size.Y()-r.y, r.w, r.h, r.clr)
+	// 		case RectTypeT:
+	// 			r := comm.rect
+
+	// 			size := c.camera.GetProjectionSize()
+	// 			if r.scaleFactor == 0 {
+	// 				c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, 0, 1, 0, r.clr)
+	// 			} else {
+	// 				c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, 0, 1, r.scaleFactor, r.clr)
+	// 			}
+	// 		case Triangle:
+	// 			tr := comm.triangle
+	// 			c.renderer.Trinagle(tr.x0, tr.y0, tr.x1, tr.y1, tr.x2, tr.y2, tr.clr)
+	// 		case RoundedRectT:
+	// 			rr := comm.rRect
+	// 			size := c.camera.GetProjectionSize()
+	// 			c.renderer.RoundedRectangleT(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.texture, 0, 1, rr.clr)
+	// 		case RoundedRect:
+	// 			rr := comm.rRect
+	// 			size := c.camera.GetProjectionSize()
+
+	// 			c.renderer.RoundedRectangleR(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.clr)
+	// 		case WindowStartCmd:
+	// 			wnd := comm.window
+	// 			size := c.camera.GetProjectionSize()
+
+	// 			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, comm.window.clr)
+	// 			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, comm.window.toolbar.clr)
+
+	// 			// c.renderer.RectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h,  comm.window.clr)
+	// 			// c.renderer.RectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, comm.window.toolbar.clr)
+	// 		default:
+	// 		}
+	// 	}
+	// 	v.rq.clearCommands()
+	// }
+
+	for _, v := range c.sortedWindows {
+		size := c.camera.GetProjectionSize()
+		var x, y, w, h int32
+		x = int32(v.x)
+		y = int32(v.y)
+		w = int32(v.w)
+		h = int32(v.h)
+
+		if int32(size.Y())-(int32(v.y)+int32(v.h)) <= 0 {
+			y = 0
+			h=int32(size[1])-int32(v.y)
+		} else {
+			y = int32(size.Y()) - (int32(v.y) + int32(v.h))
+			
 		}
-		v.rq.clearCommands()
+		c.renderer.Scissor(x, y, w,h)
+		c.renderer.Draw(c.camera, *v.buffer)
+		v.buffer.Clear()
 	}
 
-	c.renderer.Draw(c.camera)
 	c.renderer.End()
 
 	c.currentWindow = 0
@@ -312,6 +335,6 @@ type UiRenderer interface {
 	RoundedRectangleR(x, y, w, h float32, radius int, shape render.RoundedRectShape, clr [4]float32)
 	RectangleT(x, y, w, h float32, tex *gogl.Texture, uv1, uv0, f float32, clr [4]float32)
 	RoundedRectangleT(x, y, w, h float32, radius int, shape render.RoundedRectShape, tex *gogl.Texture, uv1, uv0 float32, clr [4]float32)
-	Draw(camera *gogl.Camera)
+	Draw(camera *gogl.Camera, buffer draw.CmdBuffer)
 	End()
 }

@@ -1,16 +1,15 @@
-package ui
+package utils
 
-
-type stack[T any] struct {
+type Stack[T any] struct {
 	Push   func(T)
 	Pop    func() T
 	GetTop func() T
 	Length func() int
 }
 
-func Stack[T any]() stack[T] {
+func NewStack[T any]() Stack[T] {
 	slice := make([]T, 0)
-	return stack[T]{
+	return Stack[T]{
 		Push: func(i T) {
 			slice = append(slice, i)
 		},

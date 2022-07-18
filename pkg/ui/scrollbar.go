@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/Dmitry-dms/moon/pkg/ui/utils"
+
 type Scrollbar struct {
 	x, y, w, h     float32
 	bX, bY, bW, bH float32
@@ -7,7 +9,7 @@ type Scrollbar struct {
 	isActive       bool
 }
 
-func NewScrolBar(bound, btn Rect, clr [4]float32) *Scrollbar {
+func NewScrolBar(bound, btn utils.Rect, clr [4]float32) *Scrollbar {
 	sb := Scrollbar{
 		x:        bound.Min.X,
 		y:        bound.Min.Y,

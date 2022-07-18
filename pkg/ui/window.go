@@ -3,24 +3,30 @@ package ui
 import (
 	// "fmt"
 	"fmt"
+	"math/rand"
 	// "math/rand"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui/draw"
+	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 	"github.com/google/uuid"
 	// "github.com/go-gl/mathgl/mgl32"
 )
 
 type Window struct {
-	toolbar    Toolbar
-	x, y       float32 // top-left corner
-	w, h       float32
-	active     bool
-	Id         string
-	drawList   []command
-	rq         *RenderQueue
-	outerRect  Rect
+	toolbar Toolbar
+	x, y    float32 // top-left corner
+	w, h    float32
+	active  bool
+	Id      string
+	// drawList   []command
+	// rq         *RenderQueue
+	outerRect  utils.Rect
 	minW, minH float32
+
+	//render
+	buffer *draw.CmdBuffer
 
 	//inner widgets
 	cursorX, cursorY float32
@@ -41,35 +47,39 @@ type Window struct {
 func NewWindow(x, y, w, h float32) *Window {
 	tb := NewToolbar(x, y, w, 30)
 	wnd := Window{
-		toolbar:   tb,
-		x:         x,
-		y:         y,
-		w:         w,
-		h:         h,
-		drawList:  []command{},
-		outerRect: Rect{Min: Vec2{x, y}, Max: Vec2{x + w, y + h}},
-		rq:        NewRenderQueue(),
-		minW:      200,
-		minH:      200,
+		toolbar: tb,
+		x:       x,
+		y:       y,
+		w:       w,
+		h:       h,
+		buffer:  draw.NewBuffer(UiCtx.camera),
+		// drawList:  []command{},
+		outerRect: utils.Rect{Min: utils.Vec2{X: x, Y: y}, Max: utils.Vec2{X: x + w, Y: y + h}},
+		// rq:        NewRenderQueue(),
+		minW: 200,
+		minH: 200,
 
-		startYshow: y+tb.h,
+		startYshow: y + tb.h,
 		endYshow:   y + h,
 		// srcX:      x,
 		// srcY:      y + tb.h + UiCtx.CurrentStyle.TopMargin,
 
 		widgets: []widgets.Widget{},
-		scrlBar: NewScrolBar(NewRect(x+w-10, y, 20, h), NewRect(x+w-10, y, 10, 50), [4]float32{150, 155, 155, 1}),
+		scrlBar: NewScrolBar(utils.NewRect(x+w-10, y, 20, h), utils.NewRect(x+w-10, y, 10, 50), [4]float32{150, 155, 155, 1}),
 	}
 	wnd.scrlY = wnd.toolbar.h
 	return &wnd
 }
 
-func (w *Window) AddCommand(cmd command) {
-	w.drawList = append(w.drawList, cmd)
+func (w *Window) AddCommand(cmd draw.Command) {
+	// w.drawList = append(w.drawList, cmd)
+	// w.drawData.cmdLists
+	w.buffer.AddCommand(cmd)
 }
 
 func (w *Window) ClearDrawList() {
-	w.drawList = []command{}
+	// w.drawList = []command{}
+	// w.buffer.clear()
 }
 
 func generateId() string {
@@ -85,14 +95,18 @@ const (
 func (c *UiContext) BeginWindow() {
 	var window *Window
 	if len(c.Windows) <= c.currentWindow {
-		r := 0 //rand.Intn(500)
-		g := 0 //rand.Intn(300)
+		r := rand.Intn(500)
+		g := rand.Intn(300)
 		window = NewWindow(defx+float32(r), defy+float32(g), defw, defh)
 		c.Windows = append(c.Windows, window)
 		window.Id = generateId()
 	} else {
 		window = c.Windows[c.currentWindow]
 	}
+
+
+	
+
 	// fmt.Println(c.Windows)
 
 	wnd := window
@@ -102,15 +116,17 @@ func (c *UiContext) BeginWindow() {
 	newH := wnd.h
 	newW := wnd.w
 
-	prior := 0
+	
+
+	// prior := 0
 
 	//Прямоугольник справа
-	vResizeRect := Rect{Min: Vec2{wnd.x + wnd.w - 15, wnd.y}, Max: Vec2{wnd.x + wnd.w + 15, wnd.y + wnd.h}}
-	hResizeRect := Rect{Min: Vec2{wnd.x, wnd.y + wnd.h - 15}, Max: Vec2{wnd.x + wnd.w, wnd.y + wnd.h + 15}}
-	if PointInRect(c.io.MousePos, hResizeRect) && c.ActiveWindow == wnd {
+	vResizeRect := utils.Rect{Min: utils.Vec2{X: wnd.x + wnd.w - 15, Y: wnd.y}, Max: utils.Vec2{X: wnd.x + wnd.w + 15, Y: wnd.y + wnd.h}}
+	hResizeRect := utils.Rect{Min: utils.Vec2{X: wnd.x, Y: wnd.y + wnd.h - 15}, Max: utils.Vec2{X: wnd.x + wnd.w, Y: wnd.y + wnd.h + 15}}
+	if utils.PointInRect(c.io.MousePos, hResizeRect) && c.ActiveWindow == wnd {
 		c.io.SetCursor(VResizeCursor)
 		c.wantResizeH = true
-	} else if PointInRect(c.io.MousePos, vResizeRect) && c.ActiveWindow == wnd {
+	} else if utils.PointInRect(c.io.MousePos, vResizeRect) && c.ActiveWindow == wnd {
 		c.io.SetCursor(HResizeCursor)
 		c.wantResizeV = true
 	} else {
@@ -133,7 +149,7 @@ func (c *UiContext) BeginWindow() {
 	}
 
 	// Изменение положения окна
-	if c.io.IsDragging && c.ActiveWindow == wnd && PointInRect(c.io.MousePos, wnd.outerRect) && !c.wantResizeV && !c.wantResizeH {
+	if c.io.IsDragging && c.ActiveWindow == wnd && utils.PointInRect(c.io.MousePos, wnd.outerRect) && !c.wantResizeV && !c.wantResizeH {
 		newX += c.io.MouseDelta.X
 		newY += c.io.MouseDelta.Y
 	}
@@ -142,34 +158,48 @@ func (c *UiContext) BeginWindow() {
 	wnd.y = newY
 	wnd.h = newH
 	wnd.w = newW
-	wnd.outerRect.Min = Vec2{wnd.x, wnd.y}
-	wnd.outerRect.Max = Vec2{wnd.x + wnd.w, wnd.y + wnd.h}
+	wnd.outerRect.Min = utils.Vec2{X: wnd.x, Y: wnd.y}
+	wnd.outerRect.Max = utils.Vec2{X: wnd.x + wnd.w, Y: wnd.y + wnd.h}
 	// wnd.startYshow = newY
 	// wnd.endYshow = newH + newY
 
 	cl := [4]float32{r, g, b, 0.8}
-	cmdw := window_command{
-		active: wnd.active,
-		id:     wnd.Id,
-		x:      wnd.x,
-		y:      wnd.y,
-		h:      wnd.h,
-		w:      wnd.w,
-		clr:    cl,
-		toolbar: toolbar_command{
-			h:   30,
-			clr: [4]float32{255, 0, 0, 1},
+	cmdw := draw.Window_command{
+		Active: wnd.active,
+		Id:     wnd.Id,
+		X:      wnd.x,
+		Y:      wnd.y,
+		H:      wnd.h,
+		W:      wnd.w,
+		Clr:    cl,
+		Toolbar: draw.Toolbar_command{
+			H:   30,
+			Clr: [4]float32{255, 0, 0, 1},
 		},
 	}
-	cmd := command{
-		priority: prior,
-		t:        WindowStartCmd,
-		window:   &cmdw,
+	cmd := draw.Command{
+		// priority: prior,
+		Type:   draw.WindowStartCmd,
+		Window: &cmdw,
 	}
 
+
+	// rect2 := draw.Rect_command{
+	// 	X:   newX,
+	// 	Y:   newY,
+	// 	W:   newW,
+	// 	H:   newH,
+	// 	Clr: [4]float32{0, 0, 0, 1},
+	// }
+	// cmd2 := draw.Command{
+	// 	// priority: prior,
+	// 	Type:   draw.RectType,
+	// 	Rect: &rect2,
+	// }
+	// wnd.AddCommand(cmd2)
 	wnd.cursorX = wnd.x + UiCtx.CurrentStyle.LeftMargin
 	wnd.cursorY = wnd.y + wnd.toolbar.h + UiCtx.CurrentStyle.TopMargin
-	wnd.rq.AddCommand(cmd)
+	wnd.AddCommand(cmd)
 
 	c.windowStack.Push(window)
 }
@@ -180,59 +210,58 @@ func (c *UiContext) srollbar(wnd *Window) {
 	wnd.scrlBar.y = wnd.y + wnd.toolbar.h
 	wnd.scrlBar.h = wnd.h - wnd.toolbar.h
 
-	scrollCommand := rounded_rect{
-		x:      wnd.scrlBar.x,
-		y:      wnd.scrlBar.y,
-		w:      wnd.scrlBar.w,
-		h:      wnd.scrlBar.h,
-		clr:    wnd.scrlBar.clr,
-		radius: 5,
+	scrollCommand := draw.Rounded_rect{
+		X:      wnd.scrlBar.x,
+		Y:      wnd.scrlBar.y,
+		W:      wnd.scrlBar.w,
+		H:      wnd.scrlBar.h,
+		Clr:    wnd.scrlBar.clr,
+		Radius: 5,
 	}
-	sbCmd := command{
-		rRect: &scrollCommand,
-		t:     ScrollbarCmd,
-		shown: wnd.isScrollShown,
+	sbCmd := draw.Command{
+		RRect: &scrollCommand,
+		Type:  draw.ScrollbarCmd,
+		Shown: wnd.isScrollShown,
 	}
-	wnd.rq.AddCommand(sbCmd)
+	wnd.AddCommand(sbCmd)
 
 	wnd.scrlBar.bX = wnd.x + wnd.w - wnd.scrlBar.w + 5
 	wnd.scrlBar.bY = wnd.y + wnd.toolbar.h + wnd.scrlY
 
 	if c.ActiveWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidget == "" {
 		factor := c.io.ScrollY * 10
-		n := wnd.scrlY - float32(factor)
+		// n := wnd.scrlY - float32(factor)
 		//===================
-		wnd.endYshow += float32(factor)
-		wnd.startYshow += float32(factor)
+		// wnd.endYshow += float32(factor)
+		// wnd.startYshow += float32(factor)
 
+		wnd.scrlY -= float32(factor)
 
+		// if n+wnd.cursorY < wnd.cursorY {
 
-		if n+wnd.cursorY < wnd.cursorY {
+		// } else if n+wnd.cursorY >= wnd.cursorY+wnd.h-wnd.toolbar.h-wnd.scrlBar.bH {
 
-		} else if n+wnd.cursorY >= wnd.cursorY+wnd.h-wnd.toolbar.h-wnd.scrlBar.bH {
+		// } else {
 
-		} else {
-
-			wnd.scrlY -= float32(factor)
-		}
+		// }
 
 	}
 
-	scrollBtnCommand := rounded_rect{
-		x:      wnd.scrlBar.bX,
-		y:      wnd.scrlBar.bY,
-		w:      wnd.scrlBar.bW,
-		h:      wnd.scrlBar.bH,
-		clr:    [4]float32{255, 0, 0, 1},
-		radius: 5,
+	scrollBtnCommand := draw.Rounded_rect{
+		X:      wnd.scrlBar.bX,
+		Y:      wnd.scrlBar.bY,
+		W:      wnd.scrlBar.bW,
+		H:      wnd.scrlBar.bH,
+		Clr:    [4]float32{255, 0, 0, 1},
+		Radius: 5,
 	}
 
-	sbtnCmd := command{
-		rRect: &scrollBtnCommand,
-		t:     ScrollButtonCmd,
-		shown: wnd.isScrollShown,
+	sbtnCmd := draw.Command{
+		RRect: &scrollBtnCommand,
+		Type:  draw.ScrollButtonCmd,
+		Shown: wnd.isScrollShown,
 	}
-	wnd.rq.AddCommand(sbtnCmd)
+	wnd.AddCommand(sbtnCmd)
 }
 
 var r, g, b float32 = 231, 158, 162
@@ -297,7 +326,7 @@ func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 
 	clr := btn.CurrentColor
 
-	inRect := PointInRect(c.io.MousePos, NewRectS(btn.BoundingBox))
+	inRect := utils.PointInRect(c.io.MousePos, utils.NewRectS(btn.BoundingBox))
 
 	if wnd == c.ActiveWindow && inRect {
 		c.ActiveWidget = btn.GetId()
@@ -324,39 +353,39 @@ func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 		btn.AddHeight(scroll)
 	}
 
-	rect := rounded_rect{
-		x:      wnd.cursorX,
-		y:      wnd.cursorY,
-		w:      btn.Width(),
-		h:      btn.Height(),
-		clr:    clr,
-		radius: 5,
+	rect := draw.Rounded_rect{
+		X:      wnd.cursorX,
+		Y:      wnd.cursorY,
+		W:      btn.Width(),
+		H:      btn.Height(),
+		Clr:    clr,
+		Radius: 5,
 	}
 
-	btn.BoundingBox = [4]float32{rect.x, rect.y, rect.w, rect.h}
+	btn.BoundingBox = [4]float32{rect.X, rect.Y, rect.W, rect.H}
 
-	cmd := command{
-		rRect: &rect,
-		shown: true,
+	cmd := draw.Command{
+		RRect: &rect,
+		Shown: true,
 	}
 	if tex != nil {
-		rect.texture = tex
-		cmd.t = RoundedRectT
-		rect.clr = whiteColor
+		rect.Texture = tex
+		cmd.Type = draw.RoundedRectT
+		rect.Clr = whiteColor
 	} else {
-		cmd.t = RectType
+		cmd.Type = draw.RectType
 	}
 
 	if r, ok := wnd.isWindowEnd(btn.Height()); ok && r > 0 {
-		rect.h = btn.Height() * r
-		fmt.Println(rect.h, r)
+		rect.H = btn.Height() * r
+		// fmt.Println(rect.h, r)
 
 	}
 
-	wnd.rq.AddCommand(cmd)
+	wnd.AddCommand(cmd)
 	wnd.widgetCounter++
 
-	wnd.cursorY += rect.h
+	wnd.cursorY += rect.H
 	return clicked
 }
 
@@ -373,7 +402,7 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 
 	clr := img.CurrentColor
 
-	inRect := PointInRect(c.io.MousePos, NewRectS(img.BoundingBox))
+	inRect := utils.PointInRect(c.io.MousePos, utils.NewRectS(img.BoundingBox))
 
 	if wnd == c.ActiveWindow && inRect {
 		c.ActiveWidget = img.GetId()
@@ -382,26 +411,26 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 
 	// Create command and append it to slice
 	{
-		rect := rect_command{
-			x:       wnd.cursorX,
-			y:       wnd.cursorY,
-			w:       img.Width(),
-			h:       img.Height(),
-			texture: tex,
-			clr:     clr,
+		rect := draw.Rect_command{
+			X:       wnd.cursorX,
+			Y:       wnd.cursorY,
+			W:       img.Width(),
+			H:       img.Height(),
+			Clr:     clr,
+			Texture: tex,
 		}
-		cmd := command{
-			rect:  &rect,
-			t:     RectTypeT,
-			shown: true,
+		cmd := draw.Command{
+			Rect:  &rect,
+			Type:     draw.RectTypeT,
+			Shown: true,
 		}
 
 		if r, ok := wnd.isWindowEnd(img.Height()); ok && r > 0 {
-			rect.h = img.Height() * r
-			rect.scaleFactor = r
+			rect.H = img.Height() * r
+			rect.ScaleFactor = r
 			// fmt.Println(rect.h, r)
 		}
-		wnd.rq.AddCommand(cmd)
+		wnd.AddCommand(cmd)
 	}
 
 	img.BoundingBox = [4]float32{wnd.cursorX, wnd.cursorY, img.Width(), img.Height()}
@@ -429,16 +458,15 @@ func (c *UiContext) Button() bool {
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
 	var clicked, inRect bool
-	var cmd command
-	var rect rect_command
+	var cmd draw.Command
+	var rect draw.Rect_command
 
-	if wnd.startYshow >=  wnd.cursorY {
+	if wnd.startYshow >= wnd.cursorY {
 		// fmt.Println(wnd.startYshow,wnd.cursorY)
 		// rect.h -= wnd.startYshow - wnd.cursorY
 		// rect.y += wnd.startYshow - wnd.cursorY
 		wnd.cursorY -= wnd.scrlY
 	}
-
 
 	btn = wnd.getWidget(widgets.ButtonWidget).(*widgets.Button)
 
@@ -448,25 +476,28 @@ func (c *UiContext) Button() bool {
 	h := btn.BoundingBox[3]
 	clr := btn.CurrentColor
 
-	rect = rect_command{
-		x:   x,
-		y:   y,
-		w:   w,
-		h:   h,
-		clr: clr,
+	// DEBUG
+	y += wnd.scrlY
+	//
+
+	rect = draw.Rect_command{
+		X:   x,
+		Y:   y,
+		W:   w,
+		H:   h,
+		Clr: clr,
 	}
 
-	if r, ok := wnd.isWindowEnd(rect.h); ok && r > 0 {
-		rect.h = h * r
+	// if r, ok := wnd.isWindowEnd(rect.H); ok && r > 0 {
+	// 	rect.H = h * r
 
-	} 
+	// }
 
 	// fmt.Println(wnd.h, wnd.endYshow - wnd.startYshow)
 	// fmt.Println( wnd.startYshow,wnd.cursorY)
-	
 
 	{
-		inRect = PointInRect(c.io.MousePos, NewRect(x, y, w, rect.h))
+		inRect = utils.PointInRect(c.io.MousePos, utils.NewRect(x, y, w, rect.H))
 
 		if wnd == c.ActiveWindow && inRect {
 
@@ -491,10 +522,10 @@ func (c *UiContext) Button() bool {
 		// 	btn.AddWidth(scroll)
 		// 	btn.AddHeight(scroll)
 		// }
-		cmd = command{
-			rect:  &rect,
-			t:     RectType,
-			shown: true,
+		cmd = draw.Command{
+			Rect:  &rect,
+			Type:     draw.RectType,
+			Shown: true,
 		}
 	}
 
@@ -504,15 +535,14 @@ func (c *UiContext) Button() bool {
 		// rect.h -= wnd.y - wnd.startYshow
 	}
 
-	
-	if rect.y > wnd.y+wnd.h {
+	// if rect.y > wnd.y+wnd.h {
 
-	} else {
+	// } else {
 
-	}
+	// }
 
 	wnd.cursorY += btn.Height()
-	wnd.rq.AddCommand(cmd)
+	wnd.AddCommand(cmd)
 
 	wnd.widgetCounter++
 
@@ -526,14 +556,14 @@ func (c *UiContext) EndWindow() {
 	if wnd.isScrollShown {
 		c.srollbar(wnd)
 	} else {
-		wnd.startYshow = wnd.y + wnd.toolbar.h
-		wnd.endYshow = wnd.y + wnd.h
+		// wnd.startYshow = wnd.y + wnd.toolbar.h
+		// wnd.endYshow = wnd.y + wnd.h
 		wnd.scrlY = 0
 	}
 
-	cmd := command{
-		priority: 0,
-		t:        WindowCmd,
+	cmd := draw.Command{
+
+		Type:        draw.WindowCmd,
 		// window:   cmdw,
 	}
 
@@ -544,7 +574,7 @@ func (c *UiContext) EndWindow() {
 		wnd.isScrollShown = false
 	}
 
-	wnd.rq.AddCommand(cmd)
+	wnd.AddCommand(cmd)
 	c.currentWindow++
 	wnd.widgetCounter = 0
 }

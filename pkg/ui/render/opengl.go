@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui/draw"
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -559,7 +560,8 @@ func (r *GLRender) RoundedRectangleT(x, y, w, h float32, radius int, shape Round
 
 }
 
-func (b *GLRender) Draw(camera *gogl.Camera) {
+func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
+
 	// gl.Enable(gl.BLEND)
 	// gl.BlendEquation(gl.FUNC_ADD)
 	// gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -577,11 +579,11 @@ func (b *GLRender) Draw(camera *gogl.Camera) {
 	// gl.BindVertexArray(vaoHandle)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
-	gl.BufferData(gl.ARRAY_BUFFER, len(b.Vertices)*4, gl.Ptr(b.Vertices), gl.DYNAMIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.Vertices)*4, gl.Ptr(buffer.Vertices), gl.DYNAMIC_DRAW)
 	// gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(b.Indeces)*4, gl.Ptr(b.Indeces), gl.DYNAMIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(buffer.Indeces)*4, gl.Ptr(buffer.Indeces), gl.DYNAMIC_DRAW)
 
 	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
@@ -593,7 +595,7 @@ func (b *GLRender) Draw(camera *gogl.Camera) {
 
 	//
 
-	gl.DrawElements(gl.TRIANGLES, int32(b.vertCount), gl.UNSIGNED_INT, nil)
+	gl.DrawElements(gl.TRIANGLES, int32(buffer.VertCount), gl.UNSIGNED_INT, nil)
 	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	// gl.BindVertexArray(0)
