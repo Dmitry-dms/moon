@@ -61,6 +61,7 @@ type Command struct {
 	RRect    *Rounded_rect
 	Window   *Window_command
 	WinStart *Window_start_command
+	Toolbar *Toolbar_command
 }
 
 type Rect_command struct {
@@ -87,7 +88,7 @@ type Window_command struct {
 	Toolbar    Toolbar_command
 }
 type Toolbar_command struct {
-	H   float32
+	X,Y,W,H   float32
 	Clr [4]float32
 }
 type Rounded_rect struct {

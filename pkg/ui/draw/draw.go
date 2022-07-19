@@ -28,6 +28,7 @@ type CmdBuffer struct {
 	commands  []Command
 	Vertices  []float32
 	Indeces   []int32
+	Textures  []*gogl.Texture
 	VertCount int
 	lastIndc  int
 
@@ -39,6 +40,7 @@ func NewBuffer(camera *gogl.Camera) *CmdBuffer {
 		commands:  []Command{},
 		Vertices:  []float32{},
 		Indeces:   []int32{},
+		Textures:  []*gogl.Texture{},
 		VertCount: 0,
 		camera:    camera,
 	}
@@ -64,11 +66,12 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		r := cmd.Rect
 
 		size := c.camera.GetProjectionSize()
-		if r.ScaleFactor == 0 {
-			c.RectangleT(r.X, size.Y()-r.Y, r.W, r.H, r.Texture, 0, 1, 0, r.Clr)
-		} else {
-			c.RectangleT(r.X, size.Y()-r.Y, r.W, r.H, r.Texture, 0, 1, r.ScaleFactor, r.Clr)
-		}
+		c.RectangleT(r.X, size.Y()-r.Y, r.W, r.H, r.Texture, 0, 1, r.Clr)
+
+	case ToolbarCmd:
+		t := cmd.Toolbar
+		size := c.camera.GetProjectionSize()
+		c.RoundedRectangleR(t.X, size.Y()-t.Y, t.W, t.H, 10, TopRect, t.Clr)
 	case RoundedRect:
 		rr := cmd.RRect
 		size := c.camera.GetProjectionSize()
@@ -85,7 +88,6 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		wnd := cmd.Window
 		size := c.camera.GetProjectionSize()
 		c.RoundedRectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.H, 10, AllRounded, wnd.Clr)
-		c.RoundedRectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.Toolbar.H, 10, TopRect, wnd.Toolbar.Clr)
 
 		// c.RectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.H, cmd.Window.Clr)
 		// c.RectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.Toolbar.H, cmd.Window.Toolbar.Clr)
@@ -126,8 +128,58 @@ func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 	r.lastIndc = last + 1
 	r.render(vert, ind, 6)
 }
+func (r *CmdBuffer) addTexture(tex *gogl.Texture) {
+	isAdded := false
+	for _, v := range r.Textures {
+		if tex == v {
+			isAdded = true
+			break
+		}
+	}
+	if !isAdded {
+		r.Textures = append(r.Textures, tex)
+	}
+}
+func (r *CmdBuffer) RectangleT(x, y, w, h float32, tex *gogl.Texture, uv0, uv1 float32, clr [4]float32) {
+	founded := false
+	texId := 0
+	for i := 0; i < len(r.Textures); i++ {
+		if r.Textures[i] == tex {
+			texId = i + 1 // 0 - без текстуры
+			founded = true
+		}
+	}
+	if !founded {
+		r.addTexture(tex)
+	}
 
-func (r *CmdBuffer) RectangleT(x, y, w, h float32, tex *gogl.Texture, uv0, uv1, f float32, clr [4]float32) {
+	vert := make([]float32, 9*4)
+	ind := make([]int32, 6)
+
+	ind0 := r.lastIndc
+	ind1 := ind0 + 1
+	ind2 := ind1 + 1
+	offset := 0
+
+	fillVertices(vert, &offset, x, y, uv1, uv1, float32(texId), clr)
+	fillVertices(vert, &offset, x, y-h, uv1, uv0, float32(texId), clr)
+	fillVertices(vert, &offset, x+w, y-h, uv0, uv0, float32(texId), clr)
+
+	ind[0] = int32(ind0)
+	ind[1] = int32(ind1)
+	ind[2] = int32(ind2)
+
+	last := ind2 + 1
+
+	fillVertices(vert, &offset, x+w, y, uv0, uv1, float32(texId), clr)
+	ind[3] = int32(ind0)
+	ind[4] = int32(ind2)
+	ind[5] = int32(last)
+
+	r.lastIndc = last + 1
+	r.render(vert, ind, 6)
+}
+func (r *CmdBuffer) RectangleTold(x, y, w, h float32, tex *gogl.Texture, uv0, uv1, f float32, clr [4]float32) {
 	// founded := false
 	texId := 0
 	// for i := 0; i < len(r.textures); i++ {
@@ -222,6 +274,7 @@ const (
 	TopLeft
 	TopRight
 )
+
 func (r *CmdBuffer) DrawArc(x, y, radius float32, steps int, sector CircleSector, clr [4]float32) {
 	ind0 := r.lastIndc
 	ind1 := ind0 + 1
@@ -332,7 +385,9 @@ func (r *CmdBuffer) DrawArc(x, y, radius float32, steps int, sector CircleSector
 
 	r.render(vert, ind, (numV+1)*3)
 }
+
 var steps = 30
+
 func (r *CmdBuffer) RoundedRectangleR(x, y, w, h float32, radius int, shape RoundedRectShape, clr [4]float32) {
 
 	topLeft := utils.Vec2{x + float32(radius), y - float32(radius)} //origin of arc
@@ -374,7 +429,7 @@ func (r *CmdBuffer) RoundedRectangleR(x, y, w, h float32, radius int, shape Roun
 		r.DrawArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr)
 
 		r.RectangleR(topLeft.X, topLeft.Y+float32(radius), w-float32(radius)*2, float32(radius), clr) //top
-		r.RectangleR(x, topLeft.Y, w, h-float32(radius)*2, clr)                                         //center
+		r.RectangleR(x, topLeft.Y, w, h-float32(radius)*2, clr)                                       //center
 		r.RectangleR(botLeft.X, botLeft.Y, w-float32(radius)*2, float32(radius), clr)                 //bottom
 	}
 

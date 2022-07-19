@@ -103,7 +103,7 @@ func main() {
 		
 		firstWindow()
 	
-		secondWindow()
+		// secondWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 
@@ -190,12 +190,10 @@ func firstWindow() {
 	}
 
 	uiCtx.VSpace()
-	// if uiCtx.Button() {
-	// 	fmt.Println("button clicked f 3")
-	// }
 	if uiCtx.Button() {
 		fmt.Println("button clicked f 3")
 	}
+	
 	uiCtx.EndWindow()
 }
 

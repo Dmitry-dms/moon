@@ -588,8 +588,8 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
 
-	for i := 0; i < len(b.textures); i++ {
-		b.textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
+	for i := 0; i < len(buffer.Textures); i++ {
+		buffer.Textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
 	}
 	b.shader.UploadIntArray("uTextures", b.texSlots)
 
@@ -599,8 +599,8 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	// gl.BindVertexArray(0)
-	for i := 0; i < len(b.textures); i++ {
-		b.textures[i].Unbind()
+	for i := 0; i < len(buffer.Textures); i++ {
+		buffer.Textures[i].Unbind()
 	}
 	// gl.DeleteVertexArrays(1, &vaoHandle)
 	b.shader.Detach()
