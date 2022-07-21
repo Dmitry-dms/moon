@@ -12,4 +12,5 @@ const (
 	ImageWidget WidgetType = iota
 	ButtonWidget
 	VerticalSpacingWidget
+	TextWidget
 )

@@ -3,7 +3,9 @@ package draw
 import (
 	// "fmt"
 
+	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
 
 const MAX_COMMANDS_COUNT = 1000
@@ -53,7 +55,8 @@ func (r *RenderQueue) clearCommands() {
 }
 
 type Command struct {
-	Type CmdType
+	Type     CmdType
+	WidgetId string
 	// priority int
 	Shown    bool
 	Rect     *Rect_command
@@ -61,7 +64,20 @@ type Command struct {
 	RRect    *Rounded_rect
 	Window   *Window_command
 	WinStart *Window_start_command
-	Toolbar *Toolbar_command
+	Toolbar  *Toolbar_command
+	Text     *Text_command
+}
+
+type Text_command struct {
+	Widget *widgets.Text
+	Text   string
+	Font   fonts.Font
+	X, Y   float32
+	Clr    [4]float32
+	Id     string
+	// Scale int
+	Size  int
+	TexId uint32
 }
 
 type Rect_command struct {
@@ -88,8 +104,8 @@ type Window_command struct {
 	Toolbar    Toolbar_command
 }
 type Toolbar_command struct {
-	X,Y,W,H   float32
-	Clr [4]float32
+	X, Y, W, H float32
+	Clr        [4]float32
 }
 type Rounded_rect struct {
 	X, Y, W, H float32
@@ -114,4 +130,5 @@ const (
 	WindowStartCmd
 	ScrollbarCmd
 	ScrollButtonCmd
+	Text
 )

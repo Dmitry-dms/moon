@@ -3,7 +3,9 @@ package ui
 import (
 	// "fmt"
 	"fmt"
+
 	"math/rand"
+
 	// "math/rand"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
@@ -48,7 +50,6 @@ func NewWindow(x, y, w, h float32) *Window {
 		y:       y,
 		w:       w,
 		h:       h,
-		buffer:  draw.NewBuffer(UiCtx.camera),
 
 		outerRect: utils.Rect{Min: utils.Vec2{X: x, Y: y}, Max: utils.Vec2{X: x + w, Y: y + h}},
 
@@ -60,6 +61,7 @@ func NewWindow(x, y, w, h float32) *Window {
 		widgets: []widgets.Widget{},
 		scrlBar: NewScrolBar(utils.NewRect(x+w-10, y, 20, h), utils.NewRect(x+w-10, y, 10, 50), [4]float32{150, 155, 155, 1}),
 	}
+	wnd.buffer = draw.NewBuffer(UiCtx.camera, wnd.addYcursor)
 	wnd.scrlY = wnd.toolbar.h
 	return &wnd
 }
@@ -206,9 +208,9 @@ func (c *UiContext) srollbar(wnd *Window) {
 	}
 
 	wnd.scrlBar.bX = wnd.x + wnd.w - wnd.scrlBar.w + 5
-	wnd.scrlBar.bY = wnd.y + wnd.toolbar.h + visibleRatio
+	wnd.scrlBar.bY = wnd.y + wnd.toolbar.h + visibleRatio // для правильного отоборажения при ресайзинге
 
-	if wnd.scrlBar.bY >= wnd.y+wnd.h-wnd.scrlBar.bH {
+	if wnd.scrlBar.bY >= wnd.y+wnd.h-wnd.scrlBar.bH { // конечное положение для кнопки скроллбара
 		wnd.scrlBar.bY = wnd.y + wnd.h - wnd.scrlBar.bH
 	}
 
@@ -229,7 +231,7 @@ func (c *UiContext) srollbar(wnd *Window) {
 				wnd.scrlY -= step
 			}
 		} else {
-			if wnd.cursorY-wnd.scrlY <= wnd.y+wnd.h {
+			if wnd.cursorY-wnd.scrlY <= wnd.y+wnd.h+wnd.toolbar.h {
 				if factor < 0 {
 					wnd.scrlY -= step
 				}
@@ -237,6 +239,7 @@ func (c *UiContext) srollbar(wnd *Window) {
 				wnd.scrlY += factor
 			}
 		}
+
 	}
 
 	scrollBtnCommand := draw.Rounded_rect{
@@ -284,6 +287,11 @@ func (wnd *Window) getWidget(w widgets.WidgetType) widgets.Widget {
 				Id:           generateId(),
 				CurrentColor: whiteColor,
 				BoundingBox:  [4]float32{wnd.cursorX, wnd.cursorY, float32(100), float32(100)},
+			}
+		case widgets.TextWidget:
+			widg = &widgets.Text{
+				Id:           generateId(),
+				CurrentColor: whiteColor,
 			}
 		case widgets.VerticalSpacingWidget:
 			widg = &widgets.VSpace{
@@ -363,6 +371,66 @@ func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
 	return clicked
 }
 
+var scale float32 = 1
+
+// For speacial cases when height of widget changes dynamically i.e. (Text)
+func (wnd *Window) addYcursor(y float32) {
+	wnd.cursorY += y
+}
+
+func (c *UiContext) Text(msg string, size int) {
+	wnd := c.windowStack.GetTop()
+	var txt *widgets.Text
+
+	txt = wnd.getWidget(widgets.TextWidget).(*widgets.Text)
+	txt.Message = msg
+	clr := txt.CurrentColor
+
+	y := wnd.cursorY
+
+	// DEBUG
+	y -= wnd.scrlY
+	//
+
+	inRect := utils.PointInRect(c.io.MousePos, utils.NewRectS(txt.BoundingBox))
+
+	if wnd == c.ActiveWindow && inRect {
+		c.ActiveWidget = txt.GetId()
+		txt.CurrentColor = [4]float32{167,200,100,1}
+	} else {
+		txt.CurrentColor = whiteColor
+	}
+
+	//DEBUG
+	// scroll := float32(0)
+	// if c.io.ScrollY != 0 {
+	// 	scroll += float32(c.io.ScrollY) * 10
+	// 	scale = scroll
+	// }
+	// Create command and append it to slice
+	{
+		rect := draw.Text_command{
+			X:      wnd.cursorX,
+			Y:      y,
+			Clr:    clr,
+			Text:   txt.Message,
+			Font:   *c.font,
+			Size:   size,
+			Widget: txt,
+		}
+		cmd := draw.Command{
+			Text:     &rect,
+			Type:     draw.Text,
+			WidgetId: txt.Id,
+		}
+		wnd.AddCommand(cmd)
+	}
+
+	// img.BoundingBox = [4]float32{wnd.cursorX, y, img.Width(), img.Height()}
+	wnd.widgetCounter++
+
+}
+
 func (c *UiContext) Image(tex *gogl.Texture) bool {
 	if tex == nil {
 		fmt.Println("error")
@@ -386,7 +454,7 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 	y := wnd.cursorY
 
 	// DEBUG
-	y += wnd.scrlY
+	y -= wnd.scrlY
 	//
 
 	// Create command and append it to slice
@@ -499,16 +567,11 @@ func (c *UiContext) Button() bool {
 func (c *UiContext) EndWindow() {
 
 	wnd := c.windowStack.Pop()
-	//-----------------------------
+
 	if wnd.isScrollShown {
-		// pointy = int(wnd.virtualHeight) + int(wnd.y)
 		c.srollbar(wnd)
 	} else {
-		// wnd.startYshow = wnd.y + wnd.toolbar.h
-		// wnd.endYshow = wnd.y + wnd.h
 		wnd.scrlY = 0
-		pointy = 0
-		initialy = 0
 	}
 
 	Toolbar := draw.Toolbar_command{

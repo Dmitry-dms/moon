@@ -1,7 +1,7 @@
 package ui
 
 import (
-
+	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/draw"
@@ -47,8 +47,8 @@ type UiContext struct {
 	//style
 	CurrentStyle Style
 
-	Vertices []float32
-	Indeces  []int32
+	//fonts
+	font *fonts.Font
 }
 
 func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
@@ -64,8 +64,13 @@ func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
 		windowStack:   utils.NewStack[*Window](),
 		CurrentStyle:  DefaultStyle,
 	}
+	
 
 	return &c
+}
+
+func (c *UiContext) UploadFont(path string, size int) {
+	c.font = fonts.NewFont(path)
 }
 
 func (c *UiContext) Initialize(frontRenderer UiRenderer, camera *gogl.Camera) {
@@ -295,12 +300,12 @@ func (c *UiContext) EndFrame() {
 
 		if int32(size.Y())-(int32(v.y)+int32(v.h)) <= 0 {
 			y = 0
-			h=int32(size[1])-int32(v.y)
+			h = int32(size[1]) - int32(v.y)
 		} else {
 			y = int32(size.Y()) - (int32(v.y) + int32(v.h))
-			
+
 		}
-		c.renderer.Scissor(x, y, w,h)
+		c.renderer.Scissor(x, y, w, h)
 		c.renderer.Draw(c.camera, *v.buffer)
 		v.buffer.Clear()
 	}

@@ -79,6 +79,8 @@ func main() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
+	ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 50)
+
 	beginTime := float32(glfw.GetTime())
 	var endTime float32
 	var dt float32
@@ -96,13 +98,11 @@ func main() {
 		glfw.PollEvents()
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-		
 
 		uiCtx.NewFrame()
 
-		
 		firstWindow()
-	
+
 		// secondWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
@@ -151,7 +151,7 @@ func main() {
 		// batch.FlushBatch()
 
 		window.SwapBuffers()
-		
+
 		endTime = float32(glfw.GetTime())
 		dt = endTime - beginTime
 		beginTime = endTime
@@ -178,22 +178,19 @@ func getImageFromFilePath(filePath string) (image.Image, error) {
 func firstWindow() {
 	uiCtx.BeginWindow()
 
-	if uiCtx.Button() {
-		fmt.Println("button clicked f 1")
-	}
-	uiCtx.VSpace()
+	// if uiCtx.Button() {
+	// 	fmt.Println("button clicked f 1")
+	// }
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
-	if uiCtx.Button() {
-		fmt.Println("button clicked f 2")
-	}
-
+	uiCtx.Text("Привет мир!", 30)
+	uiCtx.Text("645654 rhghgh 65", 50)
+	uiCtx.Text("Hello world><?!.", 20)
 	uiCtx.VSpace()
-	if uiCtx.Button() {
-		fmt.Println("button clicked f 3")
+	if uiCtx.Image(tex) {
+		fmt.Println("image clicked s 1")
 	}
-	
 	uiCtx.EndWindow()
 }
 
@@ -214,6 +211,12 @@ func secondWindow() {
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
+	if uiCtx.Button() {
+		fmt.Println("button clicked f 2")
+	}
+	if uiCtx.Button() {
+		fmt.Println("button clicked f 2")
+	}
 	if uiCtx.Button() {
 		fmt.Println("button clicked f 2")
 	}
@@ -246,5 +249,3 @@ func scrollCallback(w *glfw.Window, xoff float64, yoff float64) {
 	uiCtx.Io().ScrollX = xoff
 	uiCtx.Io().ScrollY = yoff
 }
-
-

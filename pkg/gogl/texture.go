@@ -4,26 +4,26 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	_ "image/jpeg"
 	"image/png"
 	_ "image/png"
-	_ "image/jpeg"
 	"os"
 
 	"github.com/go-gl/gl/v4.2-core/gl"
 )
 
 type Texture struct {
-	Filepath  string  `json:"filepath"`
-	TextureId uint32  `json:"texture_id"`
-	Width     int32 `json:"texture_width"`
-	Height    int32 `json:"texture_height"`
+	Filepath  string `json:"filepath"`
+	TextureId uint32 `json:"texture_id"`
+	Width     int32  `json:"texture_width"`
+	Height    int32  `json:"texture_height"`
 }
 
 type TextureExported struct {
-	Filepath  string  `json:"filepath"`
-	TextureId uint32  `json:"texture_id"`
-	Width     int32 `json:"texture_width"`
-	Height    int32 `json:"texture_height"`
+	Filepath  string `json:"filepath"`
+	TextureId uint32 `json:"texture_id"`
+	Width     int32  `json:"texture_width"`
+	Height    int32  `json:"texture_height"`
 }
 
 func (t *Texture) GetFilepath() string {
@@ -32,9 +32,9 @@ func (t *Texture) GetFilepath() string {
 
 func CreateTexture(filepath string, texId uint32, width, height int32) *Texture {
 	t := &Texture{
-		Filepath: filepath,
-		Width: width,
-		Height: height,
+		Filepath:  filepath,
+		Width:     width,
+		Height:    height,
 		TextureId: texId,
 	}
 	// t.Init(filepath)
@@ -57,7 +57,6 @@ func NewTextureFramebuffer(width, height int32) *Texture {
 	}
 	return &textureStruct
 }
-
 
 func genBindTexture() uint32 {
 	var texId uint32
@@ -88,9 +87,7 @@ func (t *Texture) GetId() uint32 {
 	return t.TextureId
 }
 
-
-
-func UploadTextureFromMemory(data *image.Gray) *Texture {
+func UploadTextureFromMemory(data image.Image) *Texture {
 	// p := data.Pix
 	w := data.Bounds().Max.X
 	h := data.Bounds().Max.Y
@@ -101,18 +98,35 @@ func UploadTextureFromMemory(data *image.Gray) *Texture {
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			r, g, b, a := data.At(x, y).RGBA()
-			pixels[bIndex] = byte(r / 256)
+
+			if r != 0 {
+				r = 255
+			}
+			if g != 0 {
+				g = 255
+			}
+			if b != 0 {
+				b = 255
+			}
+
+			pixels[bIndex] = byte(r )
 			bIndex++
-			pixels[bIndex] = byte(g / 256)
+			pixels[bIndex] = byte(g )
 			bIndex++
-			pixels[bIndex] = byte(b / 256)
+			pixels[bIndex] = byte(b )
 			bIndex++
-			pixels[bIndex] = byte(a / 256)
+			if r == 0 && g == 0 && b == 0 {
+				pixels[bIndex] = byte(0)
+				// pixels[bIndex] = byte(a / 256)
+			} else {
+				pixels[bIndex] = byte(a )
+			}
 			bIndex++
 		}
 	}
 
 	texture := genBindTexture()
+
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
@@ -135,7 +149,6 @@ func TextureFromPNG(filepath string) (*Texture, error) {
 		return nil, err
 	}
 	defer infile.Close()
-	
 
 	img, err := png.Decode(infile)
 	if err != nil {
@@ -226,8 +239,6 @@ func (t *Texture) Init(filepath string) (*Texture, error) {
 	textureStruct.Unbind()
 	return &textureStruct, nil
 }
-
-
 
 func ImageToBytes(img image.Image) []byte {
 	size := img.Bounds().Size()

@@ -3,7 +3,6 @@ package fonts
 import (
 	// "log"
 
-
 	"image/color"
 	"log"
 
@@ -52,7 +51,7 @@ func generateEbo() {
 	elementSize := batchSize * 3
 	elementBuffer := make([]int32, elementSize)
 
-	for i, _ := range elementBuffer {
+	for i := range elementBuffer {
 		i := int32(i)
 		elementBuffer[i] = indeces[(i%6)] + ((i / 6) * 4)
 	}
@@ -87,45 +86,6 @@ func (t *TextBatch) Init() {
 
 var first = true
 
-func (t *TextBatch) AddText(text string, x, y int, scale float32, rgb color.RGBA) {
-	var dx, dy int
-	dy = y
-	dx = x
-	prevR := rune(-1)
-	faceHeight := t.Font.Face.Metrics().Height
-	// fmt.Println("-------------------------------")
-	for _, r := range text {
-		info := t.Font.GetCharacter(r)
-		if info.width == 0 {
-			log.Printf("Unknown char = %q", r)
-			continue
-		}
-		if prevR >= 0 {
-			kern := t.Font.Face.Kern(prevR, r).Ceil()
-			dx += kern
-			// fmt.Printf("%q %q %d \n", prevR, r, kern)
-		}
-		if r == '\n' {
-			dx = x
-			dy -= faceHeight.Ceil()
-			prevR = rune(-1)
-			continue
-		}
-		xPos := float32(dx)
-		yPos := float32(dy)
-
-		if info.Descend != 0 {
-			yPos -= float32(info.Descend) * scale
-		}
-
-		t.addCharacter(xPos, yPos, scale, info, rgb)
-		dx += info.width * int(scale)
-		prevR = r
-	}
-	// fmt.Println("-------------------------------")
-	first = false
-}
-
 func (t *TextBatch) FlushBatch() {
 	//Clear GPU buffer and upload cpu contents and draw
 	gl.BindBuffer(gl.ARRAY_BUFFER, t.Vbo)
@@ -154,7 +114,44 @@ func (t *TextBatch) FlushBatch() {
 	t.Size = 0
 }
 
+func (t *TextBatch) AddText(text string, x, y int, scale float32, rgb color.RGBA) {
+	var dx, dy int
+	dy = y
+	dx = x
+	prevR := rune(-1)
+	faceHeight := t.Font.Face.Metrics().Height
+	// fmt.Println("-------------------------------")
+	for _, r := range text {
+		info := t.Font.GetCharacter(r)
+		if info.Width == 0 {
+			log.Printf("Unknown char = %q", r)
+			continue
+		}
+		if prevR >= 0 {
+			kern := t.Font.Face.Kern(prevR, r).Ceil()
+			dx += kern
+			// fmt.Printf("%q %q %d \n", prevR, r, kern)
+		}
+		if r == '\n' {
+			dx = x
+			dy -= faceHeight.Ceil()
+			prevR = rune(-1)
+			continue
+		}
+		xPos := float32(dx)
+		yPos := float32(dy)
 
+		if info.Descend != 0 {
+			yPos -= float32(info.Descend) * scale
+		}
+
+		t.addCharacter(xPos, yPos, scale, info, rgb)
+		dx += info.Width * int(scale)
+		prevR = r
+	}
+	// fmt.Println("-------------------------------")
+	first = false
+}
 
 func (t *TextBatch) addCharacter(x, y float32, scale float32, info CharInfo, rgb color.RGBA) {
 	//Если нет места, удаляем и начинаем заного
@@ -168,8 +165,8 @@ func (t *TextBatch) addCharacter(x, y float32, scale float32, info CharInfo, rgb
 
 	x0 := x
 	y0 := y
-	x1 := x + scale*float32(info.width)
-	y1 := y + scale*float32(info.heigth)
+	x1 := x + scale*float32(info.Width)
+	y1 := y + scale*float32(info.Heigth)
 
 	ux0, uy0 := info.TexCoords[0].X, info.TexCoords[0].Y
 	ux1, uy1 := info.TexCoords[1].X, info.TexCoords[1].Y

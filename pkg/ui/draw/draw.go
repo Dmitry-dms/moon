@@ -1,8 +1,10 @@
 package draw
 
 import (
+	"log"
 	"math"
 
+	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 )
@@ -29,20 +31,25 @@ type CmdBuffer struct {
 	Vertices  []float32
 	Indeces   []int32
 	Textures  []*gogl.Texture
+	TexSlots  []int32
 	VertCount int
 	lastIndc  int
+
+	addYcursor func(y float32)
 
 	camera *gogl.Camera
 }
 
-func NewBuffer(camera *gogl.Camera) *CmdBuffer {
+func NewBuffer(camera *gogl.Camera, addYcursor func(y float32)) *CmdBuffer {
 	return &CmdBuffer{
-		commands:  []Command{},
-		Vertices:  []float32{},
-		Indeces:   []int32{},
-		Textures:  []*gogl.Texture{},
-		VertCount: 0,
-		camera:    camera,
+		commands:   []Command{},
+		Vertices:   []float32{},
+		Indeces:    []int32{},
+		Textures:   []*gogl.Texture{},
+		TexSlots:   []int32{0, 1, 2, 3, 4, 5, 6, 7},
+		VertCount:  0,
+		camera:     camera,
+		addYcursor: addYcursor,
 	}
 }
 
@@ -62,6 +69,11 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		r := cmd.Rect
 		size := c.camera.GetProjectionSize()
 		c.RectangleR(r.X, size.Y()-r.Y, r.W, r.H, r.Clr)
+	case Text:
+		t := cmd.Text
+		size := c.camera.GetProjectionSize()
+		resized := c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
+		t.Widget.BoundingBox = [4]float32{resized[0], t.Y, resized[2], resized[3]}
 	case RectTypeT:
 		r := cmd.Rect
 
@@ -140,6 +152,99 @@ func (r *CmdBuffer) addTexture(tex *gogl.Texture) {
 		r.Textures = append(r.Textures, tex)
 	}
 }
+
+func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, clr [4]float32) [4]float32 {
+
+	// FIXME: too many calls
+	b.addTexture(font.Texture)
+
+	inf := font.GetCharacter('X')
+	// fmt.Println()
+
+	faceHeight := font.Face.Metrics().Height
+
+	var dx, dy float32
+	dx = x
+	prevR := rune(-1)
+	scale := 1 / (float32(font.DefaultFontSize) / float32(size))
+	dy = y - scale*float32(inf.Heigth)
+
+	var maxDescend float32
+	for _, r := range text {
+		info := font.GetCharacter(r)
+		if info.Width == 0 {
+			log.Printf("Unknown char = %q", r)
+			continue
+		}
+		if prevR >= 0 {
+			kern := font.Face.Kern(prevR, r).Ceil()
+			dx += float32(kern)
+			// fmt.Printf("%q %q %d \n", prevR, r, kern)
+		}
+		if r == '\n' {
+			dx = x
+			dy -= float32(faceHeight.Ceil())
+			prevR = rune(-1)
+			continue
+		}
+		xPos := float32(dx)
+		yPos := float32(dy)
+
+		if info.Descend != 0 {
+			d := float32(info.Descend) * scale
+			yPos -= d
+			if d > maxDescend {
+				maxDescend = d
+			}
+		}
+
+		b.addCharacter(xPos, yPos, scale, font.TextureId, info, clr)
+		dx += float32(info.Width) * float32(scale)
+		prevR = r
+	}
+
+	b.addYcursor(scale*float32(inf.Heigth) + maxDescend)
+
+	return [4]float32{x, y, dx - x, scale*float32(inf.Heigth) + maxDescend}
+}
+
+func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info fonts.CharInfo, clr [4]float32) {
+
+	vert := make([]float32, 9*4)
+	ind := make([]int32, 6)
+
+	x0 := x
+	y0 := y
+	x1 := x + scale*float32(info.Width)
+	y1 := y + scale*float32(info.Heigth)
+
+	ux0, uy0 := info.TexCoords[0].X, info.TexCoords[0].Y
+	ux1, uy1 := info.TexCoords[1].X, info.TexCoords[1].Y
+
+	ind0 := b.lastIndc
+	ind1 := ind0 + 1
+	ind2 := ind1 + 1
+	offset := 0
+
+	fillVertices(vert, &offset, x1, y0, ux1, uy0, float32(texId), clr)
+	fillVertices(vert, &offset, x1, y1, ux1, uy1, float32(texId), clr)
+	fillVertices(vert, &offset, x0, y1, ux0, uy1, float32(texId), clr)
+
+	ind[0] = int32(ind0)
+	ind[1] = int32(ind1)
+	ind[2] = int32(ind2)
+
+	last := ind2 + 1
+
+	fillVertices(vert, &offset, x0, y0, ux0, uy0, float32(texId), clr)
+	ind[3] = int32(ind0)
+	ind[4] = int32(ind2)
+	ind[5] = int32(last)
+
+	b.lastIndc = last + 1
+	b.render(vert, ind, 6)
+}
+
 func (r *CmdBuffer) RectangleT(x, y, w, h float32, tex *gogl.Texture, uv0, uv1 float32, clr [4]float32) {
 	founded := false
 	texId := 0
@@ -164,61 +269,6 @@ func (r *CmdBuffer) RectangleT(x, y, w, h float32, tex *gogl.Texture, uv0, uv1 f
 	fillVertices(vert, &offset, x, y, uv1, uv1, float32(texId), clr)
 	fillVertices(vert, &offset, x, y-h, uv1, uv0, float32(texId), clr)
 	fillVertices(vert, &offset, x+w, y-h, uv0, uv0, float32(texId), clr)
-
-	ind[0] = int32(ind0)
-	ind[1] = int32(ind1)
-	ind[2] = int32(ind2)
-
-	last := ind2 + 1
-
-	fillVertices(vert, &offset, x+w, y, uv0, uv1, float32(texId), clr)
-	ind[3] = int32(ind0)
-	ind[4] = int32(ind2)
-	ind[5] = int32(last)
-
-	r.lastIndc = last + 1
-	r.render(vert, ind, 6)
-}
-func (r *CmdBuffer) RectangleTold(x, y, w, h float32, tex *gogl.Texture, uv0, uv1, f float32, clr [4]float32) {
-	// founded := false
-	texId := 0
-	// for i := 0; i < len(r.textures); i++ {
-	// 	if r.textures[i] == tex {
-	// 		texId = i + 1 // 0 - без текстуры
-	// 		founded = true
-	// 	}
-	// }
-	// if !founded {
-	// 	r.addTexture(tex)
-	// }
-
-	vert := make([]float32, 9*4)
-	ind := make([]int32, 6)
-
-	ind0 := r.lastIndc
-	ind1 := ind0 + 1
-	ind2 := ind1 + 1
-	offset := 0
-
-	// var v00, v10, v11, v01 float32
-	// v00 = uv0
-	// v11 = uv1
-	// v10 = uv1
-	// v01 = uv0
-
-	// factor := float32(1)
-
-	if f != 0 {
-		// factor = f
-		// uv1 -= 0.4
-		// h = f
-	} else {
-		f = 1
-	}
-
-	fillVertices(vert, &offset, x, y, uv1, uv1, float32(texId), clr)
-	fillVertices(vert, &offset, x, y-h, uv1, uv0+(1-f), float32(texId), clr)
-	fillVertices(vert, &offset, x+w, y-h, uv0, uv0+(1-f), float32(texId), clr)
 
 	ind[0] = int32(ind0)
 	ind[1] = int32(ind1)

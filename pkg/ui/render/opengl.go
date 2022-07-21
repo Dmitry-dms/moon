@@ -589,7 +589,7 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
 
 	for i := 0; i < len(buffer.Textures); i++ {
-		buffer.Textures[i].BindActive(gl.TEXTURE0 + uint32(b.texSlots[i]+1))
+		buffer.Textures[i].BindActive(gl.TEXTURE0 + uint32(buffer.TexSlots[i]+1))
 	}
 	b.shader.UploadIntArray("uTextures", b.texSlots)
 

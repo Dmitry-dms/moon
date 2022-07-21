@@ -1,14 +1,12 @@
 package fonts
 
 import (
-	// "fmt"
-	// "fmt"
-	// "fmt"
 	"image"
 	"image/draw"
-	"image/png"
+
+	// "image/png"
 	"io/ioutil"
-	"os"
+	// "os"
 
 	"log"
 
@@ -24,29 +22,36 @@ import (
 )
 
 type Font struct {
-	Filepath string
-	FontSize int32
+	Filepath        string
+	DefaultFontSize int32
 
 	CharMap map[int]*CharInfo
 
 	TextureId uint32
+	Texture   *gogl.Texture
 
 	Face font.Face
 }
 
-func NewFont(filepath string, size int32, flag bool) *Font {
+const DefaultFontSize = 70
+
+func NewFont(filepath string) *Font {
 	f := Font{
-		Filepath: filepath,
-		FontSize: size,
-		CharMap:  make(map[int]*CharInfo, 50),
+		Filepath:        filepath,
+		DefaultFontSize: DefaultFontSize,
+		CharMap:         make(map[int]*CharInfo, 50),
 	}
-	opengl = flag
 
 	f.generateAndUploadBitmap()
 	return &f
 }
 
-var siz = 1280
+var siz = 2048
+
+func (f *Font) GetXHeight(fontSize int) float32 {
+	c := f.GetCharacter('X')
+	return float32(c.Heigth)
+}
 
 func (f *Font) generateAndUploadBitmap() {
 	cp := charmap.Windows1251
@@ -57,11 +62,12 @@ func (f *Font) generateAndUploadBitmap() {
 	}
 
 	var (
-		DPI           = 170.0
-		width            = siz
-		height           = siz
-		startingDotX     = 0
-		startingDotY     = int(f.FontSize)+int(DPI)/3
+		DPI = 144.0
+		// DPI          = 256.0
+		width        = siz
+		height       = siz
+		startingDotX = 0
+		startingDotY = int(f.DefaultFontSize) + int(DPI)/3
 	)
 	var face font.Face
 	{
@@ -75,7 +81,7 @@ func (f *Font) generateAndUploadBitmap() {
 			log.Fatalf("Parse: %v", err)
 		}
 		face, err = opentype.NewFace(parsed, &opentype.FaceOptions{
-			Size:    float64(f.FontSize),
+			Size:    float64(f.DefaultFontSize),
 			DPI:     DPI,
 			Hinting: font.HintingFull,
 		})
@@ -132,20 +138,20 @@ func (f *Font) generateAndUploadBitmap() {
 
 		w, h := (b.Max.X - b.Min.X).Ceil(), (b.Max.Y - b.Min.Y).Ceil()
 		sy := d.Dot.Y.Ceil() - -b.Min.Y.Ceil()
-		sx := d.Dot.X.Ceil() - a.Ceil() + b.Min.X.Ceil() //- (a.Ceil()-b.Max.X.Ceil())
-		// w, h := a.Ceil(), -b.Min.Y.Ceil()+b.Max.Y.Ceil()
+		sx := d.Dot.X.Ceil() - a.Ceil() + b.Min.X.Ceil()
+
 		ch := CharInfo{
-			srcX:         sx,
-			srcY:         sy,
-			width:        w,
-			heigth:       h,
+			SrcX:         sx,
+			SrcY:         sy,
+			Width:        w,
+			Heigth:       h,
 			Ascend:       -b.Min.Y.Ceil(),
 			Descend:      b.Max.Y.Ceil(),
 			LeftBearing:  b.Min.X.Ceil(),
 			RigthBearing: a.Ceil() - b.Max.X.Ceil(),
 		}
 		if l == ' ' {
-			ch.width = a.Ceil()
+			ch.Width = a.Ceil()
 		}
 		ch.calcTexCoords(siz, siz)
 		// draw.Draw(dst, image.Rect(sx, sy, sx+w, sy+h), Border, image.ZP, draw.Src)
@@ -168,30 +174,26 @@ func (f *Font) generateAndUploadBitmap() {
 	}
 	dy += maxDesc
 
-	// fmt.Println(width, height)
 	dst2 := dst.SubImage(image.Rect(0, 0, siz, siz))
-	dst3 := image.NewGray(dst2.Bounds())
+	dst3 := image.NewRGBA(dst2.Bounds())
+	// dst3 := image.NewGray(dst2.Bounds())
 	draw.Draw(dst3, dst2.Bounds(), dst2, image.ZP, draw.Src)
 	// ng := image.NewRGBA(dst2.Bounds())
 	// dst2 = ng
 
-	// for _, v := range f.CharMap {
-	// 	v.calcTexCoords(siz, siz)
-	// 	// draw.Draw(ng, image.Rect(v.srcX, v.srcY, v.srcX+v.width, v.srcY+v.heigth), Border, image.ZP, draw.Src)
+	// pngFile, _ := os.OpenFile("e.png", os.O_CREATE|os.O_RDWR, 0664)
+
+	// defer pngFile.Close()
+
+	// encoder := png.Encoder{
+	// 	CompressionLevel: png.BestCompression,
 	// }
-
-	pngFile, _ := os.OpenFile("e.png", os.O_CREATE|os.O_RDWR, 0664)
-
-	defer pngFile.Close()
-
-	encoder := png.Encoder{
-		CompressionLevel: png.BestCompression,
-	}
-	encoder.Encode(pngFile, dst3)
-	if opengl {
-		t2 := gogl.UploadTextureFromMemory(dst3)
-		f.TextureId = t2.GetId()
-	}
+	// encoder.Encode(pngFile, dst3)
+	// if opengl {
+	t2 := gogl.UploadTextureFromMemory(dst3)
+	f.TextureId = t2.GetId()
+	f.Texture = t2
+	// }
 }
 
 var opengl = true

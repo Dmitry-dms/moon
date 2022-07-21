@@ -14,7 +14,7 @@ import (
 
 func main() {
 
-	f := fonts.NewFont("assets/fonts/Roboto.ttf", 40, false)
+	f := fonts.NewFont("assets/fonts/Roboto.ttf", 40)
 	inf := f.GetCharacter(' ')
 	fmt.Println(inf.TexCoords)
 

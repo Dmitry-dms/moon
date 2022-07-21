@@ -46,7 +46,7 @@ func main() {
 	// font := fonts.NewFont("assets/fonts/rany.otf", 60)
 	// font := fonts.NewFont("assets/fonts/mono.ttf", 60)
 	// font := fonts.NewFont("assets/fonts/Roboto.ttf", 60)
-	font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 40, true)
+	font := fonts.NewFont("C:/Windows/Fonts/times.ttf", 40)
 
 	batch := fonts.NewTextBatch(font)
 	batch.Init()
