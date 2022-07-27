@@ -20,6 +20,10 @@ func (i Image) GetId() string {
 	return i.Id
 }
 
+func (i Image) Visible() bool {
+	return true
+}
+
 func (i Image) Height() float32 {
 	return i.BoundingBox[3] 
 }

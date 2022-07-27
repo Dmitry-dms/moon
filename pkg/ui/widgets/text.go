@@ -22,6 +22,9 @@ func (i Text) GetId() string {
 func (i Text) Height() float32 {
 	return i.BoundingBox[3]
 }
+func (i Text) Visible() bool {
+	return true
+}
 func (i Text) Width() float32 {
 	return i.BoundingBox[2]
 }

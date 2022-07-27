@@ -1,6 +1,7 @@
 package draw
 
 import (
+
 	"log"
 	"math"
 
@@ -25,6 +26,7 @@ func drawData() DrawData {
 func (d *DrawData) clear() {
 	d.cmdLists = []CmdBuffer{}
 }
+
 
 type CmdBuffer struct {
 	commands  []Command
@@ -72,8 +74,9 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 	case Text:
 		t := cmd.Text
 		size := c.camera.GetProjectionSize()
-		resized := c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
-		t.Widget.BoundingBox = [4]float32{resized[0], t.Y, resized[2], resized[3]}
+		c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
+		
+		// t.Widget.BoundingBox = [4]float32{resized[0], t.Y, resized[2], resized[3]}
 	case RectTypeT:
 		r := cmd.Rect
 
@@ -156,9 +159,21 @@ func (r *CmdBuffer) addTexture(tex *gogl.Texture) {
 func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, clr [4]float32) [4]float32 {
 
 	// FIXME: too many calls
-	b.addTexture(font.Texture)
+	// b.addTexture(font.Texture)
+	founded := false
+	texId := 0
+	for i := 0; i < len(b.Textures); i++ {
+		if b.Textures[i] == font.Texture {
+			texId = i + 1 // 0 - без текстуры
+			
+			founded = true
+		}
+	}
+	if !founded {
+		b.addTexture(font.Texture)
+	}
 
-	inf := font.GetCharacter('X')
+	inf := font.GetXHeight()
 	// fmt.Println()
 
 	faceHeight := font.Face.Metrics().Height
@@ -166,8 +181,8 @@ func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, c
 	var dx, dy float32
 	dx = x
 	prevR := rune(-1)
-	scale := 1 / (float32(font.DefaultFontSize) / float32(size))
-	dy = y - scale*float32(inf.Heigth)
+	scale := float32(1) / (float32(font.DefaultFontSize) / float32(size))
+	dy = y - scale*inf
 
 	var maxDescend float32
 	for _, r := range text {
@@ -198,14 +213,14 @@ func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, c
 			}
 		}
 
-		b.addCharacter(xPos, yPos, scale, font.TextureId, info, clr)
+		b.addCharacter(xPos, yPos, scale, uint32(texId), info, clr)
 		dx += float32(info.Width) * float32(scale)
 		prevR = r
 	}
 
-	b.addYcursor(scale*float32(inf.Heigth) + maxDescend)
+	b.addYcursor(scale*inf + maxDescend)
 
-	return [4]float32{x, y, dx - x, scale*float32(inf.Heigth) + maxDescend}
+	return [4]float32{x, y, dx - x, scale*inf + maxDescend}
 }
 
 func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info fonts.CharInfo, clr [4]float32) {
@@ -230,6 +245,13 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	fillVertices(vert, &offset, x1, y1, ux1, uy1, float32(texId), clr)
 	fillVertices(vert, &offset, x0, y1, ux0, uy1, float32(texId), clr)
 
+	// h := scale*float32(info.Heigth)
+	// w := scale*float32(info.Width)
+
+	// fillVertices(vert, &offset, x0, y0, ux1, uy1, float32(texId), clr)
+	// fillVertices(vert, &offset, x0, y0-h, ux1, uy0, float32(texId), clr)
+	// fillVertices(vert, &offset, x0+w, y0-h, ux0, uy0, float32(texId), clr)
+
 	ind[0] = int32(ind0)
 	ind[1] = int32(ind1)
 	ind[2] = int32(ind2)
@@ -237,6 +259,7 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	last := ind2 + 1
 
 	fillVertices(vert, &offset, x0, y0, ux0, uy0, float32(texId), clr)
+	// fillVertices(vert, &offset, x0+w, y0, ux1, uy0, float32(texId), clr)
 	ind[3] = int32(ind0)
 	ind[4] = int32(ind2)
 	ind[5] = int32(last)

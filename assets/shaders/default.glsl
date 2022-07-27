@@ -39,7 +39,7 @@ void main()
     //    float c = texture(uTextures[id], fTexCoords).a;
         // color = vec4(1, 1, 1, c) * fColor;
         color = fColor * texture(uTextures[id],fTexCoords);
-        //color = vec4(fTexCoords, 0, 1);//чтобы узнать u v координаты
+        // color = vec4(fTexCoords, 0, 1);//чтобы узнать u v координаты
     } else {
         color = fColor;
     }

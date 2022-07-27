@@ -5,7 +5,7 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/draw"
-	"github.com/Dmitry-dms/moon/pkg/ui/render"
+	// "github.com/Dmitry-dms/moon/pkg/ui/render"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
@@ -78,13 +78,12 @@ func (c *UiContext) Initialize(frontRenderer UiRenderer, camera *gogl.Camera) {
 	c.camera = camera
 }
 
-func (c *UiContext) AddWidget(id string, w widgets.Widget) {
-	c.widgetsCache.Add(id, &w)
+func (c *UiContext) AddWidget(id string, w widgets.Widget) bool {
+	return c.widgetsCache.Add(id, &w)
 }
 
-func (c *UiContext) GetWidget(id string) *widgets.Widget {
-	w, _ := c.widgetsCache.Get(id)
-	return w
+func (c *UiContext) GetWidget(id string) (*widgets.Widget,bool) {
+	return c.widgetsCache.Get(id)
 }
 
 func (c *UiContext) Io() *Io {
@@ -310,7 +309,7 @@ func (c *UiContext) EndFrame() {
 		v.buffer.Clear()
 	}
 
-	c.renderer.End()
+	// c.renderer.End()
 
 	c.currentWindow = 0
 
@@ -331,15 +330,15 @@ func (c *UiContext) EndFrame() {
 type UiRenderer interface {
 	NewFrame()
 	Scissor(x, y, w, h int32)
-	Rectangle(x, y, w, h float32, clr [4]float32)
-	RectangleR(x, y, w, h float32, clr [4]float32)
-	Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32)
-	Circle(x, y, radius float32, steps int, clr [4]float32)
-	Line(x0, y0, x1, y1 float32, thick int, clr [4]float32)
-	RoundedRectangle(x, y, w, h float32, radius int, clr [4]float32)
-	RoundedRectangleR(x, y, w, h float32, radius int, shape render.RoundedRectShape, clr [4]float32)
-	RectangleT(x, y, w, h float32, tex *gogl.Texture, uv1, uv0, f float32, clr [4]float32)
-	RoundedRectangleT(x, y, w, h float32, radius int, shape render.RoundedRectShape, tex *gogl.Texture, uv1, uv0 float32, clr [4]float32)
+	// Rectangle(x, y, w, h float32, clr [4]float32)
+	// RectangleR(x, y, w, h float32, clr [4]float32)
+	// Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32)
+	// Circle(x, y, radius float32, steps int, clr [4]float32)
+	// Line(x0, y0, x1, y1 float32, thick int, clr [4]float32)
+	// RoundedRectangle(x, y, w, h float32, radius int, clr [4]float32)
+	// RoundedRectangleR(x, y, w, h float32, radius int, shape render.RoundedRectShape, clr [4]float32)
+	// RectangleT(x, y, w, h float32, tex *gogl.Texture, uv1, uv0, f float32, clr [4]float32)
+	// RoundedRectangleT(x, y, w, h float32, radius int, shape render.RoundedRectShape, tex *gogl.Texture, uv1, uv0 float32, clr [4]float32)
 	Draw(camera *gogl.Camera, buffer draw.CmdBuffer)
-	End()
+	// End()
 }

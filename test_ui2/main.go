@@ -80,6 +80,7 @@ func main() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 50)
+	// ui.UiCtx.UploadFont("assets/fonts/rany.otf", 50)
 
 	beginTime := float32(glfw.GetTime())
 	var endTime float32
@@ -87,6 +88,7 @@ func main() {
 	dt = dt
 
 	tex, _ = tex.Init("assets/images/mario.png")
+	tex2, _ = tex2.Init("assets/images/goomba.png")
 
 	// fb, err := NewFramebuffer(200, 200)
 	// if err != nil {
@@ -97,7 +99,7 @@ func main() {
 	for !window.ShouldClose() {
 		glfw.PollEvents()
 		gl.ClearColor(1, 1, 1, 1)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
 
 		uiCtx.NewFrame()
 
@@ -164,6 +166,7 @@ func setCursor(c ui.CursorType) {
 }
 
 var tex *gogl.Texture
+var tex2 *gogl.Texture
 
 func getImageFromFilePath(filePath string) (image.Image, error) {
 	f, err := os.Open(filePath)
@@ -175,49 +178,84 @@ func getImageFromFilePath(filePath string) (image.Image, error) {
 	return image, err
 }
 
+var ish bool = false
+
 func firstWindow() {
 	uiCtx.BeginWindow()
 
-	// if uiCtx.Button() {
+	// if uiCtx.Button("bfgfhf") {
 	// 	fmt.Println("button clicked f 1")
+	// 	ish = !ish
 	// }
+	
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
-	uiCtx.Text("Привет мир!", 30)
-	uiCtx.Text("645654 rhghgh 65", 50)
-	uiCtx.Text("Hello world><?!.", 20)
-	uiCtx.VSpace()
-	if uiCtx.Image(tex) {
-		fmt.Println("image clicked s 1")
+	// uiCtx.ButtonT("Нажать",24)
+	uiCtx.Text("#t3","x", 40)
+	uiCtx.VSpace("#vs1")
+	uiCtx.VSpace("#vs1")
+	uiCtx.Image("#im2",tex)
+	uiCtx.VSpace("#vs1")
+	
+	// uiCtx.Image("#im76",tex2)
+	uiCtx.Image("#im4",tex)
+	// if uiCtx.Image("#im1",tex) {
+	// 	fmt.Println("image clicked s 1")
+	// 	ish = !ish
+	// }
+	if ish {
+		// if uiCtx.Image("#im2",tex) {
+		// 	fmt.Println("image clicked s 1")
+		// 	ish = !ish
+		// }
 	}
+	// uiCtx.VSpace("#vs1")
+	if ish {
+	
+		// uiCtx.Text("#t2","Hello world!:", 30)
+		// uiCtx.VSpace("#vs13r")
+		// uiCtx.Image("#im2",tex)
+		// uiCtx.VSpace("#vs13r")
+		// uiCtx.Text("#t2erwer","Hello world!:", 30)
+	}
+	// if uiCtx.Image("#im3",tex) {
+	// 	fmt.Println("image clicked s 1")
+	// 	ish = !ish
+	// }
+	// uiCtx.VSpace()
+	// if uiCtx.Image(tex) {
+	// 	fmt.Println("image clicked s 1")
+	// 	ish = !ish
+	// }
+
 	uiCtx.EndWindow()
 }
 
 func secondWindow() {
 	uiCtx.BeginWindow()
 
-	if uiCtx.Image(tex) {
+	if uiCtx.Image("#im4",tex) {
 		fmt.Println("image clicked s 1")
 	}
-	uiCtx.VSpace()
+	uiCtx.VSpace("#dfdf")
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
-	if uiCtx.Button() {
+	if uiCtx.Button("#v3245g") {
 		fmt.Println("button clicked f 2")
 	}
-	uiCtx.VSpace()
+	uiCtx.VSpace("#vs3354")
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
-	if uiCtx.Button() {
+	if uiCtx.Button("#354362") {
 		fmt.Println("button clicked f 2")
 	}
-	if uiCtx.Button() {
+	if uiCtx.Button("#vs243646547") {
 		fmt.Println("button clicked f 2")
 	}
-	if uiCtx.Button() {
+	if uiCtx.Button("#vs234634") {
 		fmt.Println("button clicked f 2")
 	}
 

@@ -116,8 +116,8 @@ func UploadTextureFromMemory(data image.Image) *Texture {
 			pixels[bIndex] = byte(b )
 			bIndex++
 			if r == 0 && g == 0 && b == 0 {
-				pixels[bIndex] = byte(0)
-				// pixels[bIndex] = byte(a / 256)
+				// pixels[bIndex] = byte(0)
+				pixels[bIndex] = byte(a / 256)
 			} else {
 				pixels[bIndex] = byte(a )
 			}

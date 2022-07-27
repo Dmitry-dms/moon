@@ -8,51 +8,6 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
 
-const MAX_COMMANDS_COUNT = 1000
-
-type RenderQueue struct {
-	commands     []Command
-	bufferWindow []Command
-
-	CmdCount int
-	Zindex   int
-}
-
-func NewRenderQueue() *RenderQueue {
-	q := RenderQueue{
-		commands: make([]Command, 0),
-	}
-	return &q
-}
-
-func (r *RenderQueue) AddCommand(cmd Command) {
-	// fmt.Printf("%s \n", cmd.t)
-	if cmd.Type == WindowStartCmd {
-	}
-	if cmd.Type == WindowCmd {
-		r.commands = append(r.commands, r.bufferWindow...)
-		// fmt.Println("End window ", r.CmdCount)
-
-		return
-	}
-	if cmd.Type == ScrollButtonCmd || cmd.Type == ScrollbarCmd {
-		if cmd.Shown {
-			cmd.Type = RoundedRect
-		}
-	}
-	r.bufferWindow = append(r.bufferWindow, cmd)
-	r.CmdCount++
-}
-
-func (r *RenderQueue) Commands() []Command {
-	return r.commands
-}
-
-func (r *RenderQueue) clearCommands() {
-	r.commands = []Command{}
-	r.bufferWindow = []Command{}
-	r.CmdCount = 0
-}
 
 type Command struct {
 	Type     CmdType

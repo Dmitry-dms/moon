@@ -34,7 +34,8 @@ type Window struct {
 	cursorX, cursorY float32
 	widgetCounter    int
 	widgets          []widgets.Widget
-	virtualHeight    float32 // сумма высот всех виджетов (для скроллинга)
+
+	virtualHeight float32 // сумма высот всех виджетов (для скроллинга)
 
 	//scrollbar
 	isScrollShown bool
@@ -59,6 +60,7 @@ func NewWindow(x, y, w, h float32) *Window {
 		// srcY:      y + tb.h + UiCtx.CurrentStyle.TopMargin,
 
 		widgets: []widgets.Widget{},
+
 		scrlBar: NewScrolBar(utils.NewRect(x+w-10, y, 20, h), utils.NewRect(x+w-10, y, 10, 50), [4]float32{150, 155, 155, 1}),
 	}
 	wnd.buffer = draw.NewBuffer(UiCtx.camera, wnd.addYcursor)
@@ -79,9 +81,6 @@ var counter int = 0
 const (
 	defx, defy, defw, defh = 300, 100, 400, 500
 )
-
-var pointy = 0
-var initialy = 0
 
 func (c *UiContext) BeginWindow() {
 	var window *Window
@@ -261,19 +260,23 @@ func (c *UiContext) srollbar(wnd *Window) {
 
 var r, g, b float32 = 231, 158, 162
 
-func (w *Window) addWidget(widg widgets.Widget) {
+func (w *Window) addWidget(widg widgets.Widget) bool {
 	w.widgets = append(w.widgets, widg)
-	UiCtx.AddWidget(widg.GetId(), widg)
 	w.virtualHeight += widg.Rectangle()[3]
+	return UiCtx.AddWidget(widg.GetId(), widg)
 }
 
 var (
 	whiteColor = [4]float32{255, 255, 255, 1}
 )
 
-func (wnd *Window) getWidget(w widgets.WidgetType) widgets.Widget {
+func (wnd *Window) getWidget(id string, w widgets.WidgetType) widgets.Widget {
 	var widg widgets.Widget
-	if len(wnd.widgets) == 0 || len(wnd.widgets) <= wnd.widgetCounter {
+
+	wi, ok := UiCtx.GetWidget(id)
+	if ok {
+		widg = *wi
+	} else {
 		switch w {
 		case widgets.ButtonWidget:
 			widg = &widgets.Button{
@@ -298,19 +301,18 @@ func (wnd *Window) getWidget(w widgets.WidgetType) widgets.Widget {
 				BoundingBox: [4]float32{wnd.cursorX, wnd.cursorY, float32(100), float32(20)},
 			}
 		}
-		wnd.addWidget(widg)
-	} else {
-		widg = wnd.widgets[wnd.widgetCounter]
+		UiCtx.AddWidget(widg.GetId(), widg)
+		wnd.virtualHeight += widg.Rectangle()[3]
 	}
 	return widg
 }
 
-func (c *UiContext) ButtonRR(tex *gogl.Texture) bool {
+func (c *UiContext) ButtonRR(id string, tex *gogl.Texture) bool {
 
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
 
-	btn = wnd.getWidget(widgets.ButtonWidget).(*widgets.Button)
+	btn = wnd.getWidget(id, widgets.ButtonWidget).(*widgets.Button)
 
 	clr := btn.CurrentColor
 
@@ -378,14 +380,16 @@ func (wnd *Window) addYcursor(y float32) {
 	wnd.cursorY += y
 }
 
-func (c *UiContext) Text(msg string, size int) {
+func (c *UiContext) Text(id string,msg string, size int) {
 	wnd := c.windowStack.GetTop()
 	var txt *widgets.Text
 
-	txt = wnd.getWidget(widgets.TextWidget).(*widgets.Text)
+	txt = wnd.getWidget(id,widgets.TextWidget).(*widgets.Text)
 	txt.Message = msg
 	clr := txt.CurrentColor
+	s := c.font.CalculateTextBounds(msg, size)
 
+	txt.BoundingBox = [4]float32{wnd.cursorX, wnd.cursorY, s[0], s[1]}
 	y := wnd.cursorY
 
 	// DEBUG
@@ -396,7 +400,7 @@ func (c *UiContext) Text(msg string, size int) {
 
 	if wnd == c.ActiveWindow && inRect {
 		c.ActiveWidget = txt.GetId()
-		txt.CurrentColor = [4]float32{167,200,100,1}
+		txt.CurrentColor = [4]float32{167, 200, 100, 1}
 	} else {
 		txt.CurrentColor = whiteColor
 	}
@@ -410,14 +414,15 @@ func (c *UiContext) Text(msg string, size int) {
 	// Create command and append it to slice
 	{
 		rect := draw.Text_command{
-			X:      wnd.cursorX,
-			Y:      y,
-			Clr:    clr,
-			Text:   txt.Message,
-			Font:   *c.font,
-			Size:   size,
-			Widget: txt,
+			X:    wnd.cursorX,
+			Y:    y,
+			Clr:  clr,
+			Text: txt.Message,
+			Font: *c.font,
+			Size: size,
+			// Widget: txt,
 		}
+
 		cmd := draw.Command{
 			Text:     &rect,
 			Type:     draw.Text,
@@ -431,7 +436,7 @@ func (c *UiContext) Text(msg string, size int) {
 
 }
 
-func (c *UiContext) Image(tex *gogl.Texture) bool {
+func (c *UiContext) Image(id string,tex *gogl.Texture) bool {
 	if tex == nil {
 		fmt.Println("error")
 		return false
@@ -440,7 +445,7 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 	wnd := c.windowStack.GetTop()
 	var img *widgets.Image
 
-	img = wnd.getWidget(widgets.ImageWidget).(*widgets.Image)
+	img = wnd.getWidget(id,widgets.ImageWidget).(*widgets.Image)
 
 	clr := img.CurrentColor
 
@@ -482,27 +487,36 @@ func (c *UiContext) Image(tex *gogl.Texture) bool {
 	return clicked
 }
 
-func (c *UiContext) VSpace() {
+func (c *UiContext) VSpace(id string,) {
 
 	wnd := c.windowStack.GetTop()
 	var s *widgets.VSpace
 
-	s = wnd.getWidget(widgets.VerticalSpacingWidget).(*widgets.VSpace)
+	s = wnd.getWidget(id,widgets.VerticalSpacingWidget).(*widgets.VSpace)
 
 	wnd.widgetCounter++
 
 	wnd.cursorY += s.Height()
 }
 
-func (c *UiContext) Button() bool {
+func (c *UiContext) ButtonT(id string,text string, size int) bool {
+	return c.button(id,text, size)
+}
+
+func (c *UiContext) Button(id string) bool {
+	return c.button(id,"", 0)
+}
+
+func (c *UiContext) button(id string,text string, size int) bool {
 
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
+
 	var clicked, inRect bool
 	var cmd draw.Command
 	var rect draw.Rect_command
 
-	btn = wnd.getWidget(widgets.ButtonWidget).(*widgets.Button)
+	btn = wnd.getWidget(id,widgets.ButtonWidget).(*widgets.Button)
 
 	x := wnd.cursorX
 	y := wnd.cursorY
@@ -521,6 +535,32 @@ func (c *UiContext) Button() bool {
 		H:   h,
 		Clr: clr,
 	}
+
+	// if text != "" {
+	// 	txt = wnd.getWidget(widgets.TextWidget).(*widgets.Text)
+	// 	tBounds := c.font.CalculateTextBounds(text, size)
+	// 	rect.W += tBounds[0]
+	// 	rect.H += tBounds[1]
+	// 	txt.Message = text
+	// 	clr := txt.CurrentColor
+	// 	rect := draw.Text_command{
+	// 		X:      wnd.cursorX,
+	// 		Y:      y,
+	// 		Clr:    clr,
+	// 		Text:   txt.Message,
+	// 		Font:   *c.font,
+	// 		Size:   size,
+	// 		Widget: txt,
+	// 	}
+
+	// 	cmd2 = draw.Command{
+	// 		Text:     &rect,
+	// 		Type:     draw.Text,
+	// 		WidgetId: txt.Id,
+	// 	}
+
+	// 	// wnd.widgetCounter++
+	// }
 
 	{
 		inRect = utils.PointInRect(c.io.MousePos, utils.NewRect(x, y, w, h))
@@ -555,11 +595,10 @@ func (c *UiContext) Button() bool {
 			Shown: true,
 		}
 	}
-
-	wnd.cursorY += btn.Height()
+	wnd.widgetCounter++
 	wnd.AddCommand(cmd)
 
-	wnd.widgetCounter++
+	wnd.cursorY += btn.Height()
 
 	return clicked
 }
@@ -603,7 +642,6 @@ func (c *UiContext) EndWindow() {
 
 	wnd.AddCommand(cmd)
 	c.currentWindow++
-	wnd.widgetCounter = 0
 }
 
 func RegionHit(mouseX, mouseY, x, y, w, h float32) bool {

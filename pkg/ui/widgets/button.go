@@ -1,10 +1,16 @@
 package widgets
 
+
+// TODO: add Base Widget
 type Button struct {
 	IsActive     bool
 	CurrentColor [4]float32
 	Id           string
 	BoundingBox  [4]float32 //x,y,w,h
+}
+
+func (b Button) Visible() bool {
+	return true
 }
 
 func (b *Button) AddWidth(w float32) {

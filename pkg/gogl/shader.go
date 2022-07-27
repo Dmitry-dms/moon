@@ -118,5 +118,4 @@ func (s *Shader) UploadIntArray(name string, array []int32) {
 	location := gl.GetUniformLocation(s.ProgramId, name_cstr)
 	s.Use()
 	gl.Uniform1iv(location, int32(len(array)), &array[0])
-
 }

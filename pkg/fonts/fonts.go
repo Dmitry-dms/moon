@@ -3,6 +3,8 @@ package fonts
 import (
 	"image"
 	"image/draw"
+	"image/png"
+	"os"
 
 	// "image/png"
 	"io/ioutil"
@@ -48,9 +50,53 @@ func NewFont(filepath string) *Font {
 
 var siz = 2048
 
-func (f *Font) GetXHeight(fontSize int) float32 {
+func (f *Font) GetXHeight() float32 {
 	c := f.GetCharacter('X')
 	return float32(c.Heigth)
+}
+
+func (f *Font) CalculateTextBounds(text string, size int) [2]float32 {
+	var dx, dy float32
+	prevR := rune(-1)
+
+	inf := f.GetXHeight()
+	// fmt.Println()
+
+	faceHeight := f.Face.Metrics().Height
+
+	scale := 1 / (float32(DefaultFontSize) / float32(size))
+	dy = scale * inf
+
+	var maxDescend float32
+	for _, r := range text {
+		info := f.GetCharacter(r)
+		if info.Width == 0 {
+			log.Printf("Unknown char = %q", r)
+			continue
+		}
+		if prevR >= 0 {
+			kern := f.Face.Kern(prevR, r).Ceil()
+			dx += float32(kern)
+			// fmt.Printf("%q %q %d \n", prevR, r, kern)
+		}
+		if r == '\n' {
+			dx = 0
+			dy += float32(faceHeight.Ceil())
+			prevR = rune(-1)
+			continue
+		}
+
+		if info.Descend != 0 {
+			d := float32(info.Descend) * scale
+			if d > maxDescend {
+				maxDescend = d
+			}
+		}
+
+		dx += float32(info.Width) * float32(scale)
+		prevR = r
+	}
+	return [2]float32{dx, dy}
 }
 
 func (f *Font) generateAndUploadBitmap() {
@@ -125,18 +171,26 @@ func (f *Font) generateAndUploadBitmap() {
 		}
 		// Редкий случай, когда символ занимает нижнее пространство другого символа, напр. ij
 		if dx > (dx + b.Min.X.Ceil()) {
+			
 			d.Dot = fixed.P(dx-b.Min.X.Ceil()*2, dy)
 		}
 
+		// special case when 'g' overlaps 'f' in Times New Roman
+		if  l =='g' {
+			d.Dot = fixed.P(dx+b.Min.X.Ceil()*2, dy)
+		}
+		
 		// if l == 'i' || l == 'j' {
 		// 	fmt.Println(d.Dot.X.Ceil(), dx, b.Min.X.Ceil())
 		// }
 
 		dx += a.Ceil()
 
+		// d.Dot = fixed.P(dx, dy)
+
 		d.DrawString(string(l))
 
-		w, h := (b.Max.X - b.Min.X).Ceil(), (b.Max.Y - b.Min.Y).Ceil()
+		w, h := (b.Max.X - b.Min.X).Ceil(), (b.Max.Y - b.Min.Y).Ceil() 
 		sy := d.Dot.Y.Ceil() - -b.Min.Y.Ceil()
 		sx := d.Dot.X.Ceil() - a.Ceil() + b.Min.X.Ceil()
 
@@ -181,14 +235,14 @@ func (f *Font) generateAndUploadBitmap() {
 	// ng := image.NewRGBA(dst2.Bounds())
 	// dst2 = ng
 
-	// pngFile, _ := os.OpenFile("e.png", os.O_CREATE|os.O_RDWR, 0664)
+	pngFile, _ := os.OpenFile("e.png", os.O_CREATE|os.O_RDWR, 0664)
 
-	// defer pngFile.Close()
+	defer pngFile.Close()
 
-	// encoder := png.Encoder{
-	// 	CompressionLevel: png.BestCompression,
-	// }
-	// encoder.Encode(pngFile, dst3)
+	encoder := png.Encoder{
+		CompressionLevel: png.BestCompression,
+	}
+	encoder.Encode(pngFile, dst3)
 	// if opengl {
 	t2 := gogl.UploadTextureFromMemory(dst3)
 	f.TextureId = t2.GetId()
