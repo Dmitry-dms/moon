@@ -1,7 +1,6 @@
 package draw
 
 import (
-
 	"log"
 	"math"
 
@@ -27,19 +26,28 @@ func (d *DrawData) clear() {
 	d.cmdLists = []CmdBuffer{}
 }
 
-
 type CmdBuffer struct {
-	commands  []Command
+	commands []Command
+
+	Inf []Info
+	ofs int
+
 	Vertices  []float32
 	Indeces   []int32
-	Textures  []*gogl.Texture
-	TexSlots  []int32
+	
 	VertCount int
 	lastIndc  int
 
-	addYcursor func(y float32)
+	// addYcursor func(y float32)
 
 	camera *gogl.Camera
+}
+
+type Info struct {
+	Elems       int
+	IndexOffset int
+	TexId       uint32
+	Type        string
 }
 
 func NewBuffer(camera *gogl.Camera, addYcursor func(y float32)) *CmdBuffer {
@@ -47,11 +55,10 @@ func NewBuffer(camera *gogl.Camera, addYcursor func(y float32)) *CmdBuffer {
 		commands:   []Command{},
 		Vertices:   []float32{},
 		Indeces:    []int32{},
-		Textures:   []*gogl.Texture{},
-		TexSlots:   []int32{0, 1, 2, 3, 4, 5, 6, 7},
+
 		VertCount:  0,
 		camera:     camera,
-		addYcursor: addYcursor,
+		// addYcursor: addYcursor,
 	}
 }
 
@@ -61,7 +68,12 @@ func (c *CmdBuffer) Clear() {
 	c.Indeces = []int32{}
 	c.VertCount = 0
 	c.lastIndc = 0
+	c.ofs = 0
+	c.Inf = []Info{}
+	lastElems = 0
 }
+
+var lastElems int
 
 func (c *CmdBuffer) AddCommand(cmd Command) {
 	c.commands = append(c.commands, cmd)
@@ -75,14 +87,29 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		t := cmd.Text
 		size := c.camera.GetProjectionSize()
 		c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
-		
+		// fmt.Println(t.Font.TextureId)
+		c.Inf = append(c.Inf, Info{
+			Elems:       c.VertCount - lastElems,
+			IndexOffset: c.ofs,
+			TexId:       t.Font.TextureId,
+			Type:        "text",
+		})
+		c.ofs += c.VertCount - lastElems
+		lastElems = c.VertCount
 		// t.Widget.BoundingBox = [4]float32{resized[0], t.Y, resized[2], resized[3]}
 	case RectTypeT:
 		r := cmd.Rect
 
 		size := c.camera.GetProjectionSize()
 		c.RectangleT(r.X, size.Y()-r.Y, r.W, r.H, r.Texture, 0, 1, r.Clr)
-
+		c.Inf = append(c.Inf, Info{
+			Elems:       c.VertCount - lastElems,
+			IndexOffset: c.ofs,
+			TexId:       r.Texture.TextureId,
+			Type:        "image",
+		})
+		c.ofs += c.VertCount - lastElems
+		lastElems = c.VertCount
 	case ToolbarCmd:
 		t := cmd.Toolbar
 		size := c.camera.GetProjectionSize()
@@ -103,10 +130,20 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		wnd := cmd.Window
 		size := c.camera.GetProjectionSize()
 		c.RoundedRectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.H, 10, AllRounded, wnd.Clr)
+		c.RoundedRectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, 30, 10, TopRect, [4]float32{255, 0, 0, 1})
 
+		c.Inf = append(c.Inf, Info{
+			Elems:       c.VertCount - lastElems,
+			IndexOffset: c.ofs,
+			TexId:       0,
+			Type:        "window",
+		})
+		c.ofs += c.VertCount - lastElems
+		lastElems = c.VertCount
 		// c.RectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.H, cmd.Window.Clr)
 		// c.RectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.Toolbar.H, cmd.Window.Toolbar.Clr)
 	}
+
 }
 
 func (r *CmdBuffer) render(vert []float32, indeces []int32, vertCount int) {
@@ -143,38 +180,12 @@ func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 	r.lastIndc = last + 1
 	r.render(vert, ind, 6)
 }
-func (r *CmdBuffer) addTexture(tex *gogl.Texture) {
-	isAdded := false
-	for _, v := range r.Textures {
-		if tex == v {
-			isAdded = true
-			break
-		}
-	}
-	if !isAdded {
-		r.Textures = append(r.Textures, tex)
-	}
-}
 
-func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, clr [4]float32) [4]float32 {
 
-	// FIXME: too many calls
-	// b.addTexture(font.Texture)
-	founded := false
-	texId := 0
-	for i := 0; i < len(b.Textures); i++ {
-		if b.Textures[i] == font.Texture {
-			texId = i + 1 // 0 - без текстуры
-			
-			founded = true
-		}
-	}
-	if !founded {
-		b.addTexture(font.Texture)
-	}
+func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, clr [4]float32) {
 
+	texId := font.TextureId
 	inf := font.GetXHeight()
-	// fmt.Println()
 
 	faceHeight := font.Face.Metrics().Height
 
@@ -212,15 +223,10 @@ func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, c
 				maxDescend = d
 			}
 		}
-
 		b.addCharacter(xPos, yPos, scale, uint32(texId), info, clr)
 		dx += float32(info.Width) * float32(scale)
 		prevR = r
 	}
-
-	b.addYcursor(scale*inf + maxDescend)
-
-	return [4]float32{x, y, dx - x, scale*inf + maxDescend}
 }
 
 func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info fonts.CharInfo, clr [4]float32) {
@@ -269,17 +275,7 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 }
 
 func (r *CmdBuffer) RectangleT(x, y, w, h float32, tex *gogl.Texture, uv0, uv1 float32, clr [4]float32) {
-	founded := false
-	texId := 0
-	for i := 0; i < len(r.Textures); i++ {
-		if r.Textures[i] == tex {
-			texId = i + 1 // 0 - без текстуры
-			founded = true
-		}
-	}
-	if !founded {
-		r.addTexture(tex)
-	}
+	texId := tex.TextureId
 
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)

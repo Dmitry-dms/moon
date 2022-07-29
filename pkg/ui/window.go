@@ -380,24 +380,26 @@ func (wnd *Window) addYcursor(y float32) {
 	wnd.cursorY += y
 }
 
-func (c *UiContext) Text(id string,msg string, size int) {
+func (c *UiContext) Text(id string, msg string, size int) {
 	wnd := c.windowStack.GetTop()
 	var txt *widgets.Text
 
-	txt = wnd.getWidget(id,widgets.TextWidget).(*widgets.Text)
+	txt = wnd.getWidget(id, widgets.TextWidget).(*widgets.Text)
 	txt.Message = msg
 	clr := txt.CurrentColor
 	s := c.font.CalculateTextBounds(msg, size)
-
-	txt.BoundingBox = [4]float32{wnd.cursorX, wnd.cursorY, s[0], s[1]}
 	y := wnd.cursorY
+	x := wnd.cursorX
+
+	txt.BoundingBox = [4]float32{x, y, s[0], s[1]}
+	
 
 	// DEBUG
 	y -= wnd.scrlY
 	//
 
 	inRect := utils.PointInRect(c.io.MousePos, utils.NewRectS(txt.BoundingBox))
-
+	// fmt.Println(inRect)
 	if wnd == c.ActiveWindow && inRect {
 		c.ActiveWidget = txt.GetId()
 		txt.CurrentColor = [4]float32{167, 200, 100, 1}
@@ -430,13 +432,12 @@ func (c *UiContext) Text(id string,msg string, size int) {
 		}
 		wnd.AddCommand(cmd)
 	}
-
 	// img.BoundingBox = [4]float32{wnd.cursorX, y, img.Width(), img.Height()}
-	wnd.widgetCounter++
+	wnd.cursorY += s[1]
 
 }
 
-func (c *UiContext) Image(id string,tex *gogl.Texture) bool {
+func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 	if tex == nil {
 		fmt.Println("error")
 		return false
@@ -445,7 +446,7 @@ func (c *UiContext) Image(id string,tex *gogl.Texture) bool {
 	wnd := c.windowStack.GetTop()
 	var img *widgets.Image
 
-	img = wnd.getWidget(id,widgets.ImageWidget).(*widgets.Image)
+	img = wnd.getWidget(id, widgets.ImageWidget).(*widgets.Image)
 
 	clr := img.CurrentColor
 
@@ -481,33 +482,32 @@ func (c *UiContext) Image(id string,tex *gogl.Texture) bool {
 	}
 
 	img.BoundingBox = [4]float32{wnd.cursorX, y, img.Width(), img.Height()}
-	wnd.widgetCounter++
 
 	wnd.cursorY += img.Height()
 	return clicked
 }
 
-func (c *UiContext) VSpace(id string,) {
+func (c *UiContext) VSpace(id string) {
 
 	wnd := c.windowStack.GetTop()
 	var s *widgets.VSpace
 
-	s = wnd.getWidget(id,widgets.VerticalSpacingWidget).(*widgets.VSpace)
+	s = wnd.getWidget(id, widgets.VerticalSpacingWidget).(*widgets.VSpace)
 
 	wnd.widgetCounter++
 
 	wnd.cursorY += s.Height()
 }
 
-func (c *UiContext) ButtonT(id string,text string, size int) bool {
-	return c.button(id,text, size)
+func (c *UiContext) ButtonT(id string, text string, size int) bool {
+	return c.button(id, text, size)
 }
 
 func (c *UiContext) Button(id string) bool {
-	return c.button(id,"", 0)
+	return c.button(id, "", 0)
 }
 
-func (c *UiContext) button(id string,text string, size int) bool {
+func (c *UiContext) button(id string, text string, size int) bool {
 
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
@@ -516,7 +516,7 @@ func (c *UiContext) button(id string,text string, size int) bool {
 	var cmd draw.Command
 	var rect draw.Rect_command
 
-	btn = wnd.getWidget(id,widgets.ButtonWidget).(*widgets.Button)
+	btn = wnd.getWidget(id, widgets.ButtonWidget).(*widgets.Button)
 
 	x := wnd.cursorX
 	y := wnd.cursorY
@@ -613,21 +613,21 @@ func (c *UiContext) EndWindow() {
 		wnd.scrlY = 0
 	}
 
-	Toolbar := draw.Toolbar_command{
-		X:   wnd.x,
-		Y:   wnd.y,
-		W:   wnd.w,
-		H:   wnd.toolbar.h,
-		Clr: wnd.toolbar.clr,
-	}
+	// Toolbar := draw.Toolbar_command{
+	// 	X:   wnd.x,
+	// 	Y:   wnd.y,
+	// 	W:   wnd.w,
+	// 	H:   wnd.toolbar.h,
+	// 	Clr: wnd.toolbar.clr,
+	// }
 
-	cmdToolbar := draw.Command{
+	// cmdToolbar := draw.Command{
 
-		Type:    draw.ToolbarCmd,
-		Toolbar: &Toolbar,
-		// window:   cmdw,
-	}
-	wnd.AddCommand(cmdToolbar)
+	// 	Type:    draw.ToolbarCmd,
+	// 	Toolbar: &Toolbar,
+	// 	// window:   cmdw,
+	// }
+	// wnd.AddCommand(cmdToolbar)
 
 	cmd := draw.Command{
 		Type: draw.WindowCmd,

@@ -85,6 +85,13 @@ func (s *Shader) UploadTexture(name string, slot int32) {
 	gl.Uniform1i(gl.GetUniformLocation(s.ProgramId, name_cstr), slot)
 }
 
+func (s *Shader) UploadInt(name string, slot int32) {
+	name_cstr := gl.Str(name + "\x00")
+	// location := gl.GetUniformLocation(s.ProgramId, name_cstr)
+	// s.Use()
+	gl.Uniform1i(gl.GetUniformLocation(s.ProgramId, name_cstr), slot)
+}
+
 func (s *Shader) UploadVec2(name string, vec []float32) {
 	name_cstr := gl.Str(name + "\x00")
 	location := gl.GetUniformLocation(s.ProgramId, name_cstr)

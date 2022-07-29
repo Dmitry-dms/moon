@@ -19,7 +19,7 @@ void main()
 #type fragment
 #version 420
 uniform sampler2D Texture;
-uniform sampler2D uTextures[8];
+
 
 in vec2 Frag_UV;
 in vec4 Frag_Color;
@@ -31,11 +31,11 @@ void main()
 {
     color = vec4(Frag_Color.rgb, Frag_Color.a * texture(Texture, Frag_UV.st).r);
     
-    if (fTexId > 0) {
-       int id = int(fTexId);
-        color = Frag_Color * texture(uTextures[id],fTexCoords);
-        //color = vec4(fTexCoords, 0, 1);//чтобы узнать u v координаты
-    } else {
-        color = Frag_Color;
-    }
+    // if (fTexId > 0) {
+    //    int id = int(fTexId);
+    //     color = Frag_Color * texture(uTextures[id],fTexCoords);
+    //     //color = vec4(fTexCoords, 0, 1);//чтобы узнать u v координаты
+    // } else {
+    //     color = Frag_Color;
+    // }
 }

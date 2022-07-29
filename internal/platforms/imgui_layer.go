@@ -1,7 +1,9 @@
 package platforms
 
 import (
-	"github.com/Dmitry-dms/moon/internal/editor"
+	// "github.com/Dmitry-dms/moon/internal/editor"
+	"fmt"
+
 	"github.com/Dmitry-dms/moon/internal/scenes"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/go-gl/gl/v4.2-core/gl"
@@ -28,6 +30,8 @@ type ImgUi struct {
 	elementsHandle         uint32
 }
 
+var tex gogl.Texture
+
 func NewImgui() *ImgUi {
 	context := imgui.CreateContext(nil)
 	io := imgui.CurrentIO()
@@ -39,16 +43,28 @@ func NewImgui() *ImgUi {
 
 	g.setKeyMapping()
 	g.createDeviceObjects()
+	tex.Init("assets/images/mario.png")
 	return &g
 }
 
-func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt float32, currentScene scenes.Scene, texId uint32) {
+func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt float32, currentScene scenes.Scene) {
 
 	imgui.NewFrame()
 
-	editor.Imgui(16/9, texId)	
-	
-	currentScene.Imgui()
+	imgui.Begin("id string")
+	imgui.Button("btn")
+	// imgui.Image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
+	imgui.Text("text string")
+	// imgui.Image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
+	// imgui.Text("text string 2")
+	// imgui.Button("btn")
+	// imgui.Button("btn")
+	// imgui.Button("btn")
+	imgui.End()
+
+	// editor.Imgui(16/9, texId)
+
+	// currentScene.Imgui()
 
 	// Rendering
 	imgui.Render() // This call only creates the draw data list. Actual rendering to framebuffer is done below.
@@ -233,6 +249,7 @@ func (renderer *ImgUi) Render(displaySize [2]float32, framebufferSize [2]float32
 	gl.EnableVertexAttribArray(uint32(renderer.attribLocationUV))
 	gl.EnableVertexAttribArray(uint32(renderer.attribLocationColor))
 	vertexSize, vertexOffsetPos, vertexOffsetUv, vertexOffsetCol := imgui.VertexBufferLayout()
+	// fmt.Println(imgui.VertexBufferLayout())
 	gl.VertexAttribPointerWithOffset(uint32(renderer.attribLocationPosition), 2, gl.FLOAT, false, int32(vertexSize), uintptr(vertexOffsetPos))
 	gl.VertexAttribPointerWithOffset(uint32(renderer.attribLocationUV), 2, gl.FLOAT, false, int32(vertexSize), uintptr(vertexOffsetUv))
 	gl.VertexAttribPointerWithOffset(uint32(renderer.attribLocationColor), 4, gl.UNSIGNED_BYTE, true, int32(vertexSize), uintptr(vertexOffsetCol))
@@ -243,6 +260,7 @@ func (renderer *ImgUi) Render(displaySize [2]float32, framebufferSize [2]float32
 		drawType = gl.UNSIGNED_INT
 	}
 
+	// fmt.Println(len(drawData.CommandLists()))
 	// Draw
 	for _, list := range drawData.CommandLists() {
 		vertexBuffer, vertexBufferSize := list.VertexBuffer()
@@ -257,13 +275,17 @@ func (renderer *ImgUi) Render(displaySize [2]float32, framebufferSize [2]float32
 			if cmd.HasUserCallback() {
 				cmd.CallUserCallback(list)
 			} else {
+				fmt.Println(cmd.ElementCount(), cmd.IndexOffset(), cmd.VertexOffset(),indexSize)
+				// fmt.Println(cmd.TextureID())
 				gl.BindTexture(gl.TEXTURE_2D, uint32(cmd.TextureID()))
 				clipRect := cmd.ClipRect()
+				// fmt.Println(cmd.ClipRect(), int32(clipRect.X), int32(fbHeight)-int32(clipRect.W), int32(clipRect.Z-clipRect.X), int32(clipRect.W-clipRect.Y))
 				gl.Scissor(int32(clipRect.X), int32(fbHeight)-int32(clipRect.W), int32(clipRect.Z-clipRect.X), int32(clipRect.W-clipRect.Y))
 				gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(cmd.ElementCount()), uint32(drawType),
 					uintptr(cmd.IndexOffset()*indexSize), int32(cmd.VertexOffset()))
 			}
 		}
+		fmt.Println("==================")
 	}
 	gl.DeleteVertexArrays(1, &vaoHandle)
 

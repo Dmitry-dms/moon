@@ -30,18 +30,23 @@ in vec2 fTexCoords;
 in float fTexId;
 out vec4 color;
 
-uniform sampler2D uTextures[8];
+uniform sampler2D Texture;
 
 void main()
 {
     if (fTexId > 0) {
-       int id = int(fTexId);
-    //    float c = texture(uTextures[id], fTexCoords).a;
-        // color = vec4(1, 1, 1, c) * fColor;
-        color = fColor * texture(uTextures[id],fTexCoords);
-        // color = vec4(fTexCoords, 0, 1);//чтобы узнать u v координаты
+        color = fColor * texture(Texture,fTexCoords);
     } else {
         color = fColor;
     }
+    // if (fTexId > 0) {
+    //    int id = int(fTexId);
+    //    float c = texture(uTextures[id], fTexCoords).a;
+        // color = vec4(1, 1, 1, c) * fColor;
+        // color = fColor * texture(uTextures[id],fTexCoords);
+        // color = vec4(fTexCoords, 0, 1);//чтобы узнать u v координаты
+    // } else {
+        // color = fColor;
+    // }
 
 }

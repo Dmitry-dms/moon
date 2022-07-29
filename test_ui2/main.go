@@ -192,14 +192,14 @@ func firstWindow() {
 	// 	fmt.Println("button clicked f 2")
 	// }
 	// uiCtx.ButtonT("Нажать",24)
-	uiCtx.Text("#t3","x", 40)
-	uiCtx.VSpace("#vs1")
-	uiCtx.VSpace("#vs1")
+	uiCtx.Text("#t3","xello world!", 40)
+	// uiCtx.VSpace("#vs1")
+	// uiCtx.VSpace("#vs1")
 	uiCtx.Image("#im2",tex)
 	uiCtx.VSpace("#vs1")
 	
-	// uiCtx.Image("#im76",tex2)
-	uiCtx.Image("#im4",tex)
+	uiCtx.Image("#im76",tex2)
+	// uiCtx.Image("#im4",tex)
 	// if uiCtx.Image("#im1",tex) {
 	// 	fmt.Println("image clicked s 1")
 	// 	ish = !ish

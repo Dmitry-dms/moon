@@ -34,11 +34,10 @@ func NewGlRenderer() *GLRender {
 	}
 	r := GLRender{
 
-		vaoId:     0,
-		vboId:     0,
-		ebo:       0,
-		shader:    s,
-		
+		vaoId:  0,
+		vboId:  0,
+		ebo:    0,
+		shader: s,
 	}
 	r.vaoId = gogl.GenBindVAO()
 
@@ -67,7 +66,6 @@ func NewGlRenderer() *GLRender {
 func (r *GLRender) NewFrame() {
 
 }
-
 
 type CircleSector int
 type RoundedRectShape int
@@ -293,7 +291,6 @@ const (
 
 var steps = 30
 
-
 func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 
 	// Backup GL state
@@ -345,6 +342,7 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 
 	b.shader.Use()
 
+	// gl.BindSampler(0, 0)
 	gogl.BindVertexArray(b.vaoId)
 
 	// var vaoHandle uint32
@@ -361,24 +359,22 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
 
-	for i := 0; i < len(buffer.Textures); i++ {
-		buffer.Textures[i].BindActive(gl.TEXTURE0 + uint32(buffer.TexSlots[i]+1))
+
+	for _, cmd := range buffer.Inf {
+
+		// fmt.Printf("type = %s, elems = %d, ofs = %d, texId = %d \n", cmd.Type, cmd.Elems, cmd.IndexOffset, cmd.TexId)
+		if cmd.TexId != 0 {
+			gl.ActiveTexture(gl.TEXTURE0 + cmd.TexId)
+			gl.BindTexture(gl.TEXTURE_2D, cmd.TexId)
+			b.shader.UploadTexture("Texture", int32(cmd.TexId))
+		}
+
+		gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(cmd.Elems), gl.UNSIGNED_INT,
+			uintptr(cmd.IndexOffset*4), 0)
+
 	}
-	b.shader.UploadIntArray("uTextures", buffer.TexSlots)
 
-	//
-
-	gl.DrawElements(gl.TRIANGLES, int32(buffer.VertCount), gl.UNSIGNED_INT, nil)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
-
-	gl.BindVertexArray(0)
-	for i := 0; i < len(buffer.Textures); i++ {
-		buffer.Textures[i].Unbind()
-	}
-	// gl.DeleteVertexArrays(1, &vaoHandle)
 	b.shader.Detach()
-
-
 
 	// Restore modified GL state
 	// gl.UseProgram(uint32(lastProgram))
@@ -416,4 +412,3 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 func (r *GLRender) Scissor(x, y, w, h int32) {
 	gl.Scissor(x, y, w, h)
 }
-

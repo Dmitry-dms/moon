@@ -91,8 +91,8 @@ func NewGLFW(clientAPI GLFWClientAPI, width, height *int32) (*GLFW, error) {
 	}
 	platform.renderer = renderer
 
-	// imGui := NewImgui()
-	// platform.ImguiIO = imGui
+	imGui := NewImgui()
+	platform.ImguiIO = imGui
 
 	return platform, nil
 }

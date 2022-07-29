@@ -58,7 +58,7 @@ func newCore(width, height int32, glVersion platforms.GLFWClientAPI, scene int) 
 	// }
 	// gl.Viewport(0, 0, width, height)
 	// c.framebuffer = buffer
-	c.changeScene(0)
+	// c.changeScene(0)
 	return &c
 }
 
@@ -79,9 +79,9 @@ func (c *Core) changeScene(scene int) {
 	}
 }
 func (c *Core) Dispose() {
-	c.currentScene.Destroy()
+	// c.currentScene.Destroy()
 	//c.renderer.Dispose()
-	//c.imGuiContext.Destroy()
+	// c.imGuiContext.Destroy()
 	c.glfwWindow.Dispose()
 }
 
@@ -98,15 +98,16 @@ func (c *Core) Run() {
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		if dt >= 0 {
-			// renderers.DebugDraw.Draw(c.currentScene.GetCamera())
-			c.currentScene.Update(dt)
-		}
-		c.currentScene.Render()
+		// if dt >= 0 {
+		// 	// renderers.DebugDraw.Draw(c.currentScene.GetCamera())
+		// 	c.currentScene.Update(dt)
+		// }
+		// c.currentScene.Render()
 		// c.framebuffer.Unbind()
 
-		// c.glfwWindow.NewFrame(dt)
-		// c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene, c.framebuffer.GetTextureId())
+		c.glfwWindow.NewFrame(dt)
+
+		c.glfwWindow.ImguiIO.Update(c.glfwWindow.DisplaySize(), c.glfwWindow.FramebufferSize(), dt, c.currentScene)
 
 		c.glfwWindow.PostRender()
 
