@@ -32,15 +32,17 @@ type CmdBuffer struct {
 	Inf []Info
 	ofs int
 
-	Vertices  []float32
-	Indeces   []int32
-	
+	Vertices []float32
+	Indeces  []int32
+
 	VertCount int
 	lastIndc  int
 
 	// addYcursor func(y float32)
 
 	camera *gogl.Camera
+
+	InnerWindowSpace [4]float32
 }
 
 type Info struct {
@@ -48,16 +50,17 @@ type Info struct {
 	IndexOffset int
 	TexId       uint32
 	Type        string
+	ClipRect    [4]float32
 }
 
 func NewBuffer(camera *gogl.Camera, addYcursor func(y float32)) *CmdBuffer {
 	return &CmdBuffer{
-		commands:   []Command{},
-		Vertices:   []float32{},
-		Indeces:    []int32{},
+		commands: []Command{},
+		Vertices: []float32{},
+		Indeces:  []int32{},
 
-		VertCount:  0,
-		camera:     camera,
+		VertCount: 0,
+		camera:    camera,
 		// addYcursor: addYcursor,
 	}
 }
@@ -93,6 +96,7 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 			IndexOffset: c.ofs,
 			TexId:       t.Font.TextureId,
 			Type:        "text",
+			ClipRect:    c.InnerWindowSpace,
 		})
 		c.ofs += c.VertCount - lastElems
 		lastElems = c.VertCount
@@ -107,6 +111,7 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 			IndexOffset: c.ofs,
 			TexId:       r.Texture.TextureId,
 			Type:        "image",
+			ClipRect:    c.InnerWindowSpace,
 		})
 		c.ofs += c.VertCount - lastElems
 		lastElems = c.VertCount
@@ -137,6 +142,7 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 			IndexOffset: c.ofs,
 			TexId:       0,
 			Type:        "window",
+			ClipRect:    [4]float32{wnd.X, wnd.Y, wnd.W, wnd.H},
 		})
 		c.ofs += c.VertCount - lastElems
 		lastElems = c.VertCount
@@ -180,7 +186,6 @@ func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 	r.lastIndc = last + 1
 	r.render(vert, ind, 6)
 }
-
 
 func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, clr [4]float32) {
 

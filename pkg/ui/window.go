@@ -165,6 +165,8 @@ func (c *UiContext) BeginWindow() {
 	wnd.AddCommand(cmd)
 
 	c.windowStack.Push(window)
+
+	wnd.buffer.InnerWindowSpace = [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}
 }
 
 var visibleRatio float32
@@ -392,7 +394,6 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	x := wnd.cursorX
 
 	txt.BoundingBox = [4]float32{x, y, s[0], s[1]}
-	
 
 	// DEBUG
 	y -= wnd.scrlY

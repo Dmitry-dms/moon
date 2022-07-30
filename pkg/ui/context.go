@@ -290,21 +290,21 @@ func (c *UiContext) EndFrame() {
 	// }
 
 	for _, v := range c.sortedWindows {
-		size := c.camera.GetProjectionSize()
-		var x, y, w, h int32
-		x = int32(v.x)
-		y = int32(v.y)
-		w = int32(v.w)
-		h = int32(v.h)
+		// size := c.camera.GetProjectionSize()
+		// var x, y, w, h int32
+		// x = int32(v.x)
+		// y = int32(v.y)
+		// w = int32(v.w)
+		// h = int32(v.h)
 
-		if int32(size.Y())-(int32(v.y)+int32(v.h)) <= 0 {
-			y = 0
-			h = int32(size[1]) - int32(v.y)
-		} else {
-			y = int32(size.Y()) - (int32(v.y) + int32(v.h))
+		// if int32(size.Y())-(int32(v.y)+int32(v.h)) <= 0 {
+		// 	y = 0
+		// 	h = int32(size[1]) - int32(v.y)
+		// } else {
+		// 	y = int32(size.Y()) - (int32(v.y) + int32(v.h))
 
-		}
-		c.renderer.Scissor(x, y, w, h)
+		// }
+		// c.renderer.Scissor(x, y, w, h)
 		c.renderer.Draw(c.camera, *v.buffer)
 		v.buffer.Clear()
 	}
