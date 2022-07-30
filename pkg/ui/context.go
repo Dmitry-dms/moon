@@ -1,10 +1,13 @@
 package ui
 
 import (
+	// "fmt"
+
 	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/draw"
+
 	// "github.com/Dmitry-dms/moon/pkg/ui/render"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
@@ -34,7 +37,7 @@ type UiContext struct {
 	LastHoveredWindow *Window
 
 	//cache
-	idCache      *cache.RamCache[Window]
+	windowCache  *cache.RamCache[*Window]
 	windowStack  utils.Stack[*Window]
 	widgetsCache *cache.RamCache[widgets.Widget]
 
@@ -59,12 +62,11 @@ func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
 		io:            NewIo(),
 		Windows:       make([]*Window, 0),
 		sortedWindows: make([]*Window, 0),
-		idCache:       cache.NewRamCache[Window](),
+		windowCache:   cache.NewRamCache[*Window](),
 		widgetsCache:  cache.NewRamCache[widgets.Widget](),
 		windowStack:   utils.NewStack[*Window](),
 		CurrentStyle:  DefaultStyle,
 	}
-	
 
 	return &c
 }
@@ -79,10 +81,10 @@ func (c *UiContext) Initialize(frontRenderer UiRenderer, camera *gogl.Camera) {
 }
 
 func (c *UiContext) AddWidget(id string, w widgets.Widget) bool {
-	return c.widgetsCache.Add(id, &w)
+	return c.widgetsCache.Add(id, w)
 }
 
-func (c *UiContext) GetWidget(id string) (*widgets.Widget,bool) {
+func (c *UiContext) GetWidget(id string) (widgets.Widget, bool) {
 	return c.widgetsCache.Get(id)
 }
 
@@ -237,74 +239,8 @@ func (c *UiContext) EndFrame() {
 	if len(c.sortedWindows) == 0 {
 		return
 	}
-
-	// for _, v := range c.sortedWindows {
-	// 	cmds := v.rq.commands
-	// 	// size := c.camera.GetProjectionSize()
-	// 	// fmt.Println("---------------------------")
-	// 	// fmt.Println(int32(v.y))
-
-	// 	// gl.Scissor(int32(v.x), int32(v.y), int32(v.w), int32(v.h))
-	// 	for i := 0; i < v.rq.CmdCount; i++ {
-	// 		comm := cmds[i]
-	// 		switch comm.t {
-	// 		case RectType:
-	// 			r := comm.rect
-
-	// 			size := c.camera.GetProjectionSize()
-	// 			c.renderer.RectangleR(r.x, size.Y()-r.y, r.w, r.h, r.clr)
-	// 		case RectTypeT:
-	// 			r := comm.rect
-
-	// 			size := c.camera.GetProjectionSize()
-	// 			if r.scaleFactor == 0 {
-	// 				c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, 0, 1, 0, r.clr)
-	// 			} else {
-	// 				c.renderer.RectangleT(r.x, size.Y()-r.y, r.w, r.h, r.texture, 0, 1, r.scaleFactor, r.clr)
-	// 			}
-	// 		case Triangle:
-	// 			tr := comm.triangle
-	// 			c.renderer.Trinagle(tr.x0, tr.y0, tr.x1, tr.y1, tr.x2, tr.y2, tr.clr)
-	// 		case RoundedRectT:
-	// 			rr := comm.rRect
-	// 			size := c.camera.GetProjectionSize()
-	// 			c.renderer.RoundedRectangleT(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.texture, 0, 1, rr.clr)
-	// 		case RoundedRect:
-	// 			rr := comm.rRect
-	// 			size := c.camera.GetProjectionSize()
-
-	// 			c.renderer.RoundedRectangleR(rr.x, size.Y()-rr.y, rr.w, rr.h, rr.radius, render.AllRounded, rr.clr)
-	// 		case WindowStartCmd:
-	// 			wnd := comm.window
-	// 			size := c.camera.GetProjectionSize()
-
-	// 			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h, 10, render.AllRounded, comm.window.clr)
-	// 			c.renderer.RoundedRectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, 10, render.TopRect, comm.window.toolbar.clr)
-
-	// 			// c.renderer.RectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.h,  comm.window.clr)
-	// 			// c.renderer.RectangleR(wnd.x, size.Y()-wnd.y, wnd.w, wnd.toolbar.h, comm.window.toolbar.clr)
-	// 		default:
-	// 		}
-	// 	}
-	// 	v.rq.clearCommands()
-	// }
-
 	for _, v := range c.sortedWindows {
-		// size := c.camera.GetProjectionSize()
-		// var x, y, w, h int32
-		// x = int32(v.x)
-		// y = int32(v.y)
-		// w = int32(v.w)
-		// h = int32(v.h)
-
-		// if int32(size.Y())-(int32(v.y)+int32(v.h)) <= 0 {
-		// 	y = 0
-		// 	h = int32(size[1]) - int32(v.y)
-		// } else {
-		// 	y = int32(size.Y()) - (int32(v.y) + int32(v.h))
-
-		// }
-		// c.renderer.Scissor(x, y, w, h)
+		// fmt.Println(v.Id, len(v.buffer.Vertices))
 		c.renderer.Draw(c.camera, *v.buffer)
 		v.buffer.Clear()
 	}

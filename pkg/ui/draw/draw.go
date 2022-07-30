@@ -37,6 +37,7 @@ type CmdBuffer struct {
 
 	VertCount int
 	lastIndc  int
+	lastElems int
 
 	// addYcursor func(y float32)
 
@@ -73,10 +74,9 @@ func (c *CmdBuffer) Clear() {
 	c.lastIndc = 0
 	c.ofs = 0
 	c.Inf = []Info{}
-	lastElems = 0
+	c.lastElems = 0
 }
 
-var lastElems int
 
 func (c *CmdBuffer) AddCommand(cmd Command) {
 	c.commands = append(c.commands, cmd)
@@ -92,14 +92,14 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
 		// fmt.Println(t.Font.TextureId)
 		c.Inf = append(c.Inf, Info{
-			Elems:       c.VertCount - lastElems,
+			Elems:       c.VertCount - c.lastElems,
 			IndexOffset: c.ofs,
 			TexId:       t.Font.TextureId,
 			Type:        "text",
 			ClipRect:    c.InnerWindowSpace,
 		})
-		c.ofs += c.VertCount - lastElems
-		lastElems = c.VertCount
+		c.ofs += c.VertCount - c.lastElems
+		c.lastElems = c.VertCount
 		// t.Widget.BoundingBox = [4]float32{resized[0], t.Y, resized[2], resized[3]}
 	case RectTypeT:
 		r := cmd.Rect
@@ -107,14 +107,14 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		size := c.camera.GetProjectionSize()
 		c.RectangleT(r.X, size.Y()-r.Y, r.W, r.H, r.Texture, 0, 1, r.Clr)
 		c.Inf = append(c.Inf, Info{
-			Elems:       c.VertCount - lastElems,
+			Elems:       c.VertCount - c.lastElems,
 			IndexOffset: c.ofs,
 			TexId:       r.Texture.TextureId,
 			Type:        "image",
 			ClipRect:    c.InnerWindowSpace,
 		})
-		c.ofs += c.VertCount - lastElems
-		lastElems = c.VertCount
+		c.ofs += c.VertCount - c.lastElems
+		c.lastElems = c.VertCount
 	case ToolbarCmd:
 		t := cmd.Toolbar
 		size := c.camera.GetProjectionSize()
@@ -138,14 +138,14 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		c.RoundedRectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, 30, 10, TopRect, [4]float32{255, 0, 0, 1})
 
 		c.Inf = append(c.Inf, Info{
-			Elems:       c.VertCount - lastElems,
+			Elems:       c.VertCount - c.lastElems,
 			IndexOffset: c.ofs,
 			TexId:       0,
 			Type:        "window",
 			ClipRect:    [4]float32{wnd.X, wnd.Y, wnd.W, wnd.H},
 		})
-		c.ofs += c.VertCount - lastElems
-		lastElems = c.VertCount
+		c.ofs += c.VertCount - c.lastElems
+		c.lastElems = c.VertCount
 		// c.RectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.H, cmd.Window.Clr)
 		// c.RectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.Toolbar.H, cmd.Window.Toolbar.Clr)
 	}

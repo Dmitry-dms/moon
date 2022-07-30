@@ -82,17 +82,23 @@ const (
 	defx, defy, defw, defh = 300, 100, 400, 500
 )
 
-func (c *UiContext) BeginWindow() {
+func (c *UiContext) BeginWindow(id string) {
 	var window *Window
-	if len(c.Windows) <= c.currentWindow {
+	window, ok := c.windowCache.Get(id)
+	if !ok {
 		r := rand.Intn(500)
 		g := rand.Intn(300)
 		window = NewWindow(defx+float32(r), defy+float32(g), defw, defh)
 		c.Windows = append(c.Windows, window)
-		window.Id = generateId()
-	} else {
-		window = c.Windows[c.currentWindow]
+		window.Id = id
+		c.windowCache.Add(id, window)
 	}
+	
+	// if len(c.Windows) <= c.currentWindow {
+
+	// } else {
+	// 	window = c.Windows[c.currentWindow]
+	// }
 
 	wnd := window
 
@@ -277,7 +283,7 @@ func (wnd *Window) getWidget(id string, w widgets.WidgetType) widgets.Widget {
 
 	wi, ok := UiCtx.GetWidget(id)
 	if ok {
-		widg = *wi
+		widg = wi
 	} else {
 		switch w {
 		case widgets.ButtonWidget:
@@ -642,7 +648,7 @@ func (c *UiContext) EndWindow() {
 	}
 
 	wnd.AddCommand(cmd)
-	c.currentWindow++
+	// c.currentWindow++
 }
 
 func RegionHit(mouseX, mouseY, x, y, w, h float32) bool {

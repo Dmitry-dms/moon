@@ -181,7 +181,7 @@ func getImageFromFilePath(filePath string) (image.Image, error) {
 var ish bool = false
 
 func firstWindow() {
-	uiCtx.BeginWindow()
+	uiCtx.BeginWindow("first wnd")
 
 	// if uiCtx.Button("bfgfhf") {
 	// 	fmt.Println("button clicked f 1")
@@ -233,31 +233,30 @@ func firstWindow() {
 }
 
 func secondWindow() {
-	uiCtx.BeginWindow()
+	uiCtx.BeginWindow("second wnd")
 
-	if uiCtx.Image("#im4",tex) {
-		fmt.Println("image clicked s 1")
-	}
-	uiCtx.VSpace("#dfdf")
-	// if uiCtx.ButtonRR(tex) {
+	uiCtx.Image("#im4",tex)
+		
+	// uiCtx.VSpace("#dfdf")
+	// // if uiCtx.ButtonRR(tex) {
+	// // 	fmt.Println("button clicked f 2")
+	// // }
+	// if uiCtx.Button("#v3245g") {
 	// 	fmt.Println("button clicked f 2")
 	// }
-	if uiCtx.Button("#v3245g") {
-		fmt.Println("button clicked f 2")
-	}
-	uiCtx.VSpace("#vs3354")
-	// if uiCtx.ButtonRR(tex) {
+	// uiCtx.VSpace("#vs3354")
+	// // if uiCtx.ButtonRR(tex) {
+	// // 	fmt.Println("button clicked f 2")
+	// // }
+	// if uiCtx.Button("#354362") {
 	// 	fmt.Println("button clicked f 2")
 	// }
-	if uiCtx.Button("#354362") {
-		fmt.Println("button clicked f 2")
-	}
-	if uiCtx.Button("#vs243646547") {
-		fmt.Println("button clicked f 2")
-	}
-	if uiCtx.Button("#vs234634") {
-		fmt.Println("button clicked f 2")
-	}
+	// if uiCtx.Button("#vs243646547") {
+	// 	fmt.Println("button clicked f 2")
+	// }
+	// if uiCtx.Button("#vs234634") {
+	// 	fmt.Println("button clicked f 2")
+	// }
 
 	uiCtx.EndWindow()
 }

@@ -39,26 +39,26 @@ func NewGlRenderer() *GLRender {
 		ebo:    0,
 		shader: s,
 	}
-	r.vaoId = gogl.GenBindVAO()
+	// r.vaoId = gogl.GenBindVAO()
 
-	// gl.GenBuffers(1, &r.vboId)
-	// gl.GenBuffers(1, &r.ebo)
+	gl.GenBuffers(1, &r.vboId)
+	gl.GenBuffers(1, &r.ebo)
 
 	//аллоцируем место для vertices
-	r.vboId = gogl.GenBindBuffer(gl.ARRAY_BUFFER)
+	// r.vboId = gogl.GenBindBuffer(gl.ARRAY_BUFFER)
 	// gogl.BufferData(gl.ARRAY_BUFFER, r.vertices, gl.DYNAMIC_DRAW)
 	// gl.BufferData(gl.ARRAY_BUFFER, 4*1500, nil, gl.DYNAMIC_DRAW)
 
-	r.ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
+	// r.ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
 	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.ebo)
 	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 500*4, nil, gl.DYNAMIC_DRAW)
 	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	//включаем layout
-	gogl.SetVertexAttribPointer(0, posSize, gl.FLOAT, vertexSize*4, posOffset)
-	gogl.SetVertexAttribPointer(1, colorSize, gl.FLOAT, vertexSize*4, colorOffset)
-	gogl.SetVertexAttribPointer(2, texCoordsSize, gl.FLOAT, vertexSize*4, texCoordsOffset)
-	gogl.SetVertexAttribPointer(3, texIdSize, gl.FLOAT, vertexSize*4, texIdOffset)
+	// gogl.SetVertexAttribPointer(0, posSize, gl.FLOAT, vertexSize*4, posOffset)
+	// gogl.SetVertexAttribPointer(1, colorSize, gl.FLOAT, vertexSize*4, colorOffset)
+	// gogl.SetVertexAttribPointer(2, texCoordsSize, gl.FLOAT, vertexSize*4, texCoordsOffset)
+	// gogl.SetVertexAttribPointer(3, texIdSize, gl.FLOAT, vertexSize*4, texIdOffset)
 
 	return &r
 }
@@ -66,7 +66,6 @@ func NewGlRenderer() *GLRender {
 func (r *GLRender) NewFrame() {
 
 }
-
 
 // func (r *GLRender) Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32) {
 // 	vert := make([]float32, 9*3)
@@ -199,6 +198,28 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	// lastEnableCullFace := gl.IsEnabled(gl.CULL_FACE)
 	// lastEnableDepthTest := gl.IsEnabled(gl.DEPTH_TEST)
 	// lastEnableScissorTest := gl.IsEnabled(gl.SCISSOR_TEST)
+	b.shader.Use()
+	vaoId := gogl.GenBindVAO()
+	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
+	//включаем layout
+	gogl.SetVertexAttribPointer(0, posSize, gl.FLOAT, vertexSize*4, posOffset)
+	gogl.SetVertexAttribPointer(1, colorSize, gl.FLOAT, vertexSize*4, colorOffset)
+	gogl.SetVertexAttribPointer(2, texCoordsSize, gl.FLOAT, vertexSize*4, texCoordsOffset)
+	gogl.SetVertexAttribPointer(3, texIdSize, gl.FLOAT, vertexSize*4, texIdOffset)
+	// gl.GenBuffers(1, &r.vboId)
+	// gl.GenBuffers(1, &r.ebo)
+
+	//аллоцируем место для vertices
+	// vboId := gogl.GenBindBuffer(gl.ARRAY_BUFFER)
+	// gogl.BufferData(gl.ARRAY_BUFFER, r.vertices, gl.DYNAMIC_DRAW)
+	// gl.BufferData(gl.ARRAY_BUFFER, 4*1500, nil, gl.DYNAMIC_DRAW)
+
+	// ebo := gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
+	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.ebo)
+	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 500*4, nil, gl.DYNAMIC_DRAW)
+	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
+
+	
 
 	// gl.Enable(gl.BLEND)
 	// gl.BlendEquation(gl.FUNC_ADD)
@@ -208,32 +229,31 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	gl.Enable(gl.SCISSOR_TEST)
 	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
 
-	b.shader.Use()
+	
 
 	// gl.BindSampler(0, 0)
-	gogl.BindVertexArray(b.vaoId)
+	// gogl.BindVertexArray(vaoId)
 
 	// var vaoHandle uint32
 	// gl.GenVertexArrays(1, &vaoHandle)
 	// gl.BindVertexArray(vaoHandle)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
-	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.Vertices)*4, gl.Ptr(buffer.Vertices), gl.DYNAMIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.Vertices)*4, gl.Ptr(buffer.Vertices), gl.STREAM_DRAW)
 	// gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(buffer.Indeces)*4, gl.Ptr(buffer.Indeces), gl.DYNAMIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(buffer.Indeces)*4, gl.Ptr(buffer.Indeces), gl.STREAM_DRAW)
 
 	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
 	b.shader.UploadMat4("uView", camera.GetViewMatrix())
 
-
 	for _, cmd := range buffer.Inf {
 		r := cmd.ClipRect
-		
-		x := int32(r[0])
+
+		// x := int32(r[0])
 		y := int32(r[1])
-		w := int32(r[2])
+		// w := int32(r[2])
 		h := int32(r[3])
 
 		size := camera.GetProjectionSize()
@@ -242,7 +262,7 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 		// 	y = 0
 		// 	h = int32(size[1]) - int32(y)
 		// } else {
-			y = int32(size.Y()) - (int32(y) + int32(h))
+		y = int32(size.Y()) - (int32(y) + int32(h))
 
 		// }
 
@@ -252,14 +272,14 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 			gl.BindTexture(gl.TEXTURE_2D, cmd.TexId)
 			b.shader.UploadTexture("Texture", int32(cmd.TexId))
 		}
-		gl.Scissor(x, y, w, h)
+		// gl.Scissor(x, y, w, h)
 		gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(cmd.Elems), gl.UNSIGNED_INT,
 			uintptr(cmd.IndexOffset*4), 0)
 
 	}
 
 	b.shader.Detach()
-
+	gl.DeleteVertexArrays(1, &vaoId)
 	// Restore modified GL state
 	// gl.UseProgram(uint32(lastProgram))
 	// gl.BindTexture(gl.TEXTURE_2D, uint32(lastTexture))
@@ -288,7 +308,7 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	// if lastEnableScissorTest {
 	// 	gl.Enable(gl.SCISSOR_TEST)
 	// } else {
-		gl.Disable(gl.SCISSOR_TEST)
+	gl.Disable(gl.SCISSOR_TEST)
 	// }
 	// gl.PolygonMode(gl.FRONT_AND_BACK, uint32(lastPolygonMode[0]))
 }

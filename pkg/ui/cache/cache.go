@@ -3,19 +3,19 @@ package cache
 import "sync"
 
 type RamCache[T any] struct {
-	m  map[string]*T
+	m  map[string]T
 	mu sync.RWMutex
 }
 
 func NewRamCache[T any]() *RamCache[T] {
 	c := RamCache[T]{
 		mu: sync.RWMutex{},
-		m:  make(map[string]*T, 100),
+		m:  make(map[string]T, 100),
 	}
 	return &c
 }
 
-func (c *RamCache[T]) Add(key string, val *T) bool {
+func (c *RamCache[T]) Add(key string, val T) bool {
 	_, ok := c.Get(key)
 	if ok {
 		return false
@@ -24,7 +24,7 @@ func (c *RamCache[T]) Add(key string, val *T) bool {
 	return true
 }
 
-func (c *RamCache[T]) Get(key string) (*T, bool) {
+func (c *RamCache[T]) Get(key string) (T, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	v, ok := c.m[key]
