@@ -251,9 +251,9 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	for _, cmd := range buffer.Inf {
 		r := cmd.ClipRect
 
-		// x := int32(r[0])
+		x := int32(r[0])
 		y := int32(r[1])
-		// w := int32(r[2])
+		w := int32(r[2])
 		h := int32(r[3])
 
 		size := camera.GetProjectionSize()
@@ -272,7 +272,7 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 			gl.BindTexture(gl.TEXTURE_2D, cmd.TexId)
 			b.shader.UploadTexture("Texture", int32(cmd.TexId))
 		}
-		// gl.Scissor(x, y, w, h)
+		gl.Scissor(x, y, w, h)
 		gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(cmd.Elems), gl.UNSIGNED_INT,
 			uintptr(cmd.IndexOffset*4), 0)
 

@@ -54,7 +54,7 @@ type Info struct {
 	ClipRect    [4]float32
 }
 
-func NewBuffer(camera *gogl.Camera, addYcursor func(y float32)) *CmdBuffer {
+func NewBuffer(camera *gogl.Camera) *CmdBuffer {
 	return &CmdBuffer{
 		commands: []Command{},
 		Vertices: []float32{},
