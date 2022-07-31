@@ -39,9 +39,9 @@ type Window struct {
 	virtualHeight float32 // сумма высот всех виджетов (для скроллинга)
 
 	//scrollbar
-	isScrollShown bool
-	scrlBar       *Scrollbar
-	scrlY         float32
+	// scrlBar       *Scrollbar
+	// isScrollShown bool
+	// scrlY         float32
 }
 
 func NewWindow(x, y, w, h float32) *Window {
@@ -62,11 +62,12 @@ func NewWindow(x, y, w, h float32) *Window {
 
 		// widgets: []widgets.Widget{},
 		mainWidgetSpace: newWidgetSpace(x, y+tb.h, w, h-tb.h),
-		scrlBar:         NewScrolBar(utils.NewRect(x+w-10, y, 20, h), utils.NewRect(x+w-10, y, 10, 50), [4]float32{150, 155, 155, 1}),
-		buffer:          draw.NewBuffer(UiCtx.camera),
+		// scrlBar:         NewScrolBar(utils.NewRect(x+w-10, y, 20, h), utils.NewRect(x+w-10, y, 10, 50), [4]float32{150, 155, 155, 1}),
+		buffer: draw.NewBuffer(UiCtx.camera),
 	}
 	wnd.currentWidgetSpace = wnd.mainWidgetSpace
-	wnd.scrlY = wnd.toolbar.h
+	// wnd.scrlY = wnd.toolbar.h
+	// wnd.mainWidgetSpace.scrlY = wnd.toolbar.h
 	return &wnd
 }
 
@@ -122,9 +123,9 @@ func (c *UiContext) BeginWindow(id string) {
 		n += c.io.MouseDelta.Y
 		if n > wnd.minH {
 			newH = n
-			if wnd.scrlY != 0 {
-				wnd.scrlY -= c.io.MouseDelta.Y
-			}
+			// if wnd.scrlY != 0 {
+			// 	wnd.scrlY -= c.io.MouseDelta.Y
+			// }
 		}
 	} else if c.wantResizeV && c.io.IsDragging && c.ActiveWindow == wnd {
 		n := newW
@@ -170,6 +171,41 @@ func (c *UiContext) BeginWindow(id string) {
 	wnd.mainWidgetSpace.cursorX = wnd.mainWidgetSpace.X + UiCtx.CurrentStyle.LeftMargin
 	wnd.mainWidgetSpace.cursorY = wnd.mainWidgetSpace.Y + UiCtx.CurrentStyle.TopMargin
 	wnd.AddCommand(cmd)
+
+	if wnd.mainWidgetSpace.isVertScrollShown {
+		wnd.mainWidgetSpace.vertScrollBar()
+		if c.ActiveWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidget == "" {
+			wnd.mainWidgetSpace.updatePosition(float32(c.io.ScrollY))
+		}
+		scrollCommand := draw.Rounded_rect{
+			X:      wnd.mainWidgetSpace.verticalScrollbar.x,
+			Y:      wnd.mainWidgetSpace.verticalScrollbar.y,
+			W:      wnd.mainWidgetSpace.verticalScrollbar.w,
+			H:      wnd.mainWidgetSpace.verticalScrollbar.h,
+			Clr:    wnd.mainWidgetSpace.verticalScrollbar.clr,
+			Radius: 5,
+		}
+		sbCmd := draw.Command{
+			RRect: &scrollCommand,
+			Type:  draw.RoundedRect,
+		}
+		wnd.AddCommand(sbCmd)
+
+		scrollBtnCommand := draw.Rounded_rect{
+			X:      wnd.mainWidgetSpace.verticalScrollbar.bX,
+			Y:      wnd.mainWidgetSpace.verticalScrollbar.bY,
+			W:      wnd.mainWidgetSpace.verticalScrollbar.bW,
+			H:      wnd.mainWidgetSpace.verticalScrollbar.bH,
+			Clr:    [4]float32{255, 0, 0, 1},
+			Radius: 5,
+		}
+
+		sbtnCmd := draw.Command{
+			RRect: &scrollBtnCommand,
+			Type:  draw.RoundedRect,
+		}
+		wnd.AddCommand(sbtnCmd)
+	}
 
 	c.windowStack.Push(wnd)
 
@@ -405,7 +441,7 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	txt.BoundingBox = [4]float32{x, y, s[0], s[1]}
 
 	// DEBUG
-	y -= wnd.scrlY
+	y -= wnd.currentWidgetSpace.scrlY
 	//
 
 	inRect := utils.PointInRect(c.io.MousePos, utils.NewRectS(txt.BoundingBox))
@@ -470,7 +506,7 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 	y := wnd.currentWidgetSpace.cursorY
 
 	// DEBUG
-	y -= wnd.scrlY
+	y -= wnd.currentWidgetSpace.scrlY
 	//
 
 	// Create command and append it to slice
@@ -533,7 +569,7 @@ func (c *UiContext) button(id string, text string, size int) bool {
 	clr := btn.CurrentColor
 
 	// DEBUG
-	y -= wnd.scrlY
+	y -= wnd.currentWidgetSpace.scrlY
 	//
 
 	rect = draw.Rect_command{
@@ -613,7 +649,7 @@ func (c *UiContext) button(id string, text string, size int) bool {
 
 func (c *UiContext) EndWindow() {
 
-	c.windowStack.Pop()
+	wnd := c.windowStack.Pop()
 
 	// if wnd.isScrollShown {
 	// 	c.srollbar(wnd)
@@ -649,6 +685,10 @@ func (c *UiContext) EndWindow() {
 	// }
 
 	// wnd.AddCommand(cmd)
+
+	
+	wnd.mainWidgetSpace.checkVerScroll()
+
 	c.currentWindow++
 }
 
