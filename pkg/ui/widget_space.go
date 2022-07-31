@@ -26,12 +26,10 @@ func (ws *WidgetSpace) vertScrollBar() {
 	ws.verticalScrollbar.x = ws.X + ws.W - ws.verticalScrollbar.w
 	ws.verticalScrollbar.y = ws.Y
 	ws.verticalScrollbar.h = ws.H
-	//проверки
 	{
 		if ws.scrlY < 0 {
 			ws.scrlY = 0
 		}
-		// fmt.Println(ws.scrlY)
 		var ratio float32 = (ws.scrlY + ws.H - ws.verticalScrollbar.bH) / ws.virtualHeight
 
 		if ws.scrlY == 0 {
@@ -40,7 +38,6 @@ func (ws *WidgetSpace) vertScrollBar() {
 			visibleRatio = (ratio)*(ws.H) - ws.verticalScrollbar.bH
 		}
 	}
-
 	ws.verticalScrollbar.bX = ws.X + ws.W - ws.verticalScrollbar.w
 	ws.verticalScrollbar.bY = ws.Y + visibleRatio // для правильного отоборажения при ресайзинге
 
@@ -67,7 +64,6 @@ func (ws *WidgetSpace) updatePosition(scrollY float32) {
 				ws.scrlY += v
 			}
 		}
-
 	} else {
 		ws.scrlY += factor
 	}
@@ -77,6 +73,7 @@ func (ws *WidgetSpace) checkVerScroll() {
 	if ws.cursorY > ws.Y+ws.H {
 		ws.isVertScrollShown = true
 	} else {
+		ws.scrlY = 0
 		ws.isVertScrollShown = false
 	}
 }
@@ -90,7 +87,7 @@ func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
 		cursorY:       y,
 		widgetCounter: 0,
 		widgets:       []widgets.Widget{},
-		virtualHeight: h,
+		virtualHeight: 0,
 		verticalScrollbar: NewScrolBar(utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, h),
 			utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, 50),
 			[4]float32{150, 155, 155, 1}),

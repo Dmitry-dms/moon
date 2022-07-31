@@ -199,7 +199,7 @@ func firstWindow() {
 	uiCtx.VSpace("#vs1")
 	
 	uiCtx.Image("#im76",tex2)
-	uiCtx.Image("#im4",tex)
+	// uiCtx.Image("#im4",tex)
 	// if uiCtx.Image("#im1",tex) {
 	// 	fmt.Println("image clicked s 1")
 	// 	ish = !ish
@@ -210,7 +210,7 @@ func firstWindow() {
 		// 	ish = !ish
 		// }
 	}
-	uiCtx.VSpace("#vs1")
+	// uiCtx.VSpace("#vs1")
 	if ish {
 	
 		// uiCtx.Text("#t2","Hello world!:", 30)
@@ -223,8 +223,8 @@ func firstWindow() {
 	// 	fmt.Println("image clicked s 1")
 	// 	ish = !ish
 	// }
-	uiCtx.VSpace("#vs1")
-	uiCtx.Image("#im76",tex2)
+	// uiCtx.VSpace("#vs1")
+	// uiCtx.Image("#im76",tex2)
 	// 	fmt.Println("image clicked s 1")
 	// 	ish = !ish
 	// }

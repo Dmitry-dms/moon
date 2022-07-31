@@ -56,7 +56,7 @@ func NewWindow(x, y, w, h float32) *Window {
 		outerRect: utils.Rect{Min: utils.Vec2{X: x, Y: y}, Max: utils.Vec2{X: x + w, Y: y + h}},
 
 		minW: 200,
-		minH: 200,
+		minH: 50,
 		// srcX:      x,
 		// srcY:      y + tb.h + UiCtx.CurrentStyle.TopMargin,
 
@@ -123,9 +123,9 @@ func (c *UiContext) BeginWindow(id string) {
 		n += c.io.MouseDelta.Y
 		if n > wnd.minH {
 			newH = n
-			// if wnd.scrlY != 0 {
-			// 	wnd.scrlY -= c.io.MouseDelta.Y
-			// }
+			if wnd.mainWidgetSpace.scrlY != 0 {
+				wnd.mainWidgetSpace.scrlY -= c.io.MouseDelta.Y
+			}
 		}
 	} else if c.wantResizeV && c.io.IsDragging && c.ActiveWindow == wnd {
 		n := newW
@@ -306,9 +306,6 @@ var step float32 = 40
 var r, g, b float32 = 231, 158, 162
 
 func (w *Window) addWidget(widg widgets.Widget) bool {
-	// w.widgets = append(w.widgets, widg)
-	// w.virtualHeight += widg.Rectangle()[3]
-	// return UiCtx.AddWidget(widg.GetId(), widg)
 	return w.currentWidgetSpace.addWidget(widg)
 }
 
@@ -323,6 +320,7 @@ func (wnd *Window) getWidget(id string, w widgets.WidgetType) widgets.Widget {
 	if ok {
 		widg = wi
 	} else {
+		fmt.Println(id)
 		x := wnd.currentWidgetSpace.cursorX
 		y := wnd.currentWidgetSpace.cursorY
 		switch w {
@@ -347,10 +345,11 @@ func (wnd *Window) getWidget(id string, w widgets.WidgetType) widgets.Widget {
 		case widgets.VerticalSpacingWidget:
 			widg = &widgets.VSpace{
 				BoundingBox: [4]float32{x, y, float32(100), float32(20)},
+				Id: id,
 			}
 		}
-		UiCtx.AddWidget(widg.GetId(), widg)
-		wnd.virtualHeight += widg.Rectangle()[3]
+		wnd.addWidget(widg)
+
 	}
 	return widg
 }
@@ -686,7 +685,6 @@ func (c *UiContext) EndWindow() {
 
 	// wnd.AddCommand(cmd)
 
-	
 	wnd.mainWidgetSpace.checkVerScroll()
 
 	c.currentWindow++
