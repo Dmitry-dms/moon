@@ -183,23 +183,25 @@ var ish bool = false
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 
-	// if uiCtx.Button("bfgfhf") {
-	// 	fmt.Println("button clicked f 1")
-	// 	ish = !ish
-	// }
-	
+	if uiCtx.Button("bfgfhf") {
+		fmt.Println("button clicked f 1")
+		// 	ish = !ish
+		uiCtx.SetScrollY(200)
+	}
+
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
 	// uiCtx.ButtonT("Нажать",24)
-	uiCtx.Text("#t3","xello world!", 40)
+	// uiCtx.Text("#t3","xello world!", 40)
+	uiCtx.Text("#t3", "xello world!", 40)
+	uiCtx.VSpace("#vs1fdgdf")
 	uiCtx.VSpace("#vs1")
-	uiCtx.VSpace("#vs1")
-	uiCtx.Image("#im2",tex)
-	uiCtx.VSpace("#vs1")
-	
-	uiCtx.Image("#im76",tex2)
-	// uiCtx.Image("#im4",tex)
+	uiCtx.Image("#im2", tex)
+	uiCtx.VSpace("#vs12")
+
+	uiCtx.Image("#im76", tex2)
+	uiCtx.Image("#im4",tex)
 	// if uiCtx.Image("#im1",tex) {
 	// 	fmt.Println("image clicked s 1")
 	// 	ish = !ish
@@ -210,19 +212,19 @@ func firstWindow() {
 		// 	ish = !ish
 		// }
 	}
-	// uiCtx.VSpace("#vs1")
+	uiCtx.VSpace("#vs1hfg")
 	if ish {
-	
+
 		// uiCtx.Text("#t2","Hello world!:", 30)
 		// uiCtx.VSpace("#vs13r")
 		// uiCtx.Image("#im2",tex)
 		// uiCtx.VSpace("#vs13r")
 		// uiCtx.Text("#t2erwer","Hello world!:", 30)
 	}
-	// if uiCtx.Image("#im3",tex) {
-	// 	fmt.Println("image clicked s 1")
-	// 	ish = !ish
-	// }
+	if uiCtx.Image("#im3treyr",tex) {
+		fmt.Println("image clicked s 1")
+		ish = !ish
+	}
 	// uiCtx.VSpace("#vs1")
 	// uiCtx.Image("#im76",tex2)
 	// 	fmt.Println("image clicked s 1")
@@ -235,8 +237,8 @@ func firstWindow() {
 func secondWindow() {
 	uiCtx.BeginWindow("second wnd")
 
-	uiCtx.Image("#im4",tex)
-		
+	uiCtx.Image("#im4", tex)
+
 	// uiCtx.VSpace("#dfdf")
 	// // if uiCtx.ButtonRR(tex) {
 	// // 	fmt.Println("button clicked f 2")

@@ -1,6 +1,10 @@
 package ui
 
-import "github.com/Dmitry-dms/moon/pkg/ui/utils"
+import (
+
+
+	"github.com/Dmitry-dms/moon/pkg/ui/utils"
+)
 
 // "fmt"
 
@@ -64,6 +68,10 @@ func (io *Io) KeyCallback(key GuiKey, pressed bool) {
 }
 
 var lastMousePos = utils.Vec2{}
+
+func (io *Io) DragStarted(rect utils.Rect) bool {
+	return utils.PointInRect(io.dragStarted, rect)
+}
 
 func (io *Io) MousePosCallback(x, y float32) {
 	io.MousePos.X = x

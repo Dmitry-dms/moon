@@ -1,8 +1,6 @@
 package ui
 
 import (
-	// "fmt"
-
 	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
@@ -78,6 +76,20 @@ func (c *UiContext) UploadFont(path string, size int) {
 func (c *UiContext) Initialize(frontRenderer UiRenderer, camera *gogl.Camera) {
 	c.renderer = frontRenderer
 	c.camera = camera
+}
+
+func (c *UiContext) dragBehavior(rect utils.Rect, captured *bool) {
+	if !*captured {
+		*captured = utils.PointInRect(c.io.MousePos, rect) && c.io.DragStarted(rect) && c.io.IsDragging
+	}
+	if c.io.MouseReleased[0] {
+		*captured = false
+	}
+}
+
+func (c *UiContext) SetScrollY(scrollY float32) {
+	wnd := c.windowStack.GetTop()
+	wnd.currentWidgetSpace.setScrollY(scrollY)
 }
 
 func (c *UiContext) AddWidget(id string, w widgets.Widget) bool {

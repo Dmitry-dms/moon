@@ -15,57 +15,66 @@ type WidgetSpace struct {
 	virtualHeight    float32
 
 	verticalScrollbar *Scrollbar
+	captured          bool
 
 	isVertScrollShown bool
 	scrlY             float32
 }
 
 var defScrollWidth float32 = 10
+var scrolconst float32 = 0
 
 func (ws *WidgetSpace) vertScrollBar() {
-	ws.verticalScrollbar.x = ws.X + ws.W - ws.verticalScrollbar.w
-	ws.verticalScrollbar.y = ws.Y
-	ws.verticalScrollbar.h = ws.H
-	{
-		if ws.scrlY < 0 {
-			ws.scrlY = 0
-		}
-		var ratio float32 = (ws.scrlY + ws.H - ws.verticalScrollbar.bH) / ws.virtualHeight
+	vB := ws.verticalScrollbar
+	vB.x = ws.X + ws.W - vB.w
+	vB.y = ws.Y
+	vB.h = ws.H
 
-		if ws.scrlY == 0 {
-			visibleRatio = 0
-		} else {
-			visibleRatio = (ratio)*(ws.H) - ws.verticalScrollbar.bH
-		}
-	}
-	ws.verticalScrollbar.bX = ws.X + ws.W - ws.verticalScrollbar.w
-	ws.verticalScrollbar.bY = ws.Y + visibleRatio // для правильного отоборажения при ресайзинге
-
-	if ws.verticalScrollbar.bY >= ws.Y+ws.H-ws.verticalScrollbar.bH { // конечное положение для кнопки скроллбара
-		ws.verticalScrollbar.bY = ws.Y + ws.H - ws.verticalScrollbar.bH
+	// top border
+	if ws.scrlY < 0 {
+		ws.scrlY = 0
 	}
 }
 
-func (ws *WidgetSpace) updatePosition(scrollY float32) {
+func (ws *WidgetSpace) setScrollY(scrollY float32) {
+	ws.scrlY = scrollY
+}
+
+func (ws *WidgetSpace) handleMouseDrag() {
+	vB := ws.verticalScrollbar
+	var ratio float32 = (ws.H) / (ws.virtualHeight)
+
+	UiCtx.dragBehavior(utils.NewRect(vB.bX, vB.bY, vB.bW, vB.bH), &ws.captured)
+	endReached := ws.scrlY+ws.H <= ws.virtualHeight
+	if ws.captured && endReached {
+		ws.scrlY += UiCtx.io.MouseDelta.Y
+
+	} else if ws.captured && !endReached {
+		if UiCtx.io.MouseDelta.Y < 0 {
+			ws.scrlY += UiCtx.io.MouseDelta.Y
+		}
+	}
+
+	vB.bH = ws.H * ratio
+	vB.bX = ws.X + ws.W - vB.w
+	vB.bY = ws.Y + ws.scrlY*ratio
+}
+func (ws *WidgetSpace) handleMouseScroll(scrollY float32) {
 	var factor float32 = scrollY * float32(step)
-	currentPos := ws.Y + ws.scrlY
-	topBorder := ws.Y
-	botBorder := ws.Y + ws.virtualHeight + ws.verticalScrollbar.bH
+	currentPos := ws.scrlY
+	var topBorder float32 = 0
+	botBorder := ws.virtualHeight
+	var ratio float32 = (ws.H) / (ws.virtualHeight)
 	if currentPos <= topBorder {
 		if factor > 0 {
-			ws.scrlY += step
+			ws.scrlY += factor * ratio
 		}
 	} else if currentPos+ws.H >= botBorder {
 		if factor < 0 {
-			ws.scrlY -= step
-		} else {
-			v := currentPos+ws.H - botBorder
-			if v <=step {
-				ws.scrlY += v
-			}
+			ws.scrlY += factor * ratio
 		}
 	} else {
-		ws.scrlY += factor
+		ws.scrlY += factor * ratio
 	}
 }
 
@@ -75,6 +84,7 @@ func (ws *WidgetSpace) checkVerScroll() {
 	} else {
 		ws.scrlY = 0
 		ws.isVertScrollShown = false
+		// ws.verticalScrollbar.bY = 0
 	}
 }
 func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
@@ -97,6 +107,10 @@ func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
 
 func (ws *WidgetSpace) addWidget(widg widgets.Widget) bool {
 	ws.widgets = append(ws.widgets, widg)
-	ws.virtualHeight += widg.Rectangle()[3]
+	// ws.virtualHeight += widg.Rectangle()[3]
 	return UiCtx.AddWidget(widg.GetId(), widg)
+}
+
+func (ws *WidgetSpace) AddVirtualHeight(height float32) {
+	ws.virtualHeight += height
 }

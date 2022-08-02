@@ -40,6 +40,9 @@ type Vec2 struct {
 func (v Vec2) Sub(x Vec2) Vec2 {
 	return Vec2{v.X - x.X, v.Y - x.Y}
 }
+func (v Vec2) Add(x Vec2) Vec2 {
+	return Vec2{v.X + x.X, v.Y + x.Y}
+}
 
 func (v Vec2) LengthSqr() float32 {
 	return v.X*v.X + v.Y*v.Y
