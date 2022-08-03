@@ -5,6 +5,7 @@ type Widget interface {
 	GetId() string
 	Rectangle() [4]float32 // x,y,w,h
 	Visible() bool
+	Height() float32
 }
 
 type WidgetType int

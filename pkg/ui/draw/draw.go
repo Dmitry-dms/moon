@@ -1,33 +1,18 @@
 package draw
 
 import (
+	// "fmt"
 	"log"
 	"math"
 
 	"github.com/Dmitry-dms/moon/pkg/fonts"
-	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 )
 
-type DrawData struct {
-	cmdLists                []CmdBuffer
-	DisplayPos, DisplaySize utils.Vec2
-}
-
-func drawData() DrawData {
-	return DrawData{
-		cmdLists:    []CmdBuffer{},
-		DisplayPos:  utils.Vec2{},
-		DisplaySize: utils.Vec2{},
-	}
-}
-
-func (d *DrawData) clear() {
-	d.cmdLists = []CmdBuffer{}
-}
-
 type CmdBuffer struct {
 	commands []Command
+
+	displaySize *utils.Vec2
 
 	Inf []Info
 	ofs int
@@ -38,10 +23,6 @@ type CmdBuffer struct {
 	VertCount int
 	lastIndc  int
 	lastElems int
-
-	// addYcursor func(y float32)
-
-	camera *gogl.Camera
 
 	InnerWindowSpace [4]float32
 }
@@ -54,15 +35,13 @@ type Info struct {
 	ClipRect    [4]float32
 }
 
-func NewBuffer(camera *gogl.Camera) *CmdBuffer {
+func NewBuffer( size *utils.Vec2) *CmdBuffer {
 	return &CmdBuffer{
-		commands: []Command{},
-		Vertices: []float32{},
-		Indeces:  []int32{},
-
-		VertCount: 0,
-		camera:    camera,
-		// addYcursor: addYcursor,
+		commands:    []Command{},
+		Vertices:    []float32{},
+		Indeces:     []int32{},
+		displaySize: size,
+		VertCount:   0,
 	}
 }
 
@@ -77,77 +56,106 @@ func (c *CmdBuffer) Clear() {
 	c.lastElems = 0
 }
 
+func (c *CmdBuffer) SeparateBuffer(texId uint32, clipRect [4]float32) {
+	cmd := Command{
+		Type: SeparateBuffer,
+		sb: &separate_buff{
+			texid:    texId,
+			clipRect: clipRect,
+		},
+	}
+	c.AddCommand(cmd)
+}
+
+func (c *CmdBuffer) CreateText(x, y float32, msg string, font fonts.Font, size int, clr [4]float32) {
+	txt := Text_command{
+		X:    x,
+		Y:    y,
+		Clr:  clr,
+		Text: msg,
+		Font: font,
+		Size: size,
+	}
+
+	cmd := Command{
+		Text:     &txt,
+		Type:     Text,
+		WidgetId: txt.Id,
+	}
+	c.AddCommand(cmd)
+	c.SeparateBuffer(font.TextureId, c.InnerWindowSpace)
+}
+
+func (c *CmdBuffer) CreateWindow(wnd Window_command) {
+	c.CreateRect(wnd.X, wnd.Y, wnd.W, wnd.H, 10, AllRounded, 0, wnd.Clr)
+	toolbar := wnd.Toolbar
+	c.CreateRect(toolbar.X, toolbar.Y, toolbar.W, toolbar.H, 10, TopRect, 0, toolbar.Clr)
+	if wnd.Scrollbar.H != 0 {
+		scrl := wnd.Scrollbar
+		c.CreateRect(scrl.X, scrl.Y, scrl.W, scrl.H, scrl.Radius, AllRounded, 0, scrl.ScrollClr)
+		c.CreateRect(scrl.Xb, scrl.Yb, scrl.Wb, scrl.Hb, scrl.Radius, AllRounded, 0, scrl.BtnClr)
+	}
+
+	c.SeparateBuffer(0, [4]float32{wnd.X, wnd.Y, wnd.W, wnd.H})
+}
+
+func (c *CmdBuffer) CreateRect(x, y, w, h float32, radius int, shape RoundedRectShape, texId uint32, clr [4]float32) {
+	cmd := Command{
+		Type: RectType,
+		Rect: &Rect_command{
+			X:      x,
+			Y:      y,
+			W:      w,
+			H:      h,
+			Clr:    clr,
+			radius: radius,
+			TexId:  texId,
+			shape:  shape,
+		},
+	}
+	c.AddCommand(cmd)
+}
 
 func (c *CmdBuffer) AddCommand(cmd Command) {
 	c.commands = append(c.commands, cmd)
 
 	switch cmd.Type {
+	case SeparateBuffer:
+		c.Inf = append(c.Inf, Info{
+			Elems:       c.VertCount - c.lastElems,
+			IndexOffset: c.ofs,
+			TexId:       cmd.sb.texid,
+			ClipRect:    cmd.sb.clipRect,
+		})
+		c.ofs += c.VertCount - c.lastElems
+		c.lastElems = c.VertCount
 	case RectType:
 		r := cmd.Rect
-		size := c.camera.GetProjectionSize()
-		c.RectangleR(r.X, size.Y()-r.Y, r.W, r.H, r.Clr)
+		// size := c.camera.GetProjectionSize()
+		// fmt.Println(c.displaySize.Y)
+		if r.radius == 0 {
+			if r.TexId == 0 {
+				// c.RectangleR(r.X, size.Y()-r.Y, r.W, r.H, r.Clr)
+				c.RectangleR(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.Clr)
+			} else {
+				// c.RectangleT(r.X, size.Y()-r.Y, r.W, r.H, uint32(r.TexId), 0, 1, r.Clr)
+				c.RectangleT(r.X, c.displaySize.Y-r.Y, r.W, r.H, uint32(r.TexId), 0, 1, r.Clr)
+				c.SeparateBuffer(r.TexId, c.InnerWindowSpace) // don't forget to slice buffer
+			}
+		} else {
+			if r.TexId == 0 {
+				// c.RoundedRectangleR(r.X, size.Y()-r.Y, r.W, r.H, r.radius, r.shape, r.Clr)
+				c.RoundedRectangleR(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.radius, r.shape, r.Clr)
+			} else {
+				// TODO: Add textured rounded rect
+			}
+		}
 	case Text:
 		t := cmd.Text
-		size := c.camera.GetProjectionSize()
-		c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
-		// fmt.Println(t.Font.TextureId)
-		c.Inf = append(c.Inf, Info{
-			Elems:       c.VertCount - c.lastElems,
-			IndexOffset: c.ofs,
-			TexId:       t.Font.TextureId,
-			Type:        "text",
-			ClipRect:    c.InnerWindowSpace,
-		})
-		c.ofs += c.VertCount - c.lastElems
-		c.lastElems = c.VertCount
-		// t.Widget.BoundingBox = [4]float32{resized[0], t.Y, resized[2], resized[3]}
-	case RectTypeT:
-		r := cmd.Rect
-
-		size := c.camera.GetProjectionSize()
-		c.RectangleT(r.X, size.Y()-r.Y, r.W, r.H, r.Texture, 0, 1, r.Clr)
-		c.Inf = append(c.Inf, Info{
-			Elems:       c.VertCount - c.lastElems,
-			IndexOffset: c.ofs,
-			TexId:       r.Texture.TextureId,
-			Type:        "image",
-			ClipRect:    c.InnerWindowSpace,
-		})
-		c.ofs += c.VertCount - c.lastElems
-		c.lastElems = c.VertCount
-	case ToolbarCmd:
-		t := cmd.Toolbar
-		size := c.camera.GetProjectionSize()
-		c.RoundedRectangleR(t.X, size.Y()-t.Y, t.W, t.H, 10, TopRect, t.Clr)
-	case RoundedRect:
-		rr := cmd.RRect
-		size := c.camera.GetProjectionSize()
-		c.RoundedRectangleR(rr.X, size.Y()-rr.Y, rr.W, rr.H, rr.Radius, AllRounded, rr.Clr)
-	case ScrollbarCmd:
-		rr := cmd.RRect
-		size := c.camera.GetProjectionSize()
-		c.RoundedRectangleR(rr.X, size.Y()-rr.Y, rr.W, rr.H, rr.Radius, AllRounded, rr.Clr)
-	case ScrollButtonCmd:
-		rr := cmd.RRect
-		size := c.camera.GetProjectionSize()
-		c.RoundedRectangleR(rr.X, size.Y()-rr.Y, rr.W, rr.H, rr.Radius, AllRounded, rr.Clr)
-	case WindowStartCmd:
-		wnd := cmd.Window
-		size := c.camera.GetProjectionSize()
-		c.RoundedRectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.H, 10, AllRounded, wnd.Clr)
-		c.RoundedRectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, 30, 10, TopRect, [4]float32{255, 0, 0, 1})
-
-		c.Inf = append(c.Inf, Info{
-			Elems:       c.VertCount - c.lastElems,
-			IndexOffset: c.ofs,
-			TexId:       0,
-			Type:        "window",
-			ClipRect:    [4]float32{wnd.X, wnd.Y, wnd.W, wnd.H},
-		})
-		c.ofs += c.VertCount - c.lastElems
-		c.lastElems = c.VertCount
-		// c.RectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.H, cmd.Window.Clr)
-		// c.RectangleR(wnd.X, size.Y()-wnd.Y, wnd.W, wnd.Toolbar.H, cmd.Window.Toolbar.Clr)
+		// size := c.camera.GetProjectionSize()
+		// c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
+		c.Text(t.Text, t.Font, t.X, c.displaySize.Y-t.Y, t.Size, t.Clr)
+		c.SeparateBuffer(t.Font.TextureId, c.InnerWindowSpace) // don't forget to slice buffer
 	}
 
 }
@@ -279,8 +287,7 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	b.render(vert, ind, 6)
 }
 
-func (r *CmdBuffer) RectangleT(x, y, w, h float32, tex *gogl.Texture, uv0, uv1 float32, clr [4]float32) {
-	texId := tex.TextureId
+func (r *CmdBuffer) RectangleT(x, y, w, h float32, texId uint32, uv0, uv1 float32, clr [4]float32) {
 
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)
@@ -340,6 +347,7 @@ const (
 	BotRect = BotLeftRect | BotRightRect
 
 	AllRounded = TopRect | BotRect
+	StraightCorners
 )
 
 const (

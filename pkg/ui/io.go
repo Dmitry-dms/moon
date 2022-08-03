@@ -16,7 +16,7 @@ const (
 
 type Io struct {
 	MousePos    utils.Vec2
-	DisplaySize utils.Vec2
+	DisplaySize *utils.Vec2
 
 	keyPressed [570]bool
 
@@ -59,6 +59,11 @@ type Io struct {
 
 type Key int
 
+func (io *Io) SetDisplaySize(w,h float32) {
+	io.DisplaySize.X = w
+	io.DisplaySize.Y = h
+}
+
 func (io *Io) KeyCallback(key GuiKey, pressed bool) {
 	if pressed {
 		io.keyPressed[key] = true
@@ -80,23 +85,6 @@ func (io *Io) MousePosCallback(x, y float32) {
 	io.IsDragging = io.MouseDown[0] ||
 		io.MouseDown[1] ||
 		io.MouseDown[2]
-
-	// if io.IsDragging {
-
-	// if io.MousePos.X() - io.dragStarted.X()  <=2 && io.MousePos.Y() - io.dragStarted.Y()  <=2 {
-	// 	io.dragDelta = mgl32.Vec2{}
-	// 	io.dragStarted = io.MousePos
-	// }
-	// io.dragDelta = io.MousePos.Sub(io.dragStarted)
-	// io.dragStarted = io.MousePos
-	// fmt.Println(io.dragDelta)
-	// lastMousePos = io.MousePos
-	// } else {
-	// 	io.dragDelta = Vec2{0, 0}
-	// io.dragStarted = io.MousePos
-	// }
-	// fmt.Println(io.dragStarted, io.MousePos, io.dragDelta)
-	// fmt.Println(io.dragDelta)
 }
 
 func (io *Io) MouseBtnCallback(mouseBtn MouseKey, action Action) {
@@ -139,7 +127,7 @@ func (io *Io) IsMousePosValid(pos *utils.Vec2) bool {
 func NewIo() *Io {
 	i := Io{
 		MousePos:                utils.Vec2{0, 0},
-		DisplaySize:             utils.Vec2{0, 0},
+		DisplaySize:             &utils.Vec2{0, 0},
 		keyPressed:              [570]bool{},
 		WantCaptureMouse:        false,
 		MouseDown:               [MOUSE_BTN_COUNT]bool{},

@@ -112,6 +112,14 @@ func (s *Shader) UploadVec4(name string, vec mgl32.Vec4) {
 	v4 := [4]float32(vec)
 	gl.Uniform4fv(location, 1, &v4[0])
 }
+func (s *Shader) UploadMatslice(name string, mat [4][4]float32) {
+	name_cstr := gl.Str(name + "\x00")
+	location := gl.GetUniformLocation(s.ProgramId, name_cstr)
+	s.Use()
+	// m4 := [16]float32(mat)
+	gl.UniformMatrix4fv(location, 1, false, &mat[0][0])
+}
+
 func (s *Shader) UploadMat4(name string, mat mgl32.Mat4) {
 	name_cstr := gl.Str(name + "\x00")
 	location := gl.GetUniformLocation(s.ProgramId, name_cstr)

@@ -28,7 +28,7 @@ const (
 )
 
 func NewGlRenderer() *GLRender {
-	s, err := gogl.NewShader("assets/shaders/default.glsl")
+	s, err := gogl.NewShader("assets/shaders/gui.glsl")
 	if err != nil {
 		panic(err)
 	}
@@ -43,16 +43,6 @@ func NewGlRenderer() *GLRender {
 
 	gl.GenBuffers(1, &r.vboId)
 	gl.GenBuffers(1, &r.ebo)
-
-	//аллоцируем место для vertices
-	// r.vboId = gogl.GenBindBuffer(gl.ARRAY_BUFFER)
-	// gogl.BufferData(gl.ARRAY_BUFFER, r.vertices, gl.DYNAMIC_DRAW)
-	// gl.BufferData(gl.ARRAY_BUFFER, 4*1500, nil, gl.DYNAMIC_DRAW)
-
-	// r.ebo = gogl.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER)
-	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.ebo)
-	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 500*4, nil, gl.DYNAMIC_DRAW)
-	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
 	//включаем layout
 	// gogl.SetVertexAttribPointer(0, posSize, gl.FLOAT, vertexSize*4, posOffset)
@@ -158,7 +148,16 @@ func (r *GLRender) NewFrame() {
 
 var steps = 30
 
-func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
+func (b *GLRender) Draw(displaySize [2]float32, buffer draw.CmdBuffer) {
+
+	displayWidth := displaySize[0]
+	displayHeight := displaySize[1]
+
+	// ofs := 1
+	// for i := 1; i < len(buffer.Vertices); i+=9 {
+	// 	buffer.Vertices[i] += displayHeight 
+	// 	// ofs += 9
+	// }
 
 	// Backup GL state
 	// var lastActiveTexture int32
@@ -206,8 +205,6 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	gogl.SetVertexAttribPointer(1, colorSize, gl.FLOAT, vertexSize*4, colorOffset)
 	gogl.SetVertexAttribPointer(2, texCoordsSize, gl.FLOAT, vertexSize*4, texCoordsOffset)
 	gogl.SetVertexAttribPointer(3, texIdSize, gl.FLOAT, vertexSize*4, texIdOffset)
-	// gl.GenBuffers(1, &r.vboId)
-	// gl.GenBuffers(1, &r.ebo)
 
 	//аллоцируем место для vertices
 	// vboId := gogl.GenBindBuffer(gl.ARRAY_BUFFER)
@@ -219,8 +216,6 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 500*4, nil, gl.DYNAMIC_DRAW)
 	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
-	
-
 	// gl.Enable(gl.BLEND)
 	// gl.BlendEquation(gl.FUNC_ADD)
 	// gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -229,24 +224,20 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 	gl.Enable(gl.SCISSOR_TEST)
 	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
 
-	
-
-	// gl.BindSampler(0, 0)
-	// gogl.BindVertexArray(vaoId)
-
-	// var vaoHandle uint32
-	// gl.GenVertexArrays(1, &vaoHandle)
-	// gl.BindVertexArray(vaoHandle)
-
 	gl.BindBuffer(gl.ARRAY_BUFFER, b.vboId)
 	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.Vertices)*4, gl.Ptr(buffer.Vertices), gl.STREAM_DRAW)
-	// gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.ebo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(buffer.Indeces)*4, gl.Ptr(buffer.Indeces), gl.STREAM_DRAW)
 
-	b.shader.UploadMat4("uProjection", camera.GetProjectionMatrix())
-	b.shader.UploadMat4("uView", camera.GetViewMatrix())
+	orthoProjection := [4][4]float32{
+		{2.0 / displayWidth, 0.0, 0.0, 0.0},
+		{0.0, 2.0 / displayHeight, 0.0, 0.0},
+		{0.0, 0.0, -2.0, 0.0},
+		{-1.0, -1.0, -1.0, 1.0},
+	}
+
+	b.shader.UploadMatslice("uProjection", orthoProjection)
 
 	for _, cmd := range buffer.Inf {
 		r := cmd.ClipRect
@@ -256,13 +247,11 @@ func (b *GLRender) Draw(camera *gogl.Camera, buffer draw.CmdBuffer) {
 		w := int32(r[2])
 		h := int32(r[3])
 
-		size := camera.GetProjectionSize()
-
 		// if int32(size.Y())-(int32(y)+int32(h)) <= 0 {
 		// 	y = 0
 		// 	h = int32(size[1]) - int32(y)
 		// } else {
-		y = int32(size.Y()) - (int32(y) + int32(h))
+		y = int32(displayHeight) - (int32(y) + int32(h))
 
 		// }
 

@@ -21,27 +21,15 @@ type Window struct {
 	w, h    float32
 	active  bool
 	Id      string
-	// drawList   []command
-	// rq         *RenderQueue
+
 	outerRect  utils.Rect
 	minW, minH float32
 
 	//render
 	buffer *draw.CmdBuffer
 
-	//inner widgets
-	// cursorX, cursorY float32
-	// widgetCounter    int
-	// widgets          []widgets.Widget
 	mainWidgetSpace    *WidgetSpace
 	currentWidgetSpace *WidgetSpace
-
-	virtualHeight float32 // сумма высот всех виджетов (для скроллинга)
-
-	//scrollbar
-	// scrlBar       *Scrollbar
-	// isScrollShown bool
-	// scrlY         float32
 
 	capturedV, capturedH bool
 	capturedWin          bool
@@ -50,33 +38,25 @@ type Window struct {
 func NewWindow(x, y, w, h float32) *Window {
 	tb := NewToolbar(x, y, w, 30)
 	wnd := Window{
-		toolbar: tb,
-		x:       x,
-		y:       y,
-		w:       w,
-		h:       h,
-
-		outerRect: utils.Rect{Min: utils.Vec2{X: x, Y: y}, Max: utils.Vec2{X: x + w, Y: y + h}},
-
-		minW: 200,
-		minH: 50,
-		// srcX:      x,
-		// srcY:      y + tb.h + UiCtx.CurrentStyle.TopMargin,
-
-		// widgets: []widgets.Widget{},
+		toolbar:         tb,
+		x:               x,
+		y:               y,
+		w:               w,
+		h:               h,
+		outerRect:       utils.Rect{Min: utils.Vec2{X: x, Y: y}, Max: utils.Vec2{X: x + w, Y: y + h}},
+		minW:            200,
+		minH:            50,
 		mainWidgetSpace: newWidgetSpace(x, y+tb.h, w, h-tb.h),
-		// scrlBar:         NewScrolBar(utils.NewRect(x+w-10, y, 20, h), utils.NewRect(x+w-10, y, 10, 50), [4]float32{150, 155, 155, 1}),
-		buffer: draw.NewBuffer(UiCtx.camera),
+		buffer:          draw.NewBuffer(UiCtx.Io().DisplaySize),
 	}
+
 	wnd.currentWidgetSpace = wnd.mainWidgetSpace
-	// wnd.scrlY = wnd.toolbar.h
-	// wnd.mainWidgetSpace.scrlY = wnd.toolbar.h
 	return &wnd
 }
 
-func (w *Window) AddCommand(cmd draw.Command) {
-	w.buffer.AddCommand(cmd)
-}
+// func (w *Window) AddCommand(cmd draw.Command) {
+// 	w.buffer.AddCommand(cmd)
+// }
 
 var counter int = 0
 
@@ -85,10 +65,10 @@ const (
 	scrollChange           = 2
 )
 
-// var capturedV, capturedH bool
-
 func (c *UiContext) BeginWindow(id string) {
 	var wnd *Window
+	// var cmd draw.Command
+	var cmdw draw.Window_command
 	wnd, ok := c.windowCache.Get(id)
 	if !ok {
 		r := rand.Intn(500)
@@ -103,44 +83,47 @@ func (c *UiContext) BeginWindow(id string) {
 	newH := wnd.h
 	newW := wnd.w
 
-	//Прямоугольник справа
-	vResizeRect := utils.Rect{Min: utils.Vec2{X: wnd.x + wnd.w - scrollChange, Y: wnd.y}, Max: utils.Vec2{X: wnd.x + wnd.w + scrollChange, Y: wnd.y + wnd.h}}
-	hResizeRect := utils.Rect{Min: utils.Vec2{X: wnd.x, Y: wnd.y + wnd.h - scrollChange}, Max: utils.Vec2{X: wnd.x + wnd.w, Y: wnd.y + wnd.h + scrollChange}}
-	if utils.PointInRect(c.io.MousePos, hResizeRect) && c.ActiveWindow == wnd {
-		c.io.SetCursor(VResizeCursor)
-		c.wantResizeH = true
-	} else if utils.PointInRect(c.io.MousePos, vResizeRect) && c.ActiveWindow == wnd {
-		c.io.SetCursor(HResizeCursor)
-		c.wantResizeV = true
-	} else {
-		c.io.SetCursor(ArrowCursor)
-	}
+	// logic
+	{
+		//Прямоугольник справа
+		vResizeRect := utils.Rect{Min: utils.Vec2{X: wnd.x + wnd.w - scrollChange, Y: wnd.y}, Max: utils.Vec2{X: wnd.x + wnd.w + scrollChange, Y: wnd.y + wnd.h}}
+		hResizeRect := utils.Rect{Min: utils.Vec2{X: wnd.x, Y: wnd.y + wnd.h - scrollChange}, Max: utils.Vec2{X: wnd.x + wnd.w, Y: wnd.y + wnd.h + scrollChange}}
+		if utils.PointInRect(c.io.MousePos, hResizeRect) && c.ActiveWindow == wnd {
+			c.io.SetCursor(VResizeCursor)
+			c.wantResizeH = true
+		} else if utils.PointInRect(c.io.MousePos, vResizeRect) && c.ActiveWindow == wnd {
+			c.io.SetCursor(HResizeCursor)
+			c.wantResizeV = true
+		} else {
+			c.io.SetCursor(ArrowCursor)
+		}
 
-	c.dragBehavior(vResizeRect, &wnd.capturedV)
-	c.dragBehavior(hResizeRect, &wnd.capturedH)
-	// Изменение размеров окна
-	if c.wantResizeH && c.ActiveWindow == wnd && wnd.capturedH {
-		n := newH
-		n += c.io.MouseDelta.Y
-		if n > wnd.minH {
-			newH = n
-			if wnd.mainWidgetSpace.scrlY != 0 {
-				wnd.mainWidgetSpace.scrlY -= c.io.MouseDelta.Y
+		c.dragBehavior(vResizeRect, &wnd.capturedV)
+		c.dragBehavior(hResizeRect, &wnd.capturedH)
+		// Изменение размеров окна
+		if c.wantResizeH && c.ActiveWindow == wnd && wnd.capturedH {
+			n := newH
+			n += c.io.MouseDelta.Y
+			if n > wnd.minH {
+				newH = n
+				if wnd.mainWidgetSpace.scrlY != 0 {
+					wnd.mainWidgetSpace.scrlY -= c.io.MouseDelta.Y
+				}
+			}
+		} else if c.wantResizeV && c.ActiveWindow == wnd && wnd.capturedV {
+			n := newW
+			n += c.io.MouseDelta.X
+			if n > wnd.minW {
+				newW = n
 			}
 		}
-	} else if c.wantResizeV && c.ActiveWindow == wnd && wnd.capturedV {
-		n := newW
-		n += c.io.MouseDelta.X
-		if n > wnd.minW {
-			newW = n
-		}
-	}
 
-	c.dragBehavior(wnd.outerRect, &wnd.capturedWin)
-	// Изменение положения окна
-	if c.ActiveWindow == wnd && wnd.capturedWin && !c.wantResizeV && !c.wantResizeH {
-		newX += c.io.MouseDelta.X
-		newY += c.io.MouseDelta.Y
+		c.dragBehavior(wnd.outerRect, &wnd.capturedWin)
+		// Изменение положения окна
+		if c.ActiveWindow == wnd && wnd.capturedWin && !c.wantResizeV && !c.wantResizeH {
+			newX += c.io.MouseDelta.X
+			newY += c.io.MouseDelta.Y
+		}
 	}
 
 	wnd.x = newX
@@ -156,69 +139,65 @@ func (c *UiContext) BeginWindow(id string) {
 	wnd.mainWidgetSpace.H = newH - wnd.toolbar.h
 
 	cl := [4]float32{r, g, b, 0.8}
-	cmdw := draw.Window_command{
-		Active: wnd.active,
-		Id:     wnd.Id,
-		X:      wnd.x,
-		Y:      wnd.y,
-		H:      wnd.h,
-		W:      wnd.w,
-		Clr:    cl,
+	{
+		cmdw = draw.Window_command{
+			Active: wnd.active,
+			Id:     wnd.Id,
+			X:      wnd.x,
+			Y:      wnd.y,
+			H:      wnd.h,
+			W:      wnd.w,
+			Clr:    cl,
+			Toolbar: draw.Toolbar_command{
+				X:   newX,
+				Y:   newY,
+				W:   newW,
+				H:   wnd.toolbar.h,
+				Clr: wnd.toolbar.clr,
+			},
+		}
+		// cmd = draw.Command{
+		// 	Type:   draw.WindowStartCmd,
+		// 	Window: &cmdw,
+		// }
 	}
-	cmd := draw.Command{
-		Type:   draw.WindowStartCmd,
-		Window: &cmdw,
-	}
-
 	wnd.mainWidgetSpace.cursorX = wnd.mainWidgetSpace.X + UiCtx.CurrentStyle.LeftMargin
 	wnd.mainWidgetSpace.cursorY = wnd.mainWidgetSpace.Y + UiCtx.CurrentStyle.TopMargin
-	wnd.AddCommand(cmd)
 
 	// Scrollbar behavior
 	if wnd.mainWidgetSpace.isVertScrollShown {
 		wnd.mainWidgetSpace.vertScrollBar()
 		if c.ActiveWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidget == "" {
-			wnd.mainWidgetSpace.handleMouseDrag()
+			// wnd.mainWidgetSpace.handleMouseDrag()
 			wnd.mainWidgetSpace.handleMouseScroll(float32(c.io.ScrollY))
 		}
-		scrollCommand := draw.Rounded_rect{
-			X:      wnd.mainWidgetSpace.verticalScrollbar.x,
-			Y:      wnd.mainWidgetSpace.verticalScrollbar.y,
-			W:      wnd.mainWidgetSpace.verticalScrollbar.w,
-			H:      wnd.mainWidgetSpace.verticalScrollbar.h,
-			Clr:    wnd.mainWidgetSpace.verticalScrollbar.clr,
-			Radius: 5,
+		cmdw.Scrollbar = draw.Scrollbar_command{
+			X:         wnd.mainWidgetSpace.verticalScrollbar.x,
+			Y:         wnd.mainWidgetSpace.verticalScrollbar.y,
+			W:         wnd.mainWidgetSpace.verticalScrollbar.w,
+			H:         wnd.mainWidgetSpace.verticalScrollbar.h,
+			Xb:        wnd.mainWidgetSpace.verticalScrollbar.bX,
+			Yb:        wnd.mainWidgetSpace.verticalScrollbar.bY,
+			Wb:        wnd.mainWidgetSpace.verticalScrollbar.bW,
+			Hb:        wnd.mainWidgetSpace.verticalScrollbar.bH,
+			Radius:    5,
+			ScrollClr: wnd.mainWidgetSpace.verticalScrollbar.clr,
+			BtnClr:    [4]float32{255, 0, 0, 1},
 		}
-		sbCmd := draw.Command{
-			RRect: &scrollCommand,
-			Type:  draw.RoundedRect,
-		}
-		wnd.AddCommand(sbCmd)
-
-		scrollBtnCommand := draw.Rounded_rect{
-			X:      wnd.mainWidgetSpace.verticalScrollbar.bX,
-			Y:      wnd.mainWidgetSpace.verticalScrollbar.bY,
-			W:      wnd.mainWidgetSpace.verticalScrollbar.bW,
-			H:      wnd.mainWidgetSpace.verticalScrollbar.bH,
-			Clr:    [4]float32{255, 0, 0, 1},
-			Radius: 5,
-		}
-
-		sbtnCmd := draw.Command{
-			RRect: &scrollBtnCommand,
-			Type:  draw.RoundedRect,
-		}
-		wnd.AddCommand(sbtnCmd)
 	}
-
+	wnd.buffer.InnerWindowSpace = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y, wnd.mainWidgetSpace.W - wnd.mainWidgetSpace.verticalScrollbar.w, wnd.mainWidgetSpace.H}
+	// wnd.AddCommand(cmd, true)
+	wnd.createWindow(cmdw)
 	c.windowStack.Push(wnd)
-
-	wnd.buffer.InnerWindowSpace = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y, wnd.mainWidgetSpace.W, wnd.mainWidgetSpace.H}
 }
 
 var visibleRatio float32
 var step float32 = 40
 var r, g, b float32 = 231, 158, 162
+
+func (w *Window) createWindow(wnd draw.Window_command) {
+	w.buffer.CreateWindow(wnd)
+}
 
 func (w *Window) addWidget(widg widgets.Widget) bool {
 	return w.currentWidgetSpace.addWidget(widg)
@@ -228,42 +207,13 @@ var (
 	whiteColor = [4]float32{255, 255, 255, 1}
 )
 
-func (wnd *Window) getWidget(id string, w widgets.WidgetType) widgets.Widget {
+func (wnd *Window) getWidget(id string, f func() widgets.Widget) widgets.Widget {
 	var widg widgets.Widget
-
-	wi, ok := UiCtx.GetWidget(id)
-	if ok {
-		widg = wi
-	} else {
-		x := wnd.currentWidgetSpace.cursorX
-		y := wnd.currentWidgetSpace.cursorY
-		switch w {
-		case widgets.ButtonWidget:
-			widg = &widgets.Button{
-				Id:           id,
-				CurrentColor: [4]float32{67, 86, 205, 1},
-				IsActive:     false,
-				BoundingBox:  [4]float32{x, y, float32(100), float32(100)},
-			}
-		case widgets.ImageWidget:
-			widg = &widgets.Image{
-				Id:           id,
-				CurrentColor: whiteColor,
-				BoundingBox:  [4]float32{x, y, float32(100), float32(100)},
-			}
-		case widgets.TextWidget:
-			widg = &widgets.Text{
-				Id:           id,
-				CurrentColor: whiteColor,
-			}
-		case widgets.VerticalSpacingWidget:
-			widg = &widgets.VSpace{
-				BoundingBox: [4]float32{x, y, float32(100), float32(20)},
-				Id:          id,
-			}
-		}
+	widg, ok := UiCtx.GetWidget(id)
+	if !ok {
+		widg = f()
 		wnd.addWidget(widg)
-
+		wnd.currentWidgetSpace.AddVirtualHeight(float32(int(widg.Height())))
 	}
 	return widg
 }
@@ -337,15 +287,14 @@ var scale float32 = 1
 
 func (c *UiContext) Text(id string, msg string, size int) {
 	wnd := c.windowStack.GetTop()
-	var widg widgets.Widget
+
 	var txt *widgets.Text
+	var hovered bool
+	// var cmd draw.Command
 	y := wnd.currentWidgetSpace.cursorY
 	x := wnd.currentWidgetSpace.cursorX
 
-	// txt = wnd.getWidget(id, widgets.TextWidget).(*widgets.Text)
-
-	widg, ok := UiCtx.GetWidget(id)
-	if !ok {
+	txt = wnd.getWidget(id, func() widgets.Widget {
 		s := c.font.CalculateTextBounds(msg, size)
 		txt = &widgets.Text{
 			Id:           id,
@@ -353,57 +302,43 @@ func (c *UiContext) Text(id string, msg string, size int) {
 			Message:      msg,
 			BoundingBox:  [4]float32{x, y, s[0], s[1]},
 		}
-		wnd.addWidget(txt)
-		wnd.currentWidgetSpace.AddVirtualHeight(float32(int(s[1])))
-	} else {
-		txt = widg.(*widgets.Text)
-	}
-
+		return txt
+	}).(*widgets.Text)
 	txt.Message = msg
 	clr := txt.CurrentColor
-
-	// txt.BoundingBox = [4]float32{x, y, s[0], s[1]}
-
-	// DEBUG
 	y -= wnd.currentWidgetSpace.scrlY
-	// y -= wnd.currentWidgetSpace.verticalScrollbar.bY
-	//
-	hovered := c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox))
-	if hovered {
-		c.ActiveWidget = txt.GetId()
-		txt.CurrentColor = [4]float32{167, 200, 100, 1}
-	} else {
-		txt.CurrentColor = whiteColor
-	}
-
-	//DEBUG
-	// scroll := float32(0)
-	// if c.io.ScrollY != 0 {
-	// 	scroll += float32(c.io.ScrollY) * 10
-	// 	scale = scroll
-	// }
-	// Create command and append it to slice
+	// logic
 	{
-		rect := draw.Text_command{
-			X:    wnd.currentWidgetSpace.cursorX,
-			Y:    y,
-			Clr:  clr,
-			Text: txt.Message,
-			Font: *c.font,
-			Size: size,
-		}
 
-		cmd := draw.Command{
-			Text:     &rect,
-			Type:     draw.Text,
-			WidgetId: txt.Id,
+		hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox))
+		if hovered {
+			c.setActiveWidget(txt.GetId())
+			txt.CurrentColor = [4]float32{167, 200, 100, 1}
+		} else {
+			txt.CurrentColor = whiteColor
 		}
-		wnd.AddCommand(cmd)
 	}
+	// Create command
+	// {
+	// 	rect := draw.Text_command{
+	// 		X:    wnd.currentWidgetSpace.cursorX,
+	// 		Y:    y,
+	// 		Clr:  clr,
+	// 		Text: txt.Message,
+	// 		Font: *c.font,
+	// 		Size: size,
+	// 	}
 
+	// 	cmd = draw.Command{
+	// 		Text:     &rect,
+	// 		Type:     draw.Text,
+	// 		WidgetId: txt.Id,
+	// 	}
+	// }
 	txt.BoundingBox = [4]float32{x, y, txt.Width(), txt.Height()}
-	wnd.currentWidgetSpace.cursorY += txt.Height()
-	// wnd.currentWidgetSpace.AddVirtualHeight(txt.Height())
+	// wnd.AddCommand(cmd, true)
+	wnd.buffer.CreateText(x, y, msg, *c.font, size, clr)
+	wnd.addYcursor(txt.Height())
 }
 
 func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
@@ -411,91 +346,72 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 		fmt.Println("error")
 		return false
 	}
-
 	wnd := c.windowStack.GetTop()
 	var img *widgets.Image
-	var widg widgets.Widget
+	var clicked bool
+	// var cmd draw.Command
 	x := wnd.currentWidgetSpace.cursorX
 	y := wnd.currentWidgetSpace.cursorY
-	// img = wnd.getWidget(id, widgets.ImageWidget).(*widgets.Image)
 
-	widg, ok := UiCtx.GetWidget(id)
-	if !ok {
+	img = wnd.getWidget(id, func() widgets.Widget {
 		img = &widgets.Image{
 			Id:           id,
 			CurrentColor: whiteColor,
 			BoundingBox:  [4]float32{x, y, float32(100), float32(100)},
 		}
-		wnd.addWidget(img)
-		wnd.currentWidgetSpace.AddVirtualHeight(img.Height())
-	} else {
-		img = widg.(*widgets.Image)
-	}
+		return img
+	}).(*widgets.Image)
 
 	clr := img.CurrentColor
-
-	hovered := c.hoverBehavior(wnd, utils.NewRectS(img.BoundingBox))
-
-	if hovered {
-		c.ActiveWidget = img.GetId()
-	}
-	clicked := c.io.MouseClicked[0] && hovered
-
-	// DEBUG
 	y -= wnd.currentWidgetSpace.scrlY
-	// y -= wnd.currentWidgetSpace.verticalScrollbar.bY
-	//
+	// logic section
+	{
 
+		hovered := c.hoverBehavior(wnd, utils.NewRectS(img.BoundingBox))
+		if hovered {
+			c.setActiveWidget(img.GetId())
+		}
+		clicked = c.io.MouseClicked[0] && hovered
+	}
 	// Create command and append it to slice
 	{
-		rect := draw.Rect_command{
-			X:       wnd.currentWidgetSpace.cursorX,
-			Y:       y,
-			W:       img.Width(),
-			H:       img.Height(),
-			Clr:     clr,
-			Texture: tex,
-		}
-		cmd := draw.Command{
-			Rect:  &rect,
-			Type:  draw.RectTypeT,
-			Shown: true,
-		}
-		wnd.AddCommand(cmd)
+		// rect := draw.Rect_command{
+		// 	X:       wnd.currentWidgetSpace.cursorX,
+		// 	Y:       y,
+		// 	W:       img.Width(),
+		// 	H:       img.Height(),
+		// 	Clr:     clr,
+		// 	Texture: tex,
+		// }
+		// cmd = draw.Command{
+		// 	Rect:  &rect,
+		// 	Type:  draw.RectTypeT,
+		// 	Shown: true,
+		// }
 	}
-
 	img.BoundingBox = [4]float32{wnd.currentWidgetSpace.cursorX, y, img.Width(), img.Height()}
 
-	wnd.currentWidgetSpace.cursorY += img.Height()
-	// wnd.currentWidgetSpace.AddVirtualHeight(img.Height())
+	wnd.buffer.CreateRect(x, y, img.Width(), img.Height(), 0, draw.StraightCorners, tex.TextureId, clr)
+	// wnd.AddCommand(cmd, false)
+	wnd.addYcursor(img.Height())
 	return clicked
 }
 
 func (c *UiContext) VSpace(id string) {
-
 	wnd := c.windowStack.GetTop()
 	var s *widgets.VSpace
-	var widg widgets.Widget
+
 	x := wnd.currentWidgetSpace.cursorX
 	y := wnd.currentWidgetSpace.cursorY
-	// img = wnd.getWidget(id, widgets.ImageWidget).(*widgets.Image)
 
-	widg, ok := UiCtx.GetWidget(id)
-	if !ok {
-		s = &widgets.VSpace{
+	s = wnd.getWidget(id, func() widgets.Widget {
+		s := &widgets.VSpace{
 			BoundingBox: [4]float32{x, y, float32(100), float32(20)},
 			Id:          id,
 		}
-		wnd.addWidget(s)
-		wnd.currentWidgetSpace.AddVirtualHeight(s.Height())
-	} else {
-		s = widg.(*widgets.VSpace)
-	}
-
-	// s = wnd.getWidget(id, widgets.VerticalSpacingWidget).(*widgets.VSpace)
-
-	wnd.currentWidgetSpace.cursorY += s.Height()
-	// wnd.currentWidgetSpace.AddVirtualHeight(s.Height())
+		return s
+	}).(*widgets.VSpace)
+	wnd.addYcursor(s.Height())
 }
 
 func (c *UiContext) ButtonT(id string, text string, size int) bool {
@@ -516,76 +432,71 @@ func (c *UiContext) button(id string, text string, size int) bool {
 
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
-
-	var clicked bool
-	var cmd draw.Command
-	var rect draw.Rect_command
-
-	var widg widgets.Widget
+	var clicked, hovered bool
+	// var cmd draw.Command
+	// var rect draw.Rect_command
 
 	x := wnd.currentWidgetSpace.cursorX
 	y := wnd.currentWidgetSpace.cursorY
-	widg, ok := UiCtx.GetWidget(id)
-	if !ok {
-		btn = &widgets.Button{
+
+	btn = wnd.getWidget(id, func() widgets.Widget {
+		btn := &widgets.Button{
 			Id:           id,
 			CurrentColor: [4]float32{67, 86, 205, 1},
 			IsActive:     false,
 			BoundingBox:  [4]float32{x, y, float32(100), float32(100)},
 		}
-		wnd.addWidget(btn)
-		wnd.currentWidgetSpace.AddVirtualHeight(btn.Height())
-	} else {
-		btn = widg.(*widgets.Button)
-	}
-
-	// btn = wnd.getWidget(id, widgets.ButtonWidget).(*widgets.Button)
+		return btn
+	}).(*widgets.Button)
 
 	w := btn.Width()
 	h := btn.Height()
 	clr := btn.CurrentColor
 
-	// DEBUG
-	y -= wnd.currentWidgetSpace.scrlY
-	// y -= wnd.currentWidgetSpace.verticalScrollbar.bY
-	//
-
-	rect = draw.Rect_command{
-		X:   x,
-		Y:   y,
-		W:   w,
-		H:   h,
-		Clr: clr,
-	}
-
+	// logic section
 	{
-		hovered := c.hoverBehavior(wnd, utils.NewRect(x, y, w, h))
+		// handle scrolling
+		y -= wnd.currentWidgetSpace.scrlY
+		hovered = c.hoverBehavior(wnd, utils.NewRect(x, y, w, h))
 		if hovered {
 			c.ActiveWidget = btn.GetId()
 			if c.io.MouseClicked[0] {
 				btn.IsActive = !btn.IsActive
 			}
 		}
-
 		if btn.IsActive {
 			btn.SetColor([4]float32{150, btn.CurrentColor[1], btn.CurrentColor[2], btn.CurrentColor[3]})
 		} else {
 			btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
 		}
-
 		clicked = c.io.MouseClicked[0] && hovered
-
-		cmd = draw.Command{
-			Rect:  &rect,
-			Type:  draw.RectType,
-			Shown: true,
-		}
 	}
-
-	wnd.AddCommand(cmd)
-	wnd.currentWidgetSpace.cursorY += btn.Height()
-	// wnd.currentWidgetSpace.AddVirtualHeight(btn.Height())
+	{
+		// rect = draw.Rect_command{
+		// 	X:   x,
+		// 	Y:   y,
+		// 	W:   w,
+		// 	H:   h,
+		// 	Clr: clr,
+		// }
+		// cmd = draw.Command{
+		// 	Rect:  &rect,
+		// 	Type:  draw.RectType,
+		// 	Shown: true,
+		// }
+	}
+	wnd.buffer.CreateRect(x, y, w, h, 0, draw.StraightCorners, 0, clr)
+	// wnd.AddCommand(cmd, false)
+	wnd.addYcursor(btn.Height())
 	return clicked
+}
+
+func (wnd *Window) addYcursor(x float32) {
+	wnd.currentWidgetSpace.cursorY += x
+}
+
+func (c *UiContext) setActiveWidget(id string) {
+	c.ActiveWidget = id
 }
 
 func (c *UiContext) EndWindow() {
@@ -630,6 +541,11 @@ func (c *UiContext) EndWindow() {
 	wnd.mainWidgetSpace.checkVerScroll()
 	// wnd.currentWidgetSpace.virtualHeight = 0
 	c.currentWindow++
+
+	// wnd.AddCommand(draw.Command{
+	// 	Type: draw.SeparateBuffer,
+	// }, false)
+	wnd.buffer.SeparateBuffer(0, wnd.buffer.InnerWindowSpace) // Make sure that we didn't miss anything
 }
 
 func RegionHit(mouseX, mouseY, x, y, w, h float32) bool {

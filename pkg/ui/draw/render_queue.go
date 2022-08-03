@@ -8,10 +8,13 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
 
-
 type Command struct {
 	Type     CmdType
 	WidgetId string
+
+	// TextureId uint32 
+
+	sb *separate_buff // special cmd 
 	// priority int
 	Shown    bool
 	Rect     *Rect_command
@@ -21,6 +24,11 @@ type Command struct {
 	WinStart *Window_start_command
 	Toolbar  *Toolbar_command
 	Text     *Text_command
+}
+
+type separate_buff struct {
+	texid uint32
+	clipRect [4]float32
 }
 
 type Text_command struct {
@@ -36,11 +44,13 @@ type Text_command struct {
 }
 
 type Rect_command struct {
-	X, Y, W, H  float32
-	Clr         [4]float32
-	Id          string
-	ScaleFactor float32
-	Texture     *gogl.Texture
+	X, Y, W, H float32
+	Clr        [4]float32
+	TexId      uint32
+	radius     int
+	shape RoundedRectShape
+	// ScaleFactor float32
+	// Texture     *gogl.Texture
 }
 type triangle_command struct {
 	x0, y0, x1, y1, x2, y2 float32
@@ -57,10 +67,19 @@ type Window_command struct {
 	X, Y, W, H float32
 	Clr        [4]float32
 	Toolbar    Toolbar_command
+	Scrollbar  Scrollbar_command
 }
 type Toolbar_command struct {
 	X, Y, W, H float32
 	Clr        [4]float32
+}
+
+type Scrollbar_command struct {
+	X, Y, W, H     float32
+	Xb, Yb, Wb, Hb float32
+	Radius         int
+	ScrollClr      [4]float32
+	BtnClr         [4]float32
 }
 type Rounded_rect struct {
 	X, Y, W, H float32
@@ -73,6 +92,7 @@ type CmdType int
 
 const (
 	RectType CmdType = iota
+	SeparateBuffer
 	RectTypeT
 	Triangle
 	TriangleT

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"github.com/Dmitry-dms/moon/pkg/fonts"
-	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/draw"
 
@@ -14,14 +13,13 @@ import (
 var UiCtx *UiContext
 
 func init() {
-	UiCtx = NewContext(nil, nil)
+	UiCtx = NewContext(nil)
 }
 
 type UiContext struct {
 	// rq *RenderQueue
 
 	renderer UiRenderer
-	camera   *gogl.Camera
 	io       *Io
 
 	//Widgets
@@ -33,6 +31,8 @@ type UiContext struct {
 	PriorWindow       *Window
 	HoveredWindow     *Window
 	LastHoveredWindow *Window
+
+	displaySize [2]float32
 
 	//cache
 	windowCache  *cache.RamCache[*Window]
@@ -52,11 +52,10 @@ type UiContext struct {
 	font *fonts.Font
 }
 
-func NewContext(frontRenderer UiRenderer, camera *gogl.Camera) *UiContext {
+func NewContext(frontRenderer UiRenderer) *UiContext {
 	c := UiContext{
 		// rq:            NewRenderQueue(),
 		renderer:      frontRenderer,
-		camera:        camera,
 		io:            NewIo(),
 		Windows:       make([]*Window, 0),
 		sortedWindows: make([]*Window, 0),
@@ -73,9 +72,8 @@ func (c *UiContext) UploadFont(path string, size int) {
 	c.font = fonts.NewFont(path)
 }
 
-func (c *UiContext) Initialize(frontRenderer UiRenderer, camera *gogl.Camera) {
+func (c *UiContext) Initialize(frontRenderer UiRenderer) {
 	c.renderer = frontRenderer
-	c.camera = camera
 }
 
 func (c *UiContext) dragBehavior(rect utils.Rect, captured *bool) {
@@ -104,12 +102,15 @@ func (c *UiContext) Io() *Io {
 	return c.io
 }
 
-func (c *UiContext) NewFrame() {
+func (c *UiContext) NewFrame(displaySize [2]float32) {
 	// c.sortedWindows = c.Windows
 
 	c.UpdateMouseInputs()
 
 	c.renderer.NewFrame()
+	// c.displaySize = displaySize
+
+	c.Io().SetDisplaySize(displaySize[0], displaySize[1])
 }
 func (c *UiContext) pushWindowFront(w *Window) {
 	for i := len(c.sortedWindows) - 1; i >= 0; i-- {
@@ -239,7 +240,7 @@ func copyWindows(w []*Window) []*Window {
 
 var lastWinL = 0
 
-func (c *UiContext) EndFrame() {
+func (c *UiContext) EndFrame(size [2]float32) {
 
 	// Если количество окон не изменилось, в копировании нет нужды
 	if lastWinL != len(c.Windows) {
@@ -253,7 +254,7 @@ func (c *UiContext) EndFrame() {
 	}
 	for _, v := range c.sortedWindows {
 		// fmt.Println(v.Id, len(v.buffer.Vertices))
-		c.renderer.Draw(c.camera, *v.buffer)
+		c.renderer.Draw(size, *v.buffer)
 		v.buffer.Clear()
 	}
 
@@ -267,7 +268,6 @@ func (c *UiContext) EndFrame() {
 	} else if !c.io.IsDragging && c.wantResizeV == true {
 		c.wantResizeV = false
 	}
-	// c.sortedWindows = []*Window{}
 
 	c.io.ScrollX = 0
 	c.io.ScrollY = 0
@@ -278,15 +278,5 @@ func (c *UiContext) EndFrame() {
 type UiRenderer interface {
 	NewFrame()
 	Scissor(x, y, w, h int32)
-	// Rectangle(x, y, w, h float32, clr [4]float32)
-	// RectangleR(x, y, w, h float32, clr [4]float32)
-	// Trinagle(x0, y0, x1, y1, x2, y2 float32, clr [4]float32)
-	// Circle(x, y, radius float32, steps int, clr [4]float32)
-	// Line(x0, y0, x1, y1 float32, thick int, clr [4]float32)
-	// RoundedRectangle(x, y, w, h float32, radius int, clr [4]float32)
-	// RoundedRectangleR(x, y, w, h float32, radius int, shape render.RoundedRectShape, clr [4]float32)
-	// RectangleT(x, y, w, h float32, tex *gogl.Texture, uv1, uv0, f float32, clr [4]float32)
-	// RoundedRectangleT(x, y, w, h float32, radius int, shape render.RoundedRectShape, tex *gogl.Texture, uv1, uv0 float32, clr [4]float32)
-	Draw(camera *gogl.Camera, buffer draw.CmdBuffer)
-	// End()
+	Draw(displaySize [2]float32, buffer draw.CmdBuffer)
 }
