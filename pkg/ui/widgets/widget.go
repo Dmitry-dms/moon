@@ -1,10 +1,11 @@
 package widgets
 
 type Widget interface {
-	GetColor() [4]float32
-	GetId() string
-	Rectangle() [4]float32 // x,y,w,h
-	Visible() bool
+	// Color() [4]float32
+	WidgetId() string
+	UpdatePosition([4]float32)
+	// Rectangle() [4]float32 // x,y,w,h
+	// Visible() bool
 	Height() float32
 }
 

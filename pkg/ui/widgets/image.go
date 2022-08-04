@@ -12,11 +12,13 @@ type Image struct {
 func (i Image) Rectangle() [4]float32 {
 	return i.BoundingBox
 }
-
-func (i Image) GetColor() [4]float32 {
+func (i *Image) UpdatePosition(pos [4]float32) {
+	i.BoundingBox = pos
+}
+func (i Image) Color() [4]float32 {
 	return i.CurrentColor
 }
-func (i Image) GetId() string {
+func (i Image) WidgetId() string {
 	return i.Id
 }
 

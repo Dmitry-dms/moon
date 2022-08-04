@@ -7,6 +7,7 @@ import (
 
 	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
+	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
 
 type CmdBuffer struct {
@@ -35,7 +36,7 @@ type Info struct {
 	ClipRect    [4]float32
 }
 
-func NewBuffer( size *utils.Vec2) *CmdBuffer {
+func NewBuffer(size *utils.Vec2) *CmdBuffer {
 	return &CmdBuffer{
 		commands:    []Command{},
 		Vertices:    []float32{},
@@ -67,18 +68,27 @@ func (c *CmdBuffer) SeparateBuffer(texId uint32, clipRect [4]float32) {
 	c.AddCommand(cmd)
 }
 
-func (c *CmdBuffer) CreateText(x, y float32, msg string, font fonts.Font, size int, clr [4]float32) {
-	txt := Text_command{
-		X:    x,
-		Y:    y,
-		Clr:  clr,
-		Text: msg,
+func (c *CmdBuffer) CreateButtonT(btn widgets.TextButton, font fonts.Font) {
+	x := btn.Button.BoundingBox[0]
+	y := btn.Button.BoundingBox[1]
+	// w := btn.Button.BoundingBox
+	// y := btn.Button.BoundingBox
+	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Button.CurrentColor)
+	c.CreateText(*btn.Text, font)
+}
+
+func (c *CmdBuffer) CreateText(txt widgets.Text, font fonts.Font) {
+	tcmd := Text_command{
+		X:    txt.BoundingBox[0],
+		Y:    txt.BoundingBox[1],
+		Clr:  txt.CurrentColor,
+		Text: txt.Message,
 		Font: font,
-		Size: size,
+		Size: txt.Size,
 	}
 
 	cmd := Command{
-		Text:     &txt,
+		Text:     &tcmd,
 		Type:     Text,
 		WidgetId: txt.Id,
 	}
@@ -131,20 +141,15 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		c.lastElems = c.VertCount
 	case RectType:
 		r := cmd.Rect
-		// size := c.camera.GetProjectionSize()
-		// fmt.Println(c.displaySize.Y)
 		if r.radius == 0 {
 			if r.TexId == 0 {
-				// c.RectangleR(r.X, size.Y()-r.Y, r.W, r.H, r.Clr)
 				c.RectangleR(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.Clr)
 			} else {
-				// c.RectangleT(r.X, size.Y()-r.Y, r.W, r.H, uint32(r.TexId), 0, 1, r.Clr)
 				c.RectangleT(r.X, c.displaySize.Y-r.Y, r.W, r.H, uint32(r.TexId), 0, 1, r.Clr)
 				c.SeparateBuffer(r.TexId, c.InnerWindowSpace) // don't forget to slice buffer
 			}
 		} else {
 			if r.TexId == 0 {
-				// c.RoundedRectangleR(r.X, size.Y()-r.Y, r.W, r.H, r.radius, r.shape, r.Clr)
 				c.RoundedRectangleR(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.radius, r.shape, r.Clr)
 			} else {
 				// TODO: Add textured rounded rect

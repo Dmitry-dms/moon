@@ -121,7 +121,7 @@ func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
 func (ws *WidgetSpace) addWidget(widg widgets.Widget) bool {
 	ws.widgets = append(ws.widgets, widg)
 	// ws.virtualHeight += widg.Rectangle()[3]
-	return UiCtx.AddWidget(widg.GetId(), widg)
+	return UiCtx.AddWidget(widg.WidgetId(), widg)
 }
 
 func (ws *WidgetSpace) AddVirtualHeight(height float32) {

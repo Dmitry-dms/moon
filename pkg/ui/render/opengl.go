@@ -153,12 +153,6 @@ func (b *GLRender) Draw(displaySize [2]float32, buffer draw.CmdBuffer) {
 	displayWidth := displaySize[0]
 	displayHeight := displaySize[1]
 
-	// ofs := 1
-	// for i := 1; i < len(buffer.Vertices); i+=9 {
-	// 	buffer.Vertices[i] += displayHeight 
-	// 	// ofs += 9
-	// }
-
 	// Backup GL state
 	// var lastActiveTexture int32
 	// gl.GetIntegerv(gl.ACTIVE_TEXTURE, &lastActiveTexture)

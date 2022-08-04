@@ -5,6 +5,10 @@ type VSpace struct {
 	Id string
 }
 
+func (s *VSpace) UpdatePosition(pos  [4]float32) {
+	s.BoundingBox = pos
+}
+
 func (s VSpace) Rectangle() [4]float32 {
 	return s.BoundingBox
 }
@@ -15,9 +19,9 @@ func (s VSpace) Height() float32 {
 	return s.BoundingBox[3]
 }
 
-func (s VSpace) GetColor() [4]float32 {
+func (s VSpace) Color() [4]float32 {
 	return [4]float32{}
 }
-func (s VSpace) GetId() string {
+func (s VSpace) WidgetId() string {
 	return s.Id
 }

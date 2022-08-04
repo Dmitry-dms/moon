@@ -8,6 +8,7 @@ import (
 	// "github.com/Dmitry-dms/moon/pkg/ui/render"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
+	"github.com/Dmitry-dms/moon/pkg/ui/styles"
 )
 
 var UiCtx *UiContext
@@ -46,7 +47,7 @@ type UiContext struct {
 	wantResizeH, wantResizeV bool
 
 	//style
-	CurrentStyle Style
+	CurrentStyle *styles.Style
 
 	//fonts
 	font *fonts.Font
@@ -62,7 +63,7 @@ func NewContext(frontRenderer UiRenderer) *UiContext {
 		windowCache:   cache.NewRamCache[*Window](),
 		widgetsCache:  cache.NewRamCache[widgets.Widget](),
 		windowStack:   utils.NewStack[*Window](),
-		CurrentStyle:  DefaultStyle,
+		CurrentStyle:  &styles.DefaultStyle,
 	}
 
 	return &c
@@ -103,12 +104,9 @@ func (c *UiContext) Io() *Io {
 }
 
 func (c *UiContext) NewFrame(displaySize [2]float32) {
-	// c.sortedWindows = c.Windows
-
 	c.UpdateMouseInputs()
 
 	c.renderer.NewFrame()
-	// c.displaySize = displaySize
 
 	c.Io().SetDisplaySize(displaySize[0], displaySize[1])
 }

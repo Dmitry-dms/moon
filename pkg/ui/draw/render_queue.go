@@ -40,7 +40,6 @@ type Text_command struct {
 	Id     string
 	// Scale int
 	Size  int
-	TexId uint32
 }
 
 type Rect_command struct {

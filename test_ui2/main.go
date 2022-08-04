@@ -18,7 +18,6 @@ func init() {
 	runtime.LockOSThread()
 }
 
-
 var uiCtx *ui.UiContext
 var window *glfw.Window
 var Width, Height int = 1280, 720
@@ -69,7 +68,6 @@ func main() {
 	gl.Init()
 
 	uiCtx = ui.UiCtx
-	
 
 	front := render.NewGlRenderer()
 	uiCtx.Initialize(front)
@@ -102,7 +100,7 @@ func main() {
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
 
-		uiCtx.NewFrame([2]float32{float32(Width),float32(Height)})
+		uiCtx.NewFrame([2]float32{float32(Width), float32(Height)})
 
 		firstWindow()
 
@@ -112,7 +110,6 @@ func main() {
 		uiCtx.EndFrame([2]float32{float32(Width), float32(Height)})
 		// fb.Unbind()
 		// rend.NewFrame()
-
 
 		window.SwapBuffers()
 
@@ -150,25 +147,26 @@ var ish bool = false
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 
-	if uiCtx.Button("bfgfhf") {
-		fmt.Println("button clicked f 1")
-		// 	ish = !ish
-		uiCtx.SetScrollY(200)
-	}
+	// if uiCtx.Button("bfgfhf") {
+	// 	fmt.Println("button clicked f 1")
+	// 	// 	ish = !ish
+	// 	// uiCtx.SetScrollY(200)
+	// }
 
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
 	// }
 	// uiCtx.ButtonT("Нажать",24)
 	// uiCtx.Text("#t3","xello world!", 40)
-	uiCtx.Text("#t3", "xello world!", 40)
-	uiCtx.VSpace("#vs1fdgdf")
-	uiCtx.VSpace("#vs1")
-	uiCtx.Image("#im2", tex)
-	uiCtx.VSpace("#vs12")
+	// uiCtx.Text("#t3", "hello world!", 40)
+	// uiCtx.VSpace("#vs1fdgdf")
+	uiCtx.ButtonT("btn3423", "Ok")
+	// uiCtx.VSpace("#vs1")
+	// uiCtx.Image("#im2", tex)
+	// uiCtx.VSpace("#vs12")
 
-	uiCtx.Image("#im76", tex2)
-	uiCtx.Image("#im4", tex)
+	// uiCtx.Image("#im76", tex2)
+	// uiCtx.Image("#im4", tex)
 	// if uiCtx.Image("#im1",tex) {
 	// 	fmt.Println("image clicked s 1")
 	// 	ish = !ish
@@ -179,7 +177,7 @@ func firstWindow() {
 		// 	ish = !ish
 		// }
 	}
-	uiCtx.VSpace("#vs1hfg")
+	// uiCtx.VSpace("#vs1hfg")
 	if ish {
 
 		// uiCtx.Text("#t2","Hello world!:", 30)
@@ -188,10 +186,10 @@ func firstWindow() {
 		// uiCtx.VSpace("#vs13r")
 		// uiCtx.Text("#t2erwer","Hello world!:", 30)
 	}
-	if uiCtx.Image("#im3treyr", tex) {
-		fmt.Println("image clicked s 1")
-		ish = !ish
-	}
+	// if uiCtx.Image("#im3treyr", tex) {
+	// 	fmt.Println("image clicked s 1")
+	// 	ish = !ish
+	// }
 	// uiCtx.VSpace("#vs1")
 	// uiCtx.Image("#im76",tex2)
 	// 	fmt.Println("image clicked s 1")

@@ -67,7 +67,6 @@ const (
 
 func (c *UiContext) BeginWindow(id string) {
 	var wnd *Window
-	// var cmd draw.Command
 	var cmdw draw.Window_command
 	wnd, ok := c.windowCache.Get(id)
 	if !ok {
@@ -156,10 +155,6 @@ func (c *UiContext) BeginWindow(id string) {
 				Clr: wnd.toolbar.clr,
 			},
 		}
-		// cmd = draw.Command{
-		// 	Type:   draw.WindowStartCmd,
-		// 	Window: &cmdw,
-		// }
 	}
 	wnd.mainWidgetSpace.cursorX = wnd.mainWidgetSpace.X + UiCtx.CurrentStyle.LeftMargin
 	wnd.mainWidgetSpace.cursorY = wnd.mainWidgetSpace.Y + UiCtx.CurrentStyle.TopMargin
@@ -186,7 +181,6 @@ func (c *UiContext) BeginWindow(id string) {
 		}
 	}
 	wnd.buffer.InnerWindowSpace = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y, wnd.mainWidgetSpace.W - wnd.mainWidgetSpace.verticalScrollbar.w, wnd.mainWidgetSpace.H}
-	// wnd.AddCommand(cmd, true)
 	wnd.createWindow(cmdw)
 	c.windowStack.Push(wnd)
 }
@@ -218,126 +212,73 @@ func (wnd *Window) getWidget(id string, f func() widgets.Widget) widgets.Widget 
 	return widg
 }
 
-// func (c *UiContext) ButtonRR(id string, tex *gogl.Texture) bool {
-
-// 	wnd := c.windowStack.GetTop()
-// 	var btn *widgets.Button
-
-// 	btn = wnd.getWidget(id, widgets.ButtonWidget).(*widgets.Button)
-
-// 	clr := btn.CurrentColor
-
-// 	inRect := utils.PointInRect(c.io.MousePos, utils.NewRectS(btn.BoundingBox))
-
-// 	if wnd == c.ActiveWindow && inRect {
-// 		c.ActiveWidget = btn.GetId()
-// 		// fmt.Println(btn.GetId())
-// 		if c.io.MouseClicked[0] {
-// 			btn.IsActive = !btn.IsActive
-// 		}
-// 	}
-
-// 	if btn.IsActive {
-// 		btn.SetColor([4]float32{150, btn.CurrentColor[1], btn.CurrentColor[2], btn.CurrentColor[3]})
-// 	} else {
-// 		btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
-// 		// btn.SetColor(whiteColor)
-// 	}
-
-// 	clicked := c.io.MouseClicked[0] && inRect
-
-// 	//DEBUG
-// 	scroll := float32(0)
-// 	if c.io.ScrollY != 0 && c.ActiveWidget == btn.Id {
-// 		scroll += float32(c.io.ScrollY) * 10
-// 		btn.AddWidth(scroll)
-// 		btn.AddHeight(scroll)
-// 	}
-
-// 	rect := draw.Rounded_rect{
-// 		X:      wnd.cursorX,
-// 		Y:      wnd.cursorY,
-// 		W:      btn.Width(),
-// 		H:      btn.Height(),
-// 		Clr:    clr,
-// 		Radius: 5,
-// 	}
-
-// 	btn.BoundingBox = [4]float32{rect.X, rect.Y, rect.W, rect.H}
-
-// 	cmd := draw.Command{
-// 		RRect: &rect,
-// 		Shown: true,
-// 	}
-// 	if tex != nil {
-// 		rect.Texture = tex
-// 		cmd.Type = draw.RoundedRectT
-// 		rect.Clr = whiteColor
-// 	} else {
-// 		cmd.Type = draw.RectType
-// 	}
-
-// 	wnd.AddCommand(cmd)
-
-// 	wnd.currentWidgetSpace.cursorY += rect.H
-// 	return clicked
-// }
-
 var scale float32 = 1
+
+func (c *UiContext) ButtonT(id string, msg string) bool {
+	wnd := c.windowStack.GetTop()
+	var tBtn *widgets.TextButton
+	var hovered, clicked bool
+
+	y := wnd.currentWidgetSpace.cursorY
+	x := wnd.currentWidgetSpace.cursorX
+
+	tBtn = wnd.getWidget(id, func() widgets.Widget {
+		s := c.font.CalculateTextBounds(msg, c.CurrentStyle.TextSize)
+		return widgets.NewTextButton(id, x, y, s, msg, widgets.Center, c.CurrentStyle)
+	}).(*widgets.TextButton)
+
+	y -= wnd.currentWidgetSpace.scrlY
+	// logic
+	{
+		clicked = c.io.MouseClicked[0] && hovered
+		hovered = c.hoverBehavior(wnd, utils.NewRectS(tBtn.Button.BoundingBox))
+		if hovered {
+			c.setActiveWidget(tBtn.Id)
+			tBtn.Button.SetColor(c.CurrentStyle.BtnHoveredColor)
+			if c.io.MouseClicked[0] {
+				tBtn.ChangeActive()
+			}
+		} else if tBtn.Active() {
+			tBtn.Button.SetColor(c.CurrentStyle.BtnActiveColor)
+		} else {
+			tBtn.Button.SetColor(c.CurrentStyle.BtnColor)
+		}
+
+	}
+
+	wnd.buffer.CreateButtonT(*tBtn, *c.font)
+	tBtn.UpdatePosition([4]float32{x, y, tBtn.Button.Width(), tBtn.Button.Height()})
+	wnd.addYcursor(tBtn.Button.Height())
+	return clicked
+}
 
 func (c *UiContext) Text(id string, msg string, size int) {
 	wnd := c.windowStack.GetTop()
-
 	var txt *widgets.Text
 	var hovered bool
-	// var cmd draw.Command
+
 	y := wnd.currentWidgetSpace.cursorY
 	x := wnd.currentWidgetSpace.cursorX
 
 	txt = wnd.getWidget(id, func() widgets.Widget {
 		s := c.font.CalculateTextBounds(msg, size)
-		txt = &widgets.Text{
-			Id:           id,
-			CurrentColor: whiteColor,
-			Message:      msg,
-			BoundingBox:  [4]float32{x, y, s[0], s[1]},
-		}
-		return txt
+		return widgets.NewText(id, msg, x, y, s[0], s[1], size, c.CurrentStyle.TextColor)
 	}).(*widgets.Text)
-	txt.Message = msg
-	clr := txt.CurrentColor
+
 	y -= wnd.currentWidgetSpace.scrlY
 	// logic
 	{
-
 		hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox))
 		if hovered {
-			c.setActiveWidget(txt.GetId())
+			c.setActiveWidget(txt.Id)
 			txt.CurrentColor = [4]float32{167, 200, 100, 1}
 		} else {
 			txt.CurrentColor = whiteColor
 		}
 	}
-	// Create command
-	// {
-	// 	rect := draw.Text_command{
-	// 		X:    wnd.currentWidgetSpace.cursorX,
-	// 		Y:    y,
-	// 		Clr:  clr,
-	// 		Text: txt.Message,
-	// 		Font: *c.font,
-	// 		Size: size,
-	// 	}
 
-	// 	cmd = draw.Command{
-	// 		Text:     &rect,
-	// 		Type:     draw.Text,
-	// 		WidgetId: txt.Id,
-	// 	}
-	// }
-	txt.BoundingBox = [4]float32{x, y, txt.Width(), txt.Height()}
-	// wnd.AddCommand(cmd, true)
-	wnd.buffer.CreateText(x, y, msg, *c.font, size, clr)
+	txt.UpdatePosition([4]float32{x, y, txt.Width(), txt.Height()})
+	wnd.buffer.CreateText(*txt, *c.font)
 	wnd.addYcursor(txt.Height())
 }
 
@@ -349,7 +290,7 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 	wnd := c.windowStack.GetTop()
 	var img *widgets.Image
 	var clicked bool
-	// var cmd draw.Command
+
 	x := wnd.currentWidgetSpace.cursorX
 	y := wnd.currentWidgetSpace.cursorY
 
@@ -364,35 +305,16 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 
 	clr := img.CurrentColor
 	y -= wnd.currentWidgetSpace.scrlY
-	// logic section
+	// logic
 	{
-
 		hovered := c.hoverBehavior(wnd, utils.NewRectS(img.BoundingBox))
 		if hovered {
-			c.setActiveWidget(img.GetId())
+			c.setActiveWidget(img.Id)
 		}
 		clicked = c.io.MouseClicked[0] && hovered
 	}
-	// Create command and append it to slice
-	{
-		// rect := draw.Rect_command{
-		// 	X:       wnd.currentWidgetSpace.cursorX,
-		// 	Y:       y,
-		// 	W:       img.Width(),
-		// 	H:       img.Height(),
-		// 	Clr:     clr,
-		// 	Texture: tex,
-		// }
-		// cmd = draw.Command{
-		// 	Rect:  &rect,
-		// 	Type:  draw.RectTypeT,
-		// 	Shown: true,
-		// }
-	}
-	img.BoundingBox = [4]float32{wnd.currentWidgetSpace.cursorX, y, img.Width(), img.Height()}
-
 	wnd.buffer.CreateRect(x, y, img.Width(), img.Height(), 0, draw.StraightCorners, tex.TextureId, clr)
-	// wnd.AddCommand(cmd, false)
+	img.UpdatePosition([4]float32{x, y, img.Width(), img.Height()})
 	wnd.addYcursor(img.Height())
 	return clicked
 }
@@ -411,11 +333,8 @@ func (c *UiContext) VSpace(id string) {
 		}
 		return s
 	}).(*widgets.VSpace)
+	s.UpdatePosition([4]float32{x, y, float32(100), float32(20)})
 	wnd.addYcursor(s.Height())
-}
-
-func (c *UiContext) ButtonT(id string, text string, size int) bool {
-	return c.button(id, text, size)
 }
 
 func (c *UiContext) Button(id string) bool {
@@ -433,33 +352,24 @@ func (c *UiContext) button(id string, text string, size int) bool {
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
 	var clicked, hovered bool
-	// var cmd draw.Command
-	// var rect draw.Rect_command
 
 	x := wnd.currentWidgetSpace.cursorX
 	y := wnd.currentWidgetSpace.cursorY
 
 	btn = wnd.getWidget(id, func() widgets.Widget {
-		btn := &widgets.Button{
-			Id:           id,
-			CurrentColor: [4]float32{67, 86, 205, 1},
-			IsActive:     false,
-			BoundingBox:  [4]float32{x, y, float32(100), float32(100)},
-		}
-		return btn
+		return widgets.NewButton(id, x, y, 100, 100, [4]float32{67, 86, 205, 1})
 	}).(*widgets.Button)
 
 	w := btn.Width()
 	h := btn.Height()
-	clr := btn.CurrentColor
-
-	// logic section
+	// handle scrolling
+	y -= wnd.currentWidgetSpace.scrlY
+	// logic
 	{
-		// handle scrolling
-		y -= wnd.currentWidgetSpace.scrlY
-		hovered = c.hoverBehavior(wnd, utils.NewRect(x, y, w, h))
+
+		hovered = c.hoverBehavior(wnd, utils.NewRectS(btn.BoundingBox))
 		if hovered {
-			c.ActiveWidget = btn.GetId()
+			c.ActiveWidget = btn.Id
 			if c.io.MouseClicked[0] {
 				btn.IsActive = !btn.IsActive
 			}
@@ -467,26 +377,12 @@ func (c *UiContext) button(id string, text string, size int) bool {
 		if btn.IsActive {
 			btn.SetColor([4]float32{150, btn.CurrentColor[1], btn.CurrentColor[2], btn.CurrentColor[3]})
 		} else {
-			btn.SetColor([4]float32{80, clr[1], clr[2], clr[3]})
+			btn.SetColor(c.CurrentStyle.BtnColor)
 		}
 		clicked = c.io.MouseClicked[0] && hovered
 	}
-	{
-		// rect = draw.Rect_command{
-		// 	X:   x,
-		// 	Y:   y,
-		// 	W:   w,
-		// 	H:   h,
-		// 	Clr: clr,
-		// }
-		// cmd = draw.Command{
-		// 	Rect:  &rect,
-		// 	Type:  draw.RectType,
-		// 	Shown: true,
-		// }
-	}
-	wnd.buffer.CreateRect(x, y, w, h, 0, draw.StraightCorners, 0, clr)
-	// wnd.AddCommand(cmd, false)
+	wnd.buffer.CreateRect(x, y, w, h, 0, draw.StraightCorners, 0, btn.CurrentColor)
+	btn.UpdatePosition([4]float32{x, y, w, h})
 	wnd.addYcursor(btn.Height())
 	return clicked
 }
@@ -503,48 +399,10 @@ func (c *UiContext) EndWindow() {
 
 	wnd := c.windowStack.Pop()
 
-	// if wnd.isScrollShown {
-	// 	c.srollbar(wnd)
-	// } else {
-	// 	wnd.scrlY = 0
-	// }
-
-	// Toolbar := draw.Toolbar_command{
-	// 	X:   wnd.x,
-	// 	Y:   wnd.y,
-	// 	W:   wnd.w,
-	// 	H:   wnd.toolbar.h,
-	// 	Clr: wnd.toolbar.clr,
-	// }
-
-	// cmdToolbar := draw.Command{
-
-	// 	Type:    draw.ToolbarCmd,
-	// 	Toolbar: &Toolbar,
-	// 	// window:   cmdw,
-	// }
-	// wnd.AddCommand(cmdToolbar)
-
-	// cmd := draw.Command{
-	// 	Type: draw.WindowCmd,
-	// }
-
-	// if wnd.cursorY > wnd.y+wnd.h {
-	// 	wnd.isScrollShown = true
-	// } else {
-	// 	// fmt.Println(wnd.y+wnd.h,wnd.cursorY)
-	// 	wnd.isScrollShown = false
-	// }
-
-	// wnd.AddCommand(cmd)
-
 	wnd.mainWidgetSpace.checkVerScroll()
-	// wnd.currentWidgetSpace.virtualHeight = 0
+
 	c.currentWindow++
 
-	// wnd.AddCommand(draw.Command{
-	// 	Type: draw.SeparateBuffer,
-	// }, false)
 	wnd.buffer.SeparateBuffer(0, wnd.buffer.InnerWindowSpace) // Make sure that we didn't miss anything
 }
 
