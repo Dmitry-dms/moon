@@ -147,11 +147,11 @@ var ish bool = false
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 
-	// if uiCtx.Button("bfgfhf") {
-	// 	fmt.Println("button clicked f 1")
-	// 	// 	ish = !ish
-	// 	// uiCtx.SetScrollY(200)
-	// }
+	if uiCtx.Button("bfgfhf") {
+		fmt.Println("button clicked f 1")
+			ish = !ish
+		// uiCtx.SetScrollY(200)
+	}
 
 	// if uiCtx.ButtonRR(tex) {
 	// 	fmt.Println("button clicked f 2")
@@ -160,13 +160,19 @@ func firstWindow() {
 	// uiCtx.Text("#t3","xello world!", 40)
 	// uiCtx.Text("#t3", "hello world!", 40)
 	// uiCtx.VSpace("#vs1fdgdf")
-	uiCtx.ButtonT("btn3423", "Ok")
-	// uiCtx.VSpace("#vs1")
-	// uiCtx.Image("#im2", tex)
-	// uiCtx.VSpace("#vs12")
 
-	// uiCtx.Image("#im76", tex2)
-	// uiCtx.Image("#im4", tex)
+	if ish {
+		uiCtx.BeginRow("row 13214")
+		uiCtx.ButtonT("btn3423", "Ok")
+		if uiCtx.Image("#im76", tex2){
+			fmt.Println("image clikc")
+		}
+		uiCtx.EndRow()
+	}
+	
+
+	// uiCtx.VSpace("#vs1")
+	uiCtx.Image("#im4", tex)
 	// if uiCtx.Image("#im1",tex) {
 	// 	fmt.Println("image clicked s 1")
 	// 	ish = !ish

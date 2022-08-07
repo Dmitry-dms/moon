@@ -21,13 +21,16 @@ func (b *Button) UpdatePosition(pos [4]float32) {
 	b.BoundingBox = pos
 }
 
+func (b *Button) ChangeActive() {
+	b.IsActive = !b.IsActive
+}
+
 func (b *Button) AddWidth(w float32) {
 	b.BoundingBox[2] += w
 }
 func (b *Button) AddHeight(h float32) {
 	b.BoundingBox[3] += h
 }
-
 func (b Button) WidgetId() string {
 	return b.Id
 }

@@ -53,7 +53,7 @@ func (tb *TextButton) Active() bool {
 }
 
 func (tb *TextButton) ChangeActive() {
-	tb.Button.IsActive = !tb.Button.IsActive
+	tb.Button.ChangeActive()
 }
 
 func (tb *TextButton) UpdatePosition(pos [4]float32) {
@@ -65,4 +65,11 @@ func (tb TextButton) WidgetId() string {
 }
 func (tb TextButton) Height() float32 {
 	return tb.Button.Height()
+}
+
+func (tb TextButton) Box() [4]float32{
+	return tb.Button.BoundingBox
+}
+func (tb TextButton) Width() float32 {
+	return tb.Button.Width()
 }

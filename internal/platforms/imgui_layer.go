@@ -2,7 +2,7 @@ package platforms
 
 import (
 	// "github.com/Dmitry-dms/moon/internal/editor"
-	"fmt"
+	// "fmt"
 
 	"github.com/Dmitry-dms/moon/internal/scenes"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
@@ -46,21 +46,23 @@ func NewImgui() *ImgUi {
 	tex.Init("assets/images/mario.png")
 	return &g
 }
-
+var open bool
 func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt float32, currentScene scenes.Scene) {
 
 	imgui.NewFrame()
 
-	imgui.Begin("id string")
-	imgui.Button("btn")
+	// imgui.Begin("id string")
+	// imgui.Button("btn")
 	// imgui.Image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
-	imgui.Text("text string")
+	// imgui.Text("text string")
+	imgui.ShowDemoWindow(&open)
+	// imgui.BeginPopup("name string")
 	// imgui.Image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
 	// imgui.Text("text string 2")
 	// imgui.Button("btn")
 	// imgui.Button("btn")
 	// imgui.Button("btn")
-	imgui.End()
+	// imgui.End()
 
 	// editor.Imgui(16/9, texId)
 
@@ -275,7 +277,7 @@ func (renderer *ImgUi) Render(displaySize [2]float32, framebufferSize [2]float32
 			if cmd.HasUserCallback() {
 				cmd.CallUserCallback(list)
 			} else {
-				fmt.Println(cmd.ElementCount(), cmd.IndexOffset(), cmd.VertexOffset(),indexSize)
+				// fmt.Println(cmd.ElementCount(), cmd.IndexOffset(), cmd.VertexOffset(),indexSize)
 				// fmt.Println(cmd.TextureID())
 				gl.BindTexture(gl.TEXTURE_2D, uint32(cmd.TextureID()))
 				clipRect := cmd.ClipRect()
@@ -285,7 +287,7 @@ func (renderer *ImgUi) Render(displaySize [2]float32, framebufferSize [2]float32
 					uintptr(cmd.IndexOffset()*indexSize), int32(cmd.VertexOffset()))
 			}
 		}
-		fmt.Println("==================")
+		// fmt.Println("==================")
 	}
 	gl.DeleteVertexArrays(1, &vaoHandle)
 

@@ -21,6 +21,8 @@ type WidgetSpace struct {
 	scrlY             float32
 
 	ratio float32
+
+	rowStack utils.Stack[*widgets.Row]
 }
 
 var defScrollWidth float32 = 10
@@ -39,6 +41,25 @@ func (ws *WidgetSpace) vertScrollBar() {
 
 	// this is here because we need to update scroll btn position every frame
 	ws.handleMouseDrag()
+}
+
+func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
+	vs := WidgetSpace{
+		X:             x,
+		Y:             y,
+		W:             w,
+		H:             h,
+		cursorX:       x,
+		cursorY:       y,
+		widgetCounter: 0,
+		widgets:       []widgets.Widget{},
+		virtualHeight: 10,
+		verticalScrollbar: NewScrolBar(utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, h),
+			utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, 50),
+			[4]float32{150, 155, 155, 1}),
+		rowStack: utils.NewStack[*widgets.Row](),
+	}
+	return &vs
 }
 
 // FIXME: is this right?
@@ -100,30 +121,36 @@ func (ws *WidgetSpace) checkVerScroll() {
 		ws.isVertScrollShown = false
 	}
 }
-func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
-	vs := WidgetSpace{
-		X:             x,
-		Y:             y,
-		W:             w,
-		H:             h,
-		cursorX:       x,
-		cursorY:       y,
-		widgetCounter: 0,
-		widgets:       []widgets.Widget{},
-		virtualHeight: 10,
-		verticalScrollbar: NewScrolBar(utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, h),
-			utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, 50),
-			[4]float32{150, 155, 155, 1}),
-	}
-	return &vs
-}
 
 func (ws *WidgetSpace) addWidget(widg widgets.Widget) bool {
 	ws.widgets = append(ws.widgets, widg)
-	// ws.virtualHeight += widg.Rectangle()[3]
 	return UiCtx.AddWidget(widg.WidgetId(), widg)
 }
 
 func (ws *WidgetSpace) AddVirtualHeight(height float32) {
 	ws.virtualHeight += height
+}
+
+func (ws *WidgetSpace) getCurrentRow() (*widgets.Row, bool) {
+	if ws.rowStack.Length() == 0 {
+		return nil, false
+	} else {
+		return ws.rowStack.GetTop(), true
+	}
+}
+
+func (ws *WidgetSpace) getCursorPosition() (x float32, y float32) {
+	row, ok := ws.getCurrentRow()
+	if !ok {
+		x = ws.cursorX
+		y = ws.cursorY
+	} else {
+		x = row.CursorX
+		y = ws.cursorY
+	}
+	return
+}
+func (ws *WidgetSpace) BeginRow() {
+
+	// ws.rowStack.Push()
 }
