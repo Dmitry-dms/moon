@@ -23,6 +23,7 @@ type WidgetSpace struct {
 	ratio float32
 
 	rowStack utils.Stack[*widgets.Row]
+	colStack utils.Stack[*widgets.Column]
 }
 
 var defScrollWidth float32 = 10
@@ -58,6 +59,7 @@ func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
 			utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, 50),
 			[4]float32{150, 155, 155, 1}),
 		rowStack: utils.NewStack[*widgets.Row](),
+		colStack: utils.NewStack[*widgets.Column](),
 	}
 	return &vs
 }
@@ -136,6 +138,13 @@ func (ws *WidgetSpace) getCurrentRow() (*widgets.Row, bool) {
 		return nil, false
 	} else {
 		return ws.rowStack.GetTop(), true
+	}
+}
+func (ws *WidgetSpace) getCurrentColumn() (*widgets.Column, bool) {
+	if ws.colStack.Length() == 0 {
+		return nil, false
+	} else {
+		return ws.colStack.GetTop(), true
 	}
 }
 
