@@ -30,14 +30,14 @@ func NewTextButton(id string, x, y float32, textSize [2]float32,
 	tb.Button = btn
 	tb.Text = txt
 
-	tb.updateTextPos()
+	tb.UpdateTextPos(tb.Button.BoundingBox[0],tb.Button.BoundingBox[1])
 
 	return &tb
 }
 
-func (tb *TextButton) updateTextPos() {
-	x := tb.Button.BoundingBox[0]
-	y := tb.Button.BoundingBox[1]
+func (tb *TextButton) UpdateTextPos(x,y float32) {
+	// x := tb.Button.BoundingBox[0]
+	// y := tb.Button.BoundingBox[1]
 	switch tb.align {
 	case Center:
 		tb.Text.UpdatePosition([4]float32{x + tb.style.Padding, y + tb.style.Padding, tb.Text.Width(), tb.Text.Height()})
@@ -58,7 +58,7 @@ func (tb *TextButton) ChangeActive() {
 
 func (tb *TextButton) UpdatePosition(pos [4]float32) {
 	tb.Button.UpdatePosition(pos)
-	tb.updateTextPos()
+	tb.UpdateTextPos(tb.Button.BoundingBox[0],tb.Button.BoundingBox[1])
 }
 func (tb TextButton) WidgetId() string {
 	return tb.Id

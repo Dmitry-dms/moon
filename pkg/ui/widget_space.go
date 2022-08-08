@@ -22,8 +22,7 @@ type WidgetSpace struct {
 
 	ratio float32
 
-	rowStack utils.Stack[*widgets.Row]
-	colStack utils.Stack[*widgets.Column]
+	rowStack utils.Stack[*widgets.HybridLayout]
 }
 
 var defScrollWidth float32 = 10
@@ -58,8 +57,8 @@ func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
 		verticalScrollbar: NewScrolBar(utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, h),
 			utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, 50),
 			[4]float32{150, 155, 155, 1}),
-		rowStack: utils.NewStack[*widgets.Row](),
-		colStack: utils.NewStack[*widgets.Column](),
+		rowStack: utils.NewStack[*widgets.HybridLayout](),
+		// colStack: utils.NewStack[*widgets.Column](),
 	}
 	return &vs
 }
@@ -133,33 +132,29 @@ func (ws *WidgetSpace) AddVirtualHeight(height float32) {
 	ws.virtualHeight += height
 }
 
-func (ws *WidgetSpace) getCurrentRow() (*widgets.Row, bool) {
+func (ws *WidgetSpace) getCurrentRow() (*widgets.HybridLayout, bool) {
 	if ws.rowStack.Length() == 0 {
 		return nil, false
 	} else {
 		return ws.rowStack.GetTop(), true
 	}
 }
-func (ws *WidgetSpace) getCurrentColumn() (*widgets.Column, bool) {
-	if ws.colStack.Length() == 0 {
-		return nil, false
-	} else {
-		return ws.colStack.GetTop(), true
-	}
-}
+// func (ws *WidgetSpace) getCurrentColumn() (*widgets.Column, bool) {
+// 	if ws.colStack.Length() == 0 {
+// 		return nil, false
+// 	} else {
+// 		return ws.colStack.GetTop(), true
+// 	}
+// }
 
 func (ws *WidgetSpace) getCursorPosition() (x float32, y float32) {
 	row, ok := ws.getCurrentRow()
-	if !ok {
-		x = ws.cursorX
-		y = ws.cursorY
-	} else {
+	if ok {
 		x = row.CursorX
+		y = row.CursorY
+	} else {
+		x = ws.cursorX
 		y = ws.cursorY
 	}
 	return
-}
-func (ws *WidgetSpace) BeginRow() {
-
-	// ws.rowStack.Push()
 }

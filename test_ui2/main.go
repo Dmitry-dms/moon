@@ -37,7 +37,7 @@ func main() {
 	}
 	window.MakeContextCurrent()
 
-	glfw.SwapInterval(0)
+	glfw.SwapInterval(1)
 
 	size := func(w *glfw.Window, width int, height int) {
 		gl.Viewport(0, 0, int32(width), int32(height))
@@ -147,60 +147,43 @@ var ish bool = false
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 
-	if uiCtx.Button("bfgfhf") {
-		fmt.Println("button clicked f 1")
-			ish = !ish
-		// uiCtx.SetScrollY(200)
-	}
 
-	// if uiCtx.ButtonRR(tex) {
-	// 	fmt.Println("button clicked f 2")
-	// }
-	// uiCtx.ButtonT("Нажать",24)
+	uiCtx.ButtonT("Нажать", "Press")
 	// uiCtx.Text("#t3","xello world!", 40)
 	// uiCtx.Text("#t3", "hello world!", 40)
-	// uiCtx.VSpace("#vs1fdgdf")
+	uiCtx.VSpace("#vs1fdgdf")
 
-	if ish {
-		uiCtx.BeginRow("row 13214")
-		uiCtx.ButtonT("btn3423", "Ok")
-		if uiCtx.Image("#im76", tex2){
-			fmt.Println("image clikc")
-		}
-		uiCtx.EndRow()
-	}
-	
+	// if ish {
+	uiCtx.BeginRow("row 13214")
+	uiCtx.Image("#im4kjdg464", tex)
+	uiCtx.BeginColumn("col fdfd")
 
-	// uiCtx.VSpace("#vs1")
+	uiCtx.Image("#im76", tex2)
 	uiCtx.Image("#im4", tex)
-	// if uiCtx.Image("#im1",tex) {
-	// 	fmt.Println("image clicked s 1")
-	// 	ish = !ish
-	// }
-	if ish {
-		// if uiCtx.Image("#im2",tex) {
-		// 	fmt.Println("image clicked s 1")
-		// 	ish = !ish
-		// }
-	}
-	// uiCtx.VSpace("#vs1hfg")
-	if ish {
+	uiCtx.Image("#im4df", tex2)
+	// uiCtx.VSpace("#vsefer")
+	// uiCtx.VSpace("#vs22343")
+	uiCtx.Text("#t3ппо", "hello world!", 14)
+	uiCtx.EndColumn()
 
-		// uiCtx.Text("#t2","Hello world!:", 30)
-		// uiCtx.VSpace("#vs13r")
-		// uiCtx.Image("#im2",tex)
-		// uiCtx.VSpace("#vs13r")
-		// uiCtx.Text("#t2erwer","Hello world!:", 30)
-	}
-	// if uiCtx.Image("#im3treyr", tex) {
-	// 	fmt.Println("image clicked s 1")
-	// 	ish = !ish
+	uiCtx.BeginColumn("col fdfdвава")
+
+	uiCtx.Image("#im4и", tex)
+	uiCtx.Button("ASsfdf")
+	uiCtx.Button("ASsfdffb")
+	uiCtx.Button("ASsfdffbbb")
+	// // uiCtx.Text("#t3", "hello world!", 14)
+	uiCtx.EndColumn()
+
+	uiCtx.Image("#im4kj", tex)
+	uiCtx.Image("#im4kjfdf", tex2)
+	// uiCtx.Image("#im4kjgd", tex)
+	uiCtx.EndRow()
+	// uiCtx.Image("#im4jhj", tex)
 	// }
+
 	// uiCtx.VSpace("#vs1")
-	// uiCtx.Image("#im76",tex2)
-	// 	fmt.Println("image clicked s 1")
-	// 	ish = !ish
-	// }
+	uiCtx.Image("#im4", tex2)
 
 	uiCtx.EndWindow()
 }

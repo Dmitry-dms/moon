@@ -68,19 +68,16 @@ func (c *CmdBuffer) SeparateBuffer(texId uint32, clipRect [4]float32) {
 	c.AddCommand(cmd)
 }
 
-func (c *CmdBuffer) CreateButtonT(btn widgets.TextButton, font fonts.Font) {
-	x := btn.Button.BoundingBox[0]
-	y := btn.Button.BoundingBox[1]
-	// w := btn.Button.BoundingBox
-	// y := btn.Button.BoundingBox
+func (c *CmdBuffer) CreateButtonT(x, y float32, btn *widgets.TextButton, font fonts.Font) {
 	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Button.CurrentColor)
-	c.CreateText(*btn.Text, font)
+	btn.UpdateTextPos(x, y)
+	c.CreateText(btn.Text.BoundingBox[0], btn.Text.BoundingBox[1], btn.Text, font)
 }
 
-func (c *CmdBuffer) CreateText(txt widgets.Text, font fonts.Font) {
+func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font) {
 	tcmd := Text_command{
-		X:    txt.BoundingBox[0],
-		Y:    txt.BoundingBox[1],
+		X:    x,
+		Y:    y,
 		Clr:  txt.CurrentColor,
 		Text: txt.Message,
 		Font: font,

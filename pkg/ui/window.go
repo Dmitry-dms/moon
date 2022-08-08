@@ -242,10 +242,11 @@ func (c *UiContext) ButtonT(id string, msg string) bool {
 		}
 		clicked = c.io.MouseClicked[0] && hovered
 	}
-
-	wnd.buffer.CreateButtonT(*tBtn, *c.font)
+	//
+	wnd.buffer.CreateButtonT(x, y, tBtn, *c.font)
+	//
 	tBtn.UpdatePosition([4]float32{x, y, tBtn.Width(), tBtn.Height()})
-	// wnd.addYcursor(tBtn.Button.Height())
+
 	wnd.addCursor(tBtn.Width(), tBtn.Height())
 	return clicked
 }
@@ -274,8 +275,8 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	}
 
 	txt.UpdatePosition([4]float32{x, y, txt.Width(), txt.Height()})
-	wnd.buffer.CreateText(*txt, *c.font)
-	// wnd.addYcursor(txt.Height())
+	wnd.buffer.CreateText(x, y, txt, *c.font)
+
 	wnd.addCursor(txt.Width(), txt.Height())
 }
 
@@ -328,12 +329,8 @@ func (c *UiContext) VSpace(id string) {
 		return s
 	}).(*widgets.VSpace)
 	s.UpdatePosition([4]float32{x, y, float32(100), float32(20)})
-	wnd.addYcursor(s.Height())
+	// wnd.addYcursor(s.Height())
 	wnd.addCursor(0, s.Height())
-}
-
-func (c *UiContext) Button(id string) bool {
-	return c.button(id, "", 0)
 }
 
 func (c *UiContext) hoverBehavior(wnd *Window, rect utils.Rect) bool {
@@ -342,7 +339,7 @@ func (c *UiContext) hoverBehavior(wnd *Window, rect utils.Rect) bool {
 	return c.ActiveWindow == wnd && inRect && inWindow
 }
 
-func (c *UiContext) button(id string, text string, size int) bool {
+func (c *UiContext) Button(id string) bool {
 
 	wnd := c.windowStack.GetTop()
 	var btn *widgets.Button
@@ -379,7 +376,6 @@ func (c *UiContext) button(id string, text string, size int) bool {
 	wnd.buffer.CreateRect(x, y, w, h, 0, draw.StraightCorners, 0, btn.CurrentColor)
 	//
 	btn.UpdatePosition([4]float32{x, y, w, h})
-	// wnd.addYcursor(btn.Height())
 	wnd.addCursor(btn.Width(), btn.Height())
 	return clicked
 }
@@ -389,10 +385,16 @@ func (wnd *Window) addCursor(width, height float32) {
 	if !ok {
 		wnd.currentWidgetSpace.cursorY += height
 	} else {
-		row.CursorX += width
-		row.UpdateHeight(height)
+		if row.RequiereColumn {
+			row.CursorY += height
+			row.UpdateColWidth(width)
+			row.AddColHeight(height)
+		} else {
+			row.CursorX += width
+			row.W += width
+			row.UpdateHeight(height)
+		}
 	}
-	// wnd.currentWidgetSpace.cursorY += x
 }
 func (wnd *Window) addYcursor(x float32) {
 	wnd.currentWidgetSpace.cursorY += x
@@ -402,14 +404,38 @@ func (c *UiContext) setActiveWidget(id string) {
 	c.ActiveWidget = id
 }
 
+func (c *UiContext) BeginColumn(id string) {
+	wnd := c.windowStack.GetTop()
+	var hl *widgets.HybridLayout
+	hl, ok := wnd.currentWidgetSpace.getCurrentRow()
+	if !ok {
+		return
+	}
+	hl.RequiereColumn = true
+	hl.CurrentColH, hl.CurrentColW = 0, 0
+}
+
+func (c *UiContext) EndColumn() {
+	wnd := c.windowStack.GetTop()
+	hl, ok := wnd.currentWidgetSpace.getCurrentRow()
+	if !ok {
+		return
+	}
+	hl.RequiereColumn = false
+	hl.CursorY = hl.InitY
+
+	hl.W += hl.CurrentColW
+	hl.CursorX += hl.CurrentColW
+	hl.UpdateHeight(hl.CurrentColH)
+}
+
 func (c *UiContext) BeginRow(id string) {
 	wnd := c.windowStack.GetTop()
-
-	var row *widgets.Row
+	var row *widgets.HybridLayout
 	x, y := wnd.currentWidgetSpace.getCursorPosition()
 	row = wnd.getWidget(id, func() widgets.Widget {
-		return widgets.NewRow(id, x, y, c.CurrentStyle)
-	}).(*widgets.Row)
+		return widgets.NewHLayout(id, x, y, c.CurrentStyle)
+	}).(*widgets.HybridLayout)
 
 	wnd.currentWidgetSpace.rowStack.Push(row)
 	row.UpdatePosition([4]float32{x, y, wnd.w, 0})
@@ -417,9 +443,12 @@ func (c *UiContext) BeginRow(id string) {
 
 func (c *UiContext) EndRow() {
 	wnd := c.windowStack.GetTop()
-	row := wnd.currentWidgetSpace.rowStack.Pop()
-	wnd.addYcursor(row.Height())
-	// row.CursorX = 0
+
+	hl := wnd.currentWidgetSpace.rowStack.Pop()
+	// wnd.addCursor(hl.Width(), hl.Height())
+	wnd.addYcursor(hl.H)
+	hl.H = 0
+	hl.W = 0
 }
 
 func (c *UiContext) EndWindow() {
@@ -428,7 +457,7 @@ func (c *UiContext) EndWindow() {
 
 	wnd.mainWidgetSpace.checkVerScroll()
 
-	c.currentWindow++
+	// c.currentWindow++
 
 	wnd.buffer.SeparateBuffer(0, wnd.buffer.InnerWindowSpace) // Make sure that we didn't miss anything
 }
