@@ -151,7 +151,7 @@ func firstWindow() {
 	uiCtx.ButtonT("Нажать", "Press")
 	// uiCtx.Text("#t3","xello world!", 40)
 	// uiCtx.Text("#t3", "hello world!", 40)
-	uiCtx.VSpace("#vs1fdgdf")
+	// uiCtx.VSpace("#vs1fdgdf")
 
 	// if ish {
 	uiCtx.BeginRow("row 13214")
@@ -160,23 +160,23 @@ func firstWindow() {
 
 	uiCtx.Image("#im76", tex2)
 	uiCtx.Image("#im4", tex)
-	uiCtx.Image("#im4df", tex2)
+	// uiCtx.Image("#im4df", tex2)
 	// uiCtx.VSpace("#vsefer")
 	// uiCtx.VSpace("#vs22343")
-	uiCtx.Text("#t3ппо", "hello world!", 14)
+	// uiCtx.Text("#t3ппо", "hello world!", 14)
 	uiCtx.EndColumn()
 
 	uiCtx.BeginColumn("col fdfdвава")
 
-	uiCtx.Image("#im4и", tex)
-	uiCtx.Button("ASsfdf")
+	// uiCtx.Image("#im4и", tex)
+	// uiCtx.Button("ASsfdf")
 	uiCtx.Button("ASsfdffb")
 	uiCtx.Button("ASsfdffbbb")
 	// // uiCtx.Text("#t3", "hello world!", 14)
 	uiCtx.EndColumn()
 
 	uiCtx.Image("#im4kj", tex)
-	uiCtx.Image("#im4kjfdf", tex2)
+	// uiCtx.Image("#im4kjfdf", tex2)
 	// uiCtx.Image("#im4kjgd", tex)
 	uiCtx.EndRow()
 	// uiCtx.Image("#im4jhj", tex)

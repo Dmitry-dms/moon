@@ -9,10 +9,10 @@ type WidgetSpace struct {
 	X, Y, W, H float32
 
 	//inner widgets
-	cursorX, cursorY float32
-	widgetCounter    int
-	widgets          []widgets.Widget
-	virtualHeight    float32
+	cursorX, cursorY                 float32
+	widgetCounter                    int
+	widgets                          []widgets.Widget
+	virtualHeight, lastVirtualHeight float32
 
 	verticalScrollbar *Scrollbar
 	captured          bool
@@ -33,7 +33,8 @@ func (ws *WidgetSpace) vertScrollBar() {
 	vB.x = ws.X + ws.W - vB.w
 	vB.y = ws.Y
 	vB.h = ws.H
-	ws.ratio = (ws.H) / (ws.virtualHeight)
+	// ws.ratio = (ws.H) / (ws.virtualHeight)
+	ws.ratio = (ws.H) / (ws.lastVirtualHeight)
 	// top border
 	if ws.scrlY < 0 {
 		ws.scrlY = 0
@@ -65,7 +66,8 @@ func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
 
 // FIXME: is this right?
 func (ws *WidgetSpace) setScrollY(scrollY float32) {
-	if scrollY <= ws.virtualHeight {
+	// if scrollY <= ws.virtualHeight {
+	if scrollY <= ws.lastVirtualHeight {
 		ws.scrlY = scrollY * (1 - ws.ratio)
 	}
 }
@@ -74,7 +76,8 @@ func (ws *WidgetSpace) handleMouseDrag() {
 	vB := ws.verticalScrollbar
 
 	UiCtx.dragBehavior(utils.NewRect(vB.bX, vB.bY, vB.bW, vB.bH), &ws.captured)
-	endReached := ws.scrlY+ws.H <= ws.virtualHeight
+	// endReached := ws.scrlY+ws.H <= ws.virtualHeight
+	endReached := ws.scrlY+ws.H <= ws.lastVirtualHeight
 	delta := UiCtx.io.MouseDelta.Y
 	if ws.captured && endReached {
 		// prevent top glitch
@@ -99,7 +102,8 @@ func (ws *WidgetSpace) handleMouseScroll(scrollY float32) {
 	var factor float32 = scrollY * float32(step)
 	currentPos := ws.scrlY
 	var topBorder float32 = 0
-	botBorder := ws.virtualHeight
+	// botBorder := ws.virtualHeight
+	botBorder := ws.lastVirtualHeight
 
 	if currentPos <= topBorder {
 		if factor > 0 {
@@ -139,15 +143,8 @@ func (ws *WidgetSpace) getCurrentRow() (*widgets.HybridLayout, bool) {
 		return ws.rowStack.GetTop(), true
 	}
 }
-// func (ws *WidgetSpace) getCurrentColumn() (*widgets.Column, bool) {
-// 	if ws.colStack.Length() == 0 {
-// 		return nil, false
-// 	} else {
-// 		return ws.colStack.GetTop(), true
-// 	}
-// }
 
-func (ws *WidgetSpace) getCursorPosition() (x float32, y float32) {
+func (ws *WidgetSpace) getCursorPosition() (x float32, y float32, isRow bool) {
 	row, ok := ws.getCurrentRow()
 	if ok {
 		x = row.CursorX
@@ -156,5 +153,6 @@ func (ws *WidgetSpace) getCursorPosition() (x float32, y float32) {
 		x = ws.cursorX
 		y = ws.cursorY
 	}
+	isRow = ok
 	return
 }

@@ -207,7 +207,7 @@ func (wnd *Window) getWidget(id string, f func() widgets.Widget) widgets.Widget 
 	if !ok {
 		widg = f()
 		wnd.addWidget(widg)
-		wnd.currentWidgetSpace.AddVirtualHeight(float32(int(widg.Height())))
+		// wnd.currentWidgetSpace.AddVirtualHeight(float32(int(widg.Height())))
 	}
 	return widg
 }
@@ -218,7 +218,7 @@ func (c *UiContext) ButtonT(id string, msg string) bool {
 	wnd := c.windowStack.GetTop()
 	var tBtn *widgets.TextButton
 	var hovered, clicked bool
-	x, y := wnd.currentWidgetSpace.getCursorPosition()
+	x, y,isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	tBtn = wnd.getWidget(id, func() widgets.Widget {
 		s := c.font.CalculateTextBounds(msg, c.CurrentStyle.TextSize)
@@ -248,6 +248,9 @@ func (c *UiContext) ButtonT(id string, msg string) bool {
 	tBtn.UpdatePosition([4]float32{x, y, tBtn.Width(), tBtn.Height()})
 
 	wnd.addCursor(tBtn.Width(), tBtn.Height())
+	if !isRow {
+		wnd.currentWidgetSpace.AddVirtualHeight(tBtn.Height())
+	}
 	return clicked
 }
 
@@ -255,7 +258,7 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	wnd := c.windowStack.GetTop()
 	var txt *widgets.Text
 	var hovered bool
-	x, y := wnd.currentWidgetSpace.getCursorPosition()
+	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	txt = wnd.getWidget(id, func() widgets.Widget {
 		s := c.font.CalculateTextBounds(msg, size)
@@ -278,6 +281,9 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	wnd.buffer.CreateText(x, y, txt, *c.font)
 
 	wnd.addCursor(txt.Width(), txt.Height())
+	if !isRow {
+		wnd.currentWidgetSpace.AddVirtualHeight(txt.Height())
+	}
 }
 
 func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
@@ -288,7 +294,7 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 	wnd := c.windowStack.GetTop()
 	var img *widgets.Image
 	var clicked bool
-	x, y := wnd.currentWidgetSpace.getCursorPosition()
+	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	img = wnd.getWidget(id, func() widgets.Widget {
 		img = &widgets.Image{
@@ -313,13 +319,16 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 	img.UpdatePosition([4]float32{x, y, img.Width(), img.Height()})
 	// wnd.addYcursor(img.Height())
 	wnd.addCursor(img.Width(), img.Height())
+	if !isRow {
+		wnd.currentWidgetSpace.AddVirtualHeight(img.Height())
+	}
 	return clicked
 }
 
 func (c *UiContext) VSpace(id string) {
 	wnd := c.windowStack.GetTop()
 	var s *widgets.VSpace
-	x, y := wnd.currentWidgetSpace.getCursorPosition()
+	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	s = wnd.getWidget(id, func() widgets.Widget {
 		s := &widgets.VSpace{
@@ -331,6 +340,9 @@ func (c *UiContext) VSpace(id string) {
 	s.UpdatePosition([4]float32{x, y, float32(100), float32(20)})
 	// wnd.addYcursor(s.Height())
 	wnd.addCursor(0, s.Height())
+	if !isRow {
+		wnd.currentWidgetSpace.AddVirtualHeight(s.Height())
+	}
 }
 
 func (c *UiContext) hoverBehavior(wnd *Window, rect utils.Rect) bool {
@@ -345,7 +357,7 @@ func (c *UiContext) Button(id string) bool {
 	var btn *widgets.Button
 	var clicked, hovered bool
 
-	x, y := wnd.currentWidgetSpace.getCursorPosition()
+	x, y,isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	btn = wnd.getWidget(id, func() widgets.Widget {
 		return widgets.NewButton(id, x, y, 100, 100, c.CurrentStyle.BtnColor)
@@ -377,6 +389,9 @@ func (c *UiContext) Button(id string) bool {
 	//
 	btn.UpdatePosition([4]float32{x, y, w, h})
 	wnd.addCursor(btn.Width(), btn.Height())
+	if !isRow {
+		wnd.currentWidgetSpace.AddVirtualHeight(btn.Height())
+	}
 	return clicked
 }
 
@@ -432,7 +447,7 @@ func (c *UiContext) EndColumn() {
 func (c *UiContext) BeginRow(id string) {
 	wnd := c.windowStack.GetTop()
 	var row *widgets.HybridLayout
-	x, y := wnd.currentWidgetSpace.getCursorPosition()
+	x, y,_ := wnd.currentWidgetSpace.getCursorPosition()
 	row = wnd.getWidget(id, func() widgets.Widget {
 		return widgets.NewHLayout(id, x, y, c.CurrentStyle)
 	}).(*widgets.HybridLayout)
@@ -443,10 +458,10 @@ func (c *UiContext) BeginRow(id string) {
 
 func (c *UiContext) EndRow() {
 	wnd := c.windowStack.GetTop()
-
 	hl := wnd.currentWidgetSpace.rowStack.Pop()
-	// wnd.addCursor(hl.Width(), hl.Height())
-	wnd.addYcursor(hl.H)
+	wnd.addCursor(0, hl.H)
+	
+	wnd.currentWidgetSpace.AddVirtualHeight(hl.H)
 	hl.H = 0
 	hl.W = 0
 }
@@ -457,7 +472,9 @@ func (c *UiContext) EndWindow() {
 
 	wnd.mainWidgetSpace.checkVerScroll()
 
-	// c.currentWindow++
+	fmt.Println(wnd.mainWidgetSpace.virtualHeight)
+	wnd.mainWidgetSpace.lastVirtualHeight = wnd.mainWidgetSpace.virtualHeight
+	wnd.mainWidgetSpace.virtualHeight = 0
 
 	wnd.buffer.SeparateBuffer(0, wnd.buffer.InnerWindowSpace) // Make sure that we didn't miss anything
 }
