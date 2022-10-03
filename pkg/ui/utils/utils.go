@@ -9,7 +9,7 @@ import (
 type Stack[T any] struct {
 	Push   func(T)
 	Pop    func() T
-	GetTop func() T
+	Peek   func() T
 	Length func() int
 }
 
@@ -24,7 +24,7 @@ func NewStack[T any]() Stack[T] {
 			slice = slice[:len(slice)-1]
 			return res
 		},
-		GetTop: func() T {
+		Peek: func() T {
 			return slice[len(slice)-1]
 		},
 		Length: func() int {
@@ -106,12 +106,13 @@ func PointInRect(point Vec2, box Rect) bool {
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const (
-    letterIdxBits = 6                    // 6 bits to represent a letter index
-    letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-    letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+	letterIdxBits = 6                    // 6 bits to represent a letter index
+	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
+	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
 var src = rand.NewSource(time.Now().UnixNano())
+
 func RandString(n int) string {
 	sb := strings.Builder{}
 	sb.Grow(n)

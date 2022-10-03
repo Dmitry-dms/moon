@@ -13,6 +13,7 @@ type WidgetSpace struct {
 	widgetCounter                    int
 	widgets                          []widgets.Widget
 	virtualHeight, lastVirtualHeight float32
+	ClipRect                         [4]float32
 
 	verticalScrollbar *Scrollbar
 	captured          bool
@@ -140,7 +141,7 @@ func (ws *WidgetSpace) getCurrentRow() (*widgets.HybridLayout, bool) {
 	if ws.rowStack.Length() == 0 {
 		return nil, false
 	} else {
-		return ws.rowStack.GetTop(), true
+		return ws.rowStack.Peek(), true
 	}
 }
 

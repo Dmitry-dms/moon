@@ -104,6 +104,9 @@ func main() {
 
 		firstWindow()
 
+		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
+			fmt.Println(uiCtx.ActiveWidget)
+		}
 		// secondWindow()
 
 		// fb.Bind()
@@ -147,43 +150,34 @@ var ish bool = false
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 
-
-	uiCtx.ButtonT("Нажать", "Press")
+	//if uiCtx.ButtonT("Нажать", "Press") {
+	//	ish = !ish
+	//}
 	// uiCtx.Text("#t3","xello world!", 40)
 	// uiCtx.Text("#t3", "hello world!", 40)
-	// uiCtx.VSpace("#vs1fdgdf")
+	//uiCtx.VSpace("#vs1fdgdf")
 
-	// if ish {
-	uiCtx.BeginRow("row 13214")
-	uiCtx.Image("#im4kjdg464", tex)
-	uiCtx.BeginColumn("col fdfd")
-
-	uiCtx.Image("#im76", tex2)
-	uiCtx.Image("#im4", tex)
-	// uiCtx.Image("#im4df", tex2)
-	// uiCtx.VSpace("#vsefer")
-	// uiCtx.VSpace("#vs22343")
-	// uiCtx.Text("#t3ппо", "hello world!", 14)
-	uiCtx.EndColumn()
-
-	uiCtx.BeginColumn("col fdfdвава")
-
-	// uiCtx.Image("#im4и", tex)
-	// uiCtx.Button("ASsfdf")
-	uiCtx.Button("ASsfdffb")
-	uiCtx.Button("ASsfdffbbb")
-	// // uiCtx.Text("#t3", "hello world!", 14)
-	uiCtx.EndColumn()
-
-	uiCtx.Image("#im4kj", tex)
-	// uiCtx.Image("#im4kjfdf", tex2)
-	// uiCtx.Image("#im4kjgd", tex)
-	uiCtx.EndRow()
-	// uiCtx.Image("#im4jhj", tex)
-	// }
-
+	//uiCtx.Row("row 13214", func() {
+	//	uiCtx.Image("#im4kjdg464", tex)
+	//	uiCtx.Column("col fdfd", func() {
+	//		uiCtx.Image("#im76", tex2)
+	//		uiCtx.Image("#im4", tex)
+	//	})
+	//
+	//	uiCtx.Column("col fdfdвава", func() {
+	//		uiCtx.Button("ASsfdffb")
+	//		uiCtx.Button("ASsfdffbbb")
+	//	})
+	//
+	//	uiCtx.Image("#im4kj", tex)
+	//})
+	uiCtx.SubWidgetSpace("widhsp-1", func() {
+		uiCtx.Image("#im4kjdg464tht", tex2)
+		uiCtx.Image("#im76erewr", tex)
+		uiCtx.Text("#t3df", "world!", 24)
+	})
 	// uiCtx.VSpace("#vs1")
-	uiCtx.Image("#im4", tex2)
+	uiCtx.Image("#imgj4", tex2)
 
 	uiCtx.EndWindow()
 }

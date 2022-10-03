@@ -5,10 +5,10 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/draw"
 
+	"github.com/Dmitry-dms/moon/pkg/ui/styles"
 	// "github.com/Dmitry-dms/moon/pkg/ui/render"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
-	"github.com/Dmitry-dms/moon/pkg/ui/styles"
 )
 
 var UiCtx *UiContext
@@ -36,9 +36,10 @@ type UiContext struct {
 	displaySize [2]float32
 
 	//cache
-	windowCache  *cache.RamCache[*Window]
-	windowStack  utils.Stack[*Window]
-	widgetsCache *cache.RamCache[widgets.Widget]
+	windowCache    *cache.RamCache[*Window]
+	windowStack    utils.Stack[*Window]
+	widgetsCache   *cache.RamCache[widgets.Widget]
+	widgSpaceCache *cache.RamCache[*WidgetSpace]
 
 	//refactor
 	Time float32
@@ -56,14 +57,15 @@ type UiContext struct {
 func NewContext(frontRenderer UiRenderer) *UiContext {
 	c := UiContext{
 		// rq:            NewRenderQueue(),
-		renderer:      frontRenderer,
-		io:            NewIo(),
-		Windows:       make([]*Window, 0),
-		sortedWindows: make([]*Window, 0),
-		windowCache:   cache.NewRamCache[*Window](),
-		widgetsCache:  cache.NewRamCache[widgets.Widget](),
-		windowStack:   utils.NewStack[*Window](),
-		CurrentStyle:  &styles.DefaultStyle,
+		renderer:       frontRenderer,
+		io:             NewIo(),
+		Windows:        make([]*Window, 0),
+		sortedWindows:  make([]*Window, 0),
+		windowCache:    cache.NewRamCache[*Window](),
+		widgetsCache:   cache.NewRamCache[widgets.Widget](),
+		windowStack:    utils.NewStack[*Window](),
+		widgSpaceCache: cache.NewRamCache[*WidgetSpace](),
+		CurrentStyle:   &styles.DefaultStyle,
 	}
 
 	return &c
@@ -87,7 +89,7 @@ func (c *UiContext) dragBehavior(rect utils.Rect, captured *bool) {
 }
 
 func (c *UiContext) SetScrollY(scrollY float32) {
-	wnd := c.windowStack.GetTop()
+	wnd := c.windowStack.Peek()
 	wnd.currentWidgetSpace.setScrollY(scrollY)
 }
 

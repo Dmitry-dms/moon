@@ -25,7 +25,7 @@ type CmdBuffer struct {
 	lastIndc  int
 	lastElems int
 
-	InnerWindowSpace [4]float32
+	//InnerWindowSpace [4]float32
 }
 
 type Info struct {
@@ -33,7 +33,14 @@ type Info struct {
 	IndexOffset int
 	TexId       uint32
 	Type        string
-	ClipRect    [4]float32
+	//Clip        ClipRectCompose
+	ClipRect [4]float32
+	//MainClipRect [4]float32
+}
+
+type ClipRectCompose struct {
+	ClipRect     [4]float32 // only used in sub widget spaces
+	MainClipRect [4]float32 // main window clipping rectangle
 }
 
 func NewBuffer(size *utils.Vec2) *CmdBuffer {
@@ -57,24 +64,25 @@ func (c *CmdBuffer) Clear() {
 	c.lastElems = 0
 }
 
-func (c *CmdBuffer) SeparateBuffer(texId uint32, clipRect [4]float32) {
+func (c *CmdBuffer) SeparateBuffer(texId uint32, clip ClipRectCompose) {
 	cmd := Command{
 		Type: SeparateBuffer,
 		sb: &separate_buff{
-			texid:    texId,
-			clipRect: clipRect,
+			texid:        texId,
+			clipRect:     clip.ClipRect,
+			mainClipRect: clip.MainClipRect,
 		},
 	}
-	c.AddCommand(cmd)
+	c.AddCommand(cmd, clip)
 }
 
-func (c *CmdBuffer) CreateButtonT(x, y float32, btn *widgets.TextButton, font fonts.Font) {
-	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Button.CurrentColor)
+func (c *CmdBuffer) CreateButtonT(x, y float32, btn *widgets.TextButton, font fonts.Font, clip ClipRectCompose) {
+	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Button.CurrentColor, clip)
 	btn.UpdateTextPos(x, y)
-	c.CreateText(btn.Text.BoundingBox[0], btn.Text.BoundingBox[1], btn.Text, font)
+	c.CreateText(btn.Text.BoundingBox[0], btn.Text.BoundingBox[1], btn.Text, font, clip)
 }
 
-func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font) {
+func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font, clip ClipRectCompose) {
 	tcmd := Text_command{
 		X:    x,
 		Y:    y,
@@ -89,24 +97,25 @@ func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font)
 		Type:     Text,
 		WidgetId: txt.Id,
 	}
-	c.AddCommand(cmd)
-	c.SeparateBuffer(font.TextureId, c.InnerWindowSpace)
+	c.AddCommand(cmd, clip)
+	c.SeparateBuffer(font.TextureId, clip)
 }
 
-func (c *CmdBuffer) CreateWindow(wnd Window_command) {
-	c.CreateRect(wnd.X, wnd.Y, wnd.W, wnd.H, 10, AllRounded, 0, wnd.Clr)
+func (c *CmdBuffer) CreateWindow(wnd Window_command, clip ClipRectCompose) {
+	c.CreateRect(wnd.X, wnd.Y, wnd.W, wnd.H, 10, AllRounded, 0, wnd.Clr, clip)
 	toolbar := wnd.Toolbar
-	c.CreateRect(toolbar.X, toolbar.Y, toolbar.W, toolbar.H, 10, TopRect, 0, toolbar.Clr)
+	c.CreateRect(toolbar.X, toolbar.Y, toolbar.W, toolbar.H, 10, TopRect, 0, toolbar.Clr, clip)
 	if wnd.Scrollbar.H != 0 {
 		scrl := wnd.Scrollbar
-		c.CreateRect(scrl.X, scrl.Y, scrl.W, scrl.H, scrl.Radius, AllRounded, 0, scrl.ScrollClr)
-		c.CreateRect(scrl.Xb, scrl.Yb, scrl.Wb, scrl.Hb, scrl.Radius, AllRounded, 0, scrl.BtnClr)
+		c.CreateRect(scrl.X, scrl.Y, scrl.W, scrl.H, scrl.Radius, AllRounded, 0, scrl.ScrollClr, clip)
+		c.CreateRect(scrl.Xb, scrl.Yb, scrl.Wb, scrl.Hb, scrl.Radius, AllRounded, 0, scrl.BtnClr, clip)
 	}
+	//var cl = clip.MainClipRect
 
-	c.SeparateBuffer(0, [4]float32{wnd.X, wnd.Y, wnd.W, wnd.H})
+	c.SeparateBuffer(0, clip)
 }
 
-func (c *CmdBuffer) CreateRect(x, y, w, h float32, radius int, shape RoundedRectShape, texId uint32, clr [4]float32) {
+func (c *CmdBuffer) CreateRect(x, y, w, h float32, radius int, shape RoundedRectShape, texId uint32, clr [4]float32, clip ClipRectCompose) {
 	cmd := Command{
 		Type: RectType,
 		Rect: &Rect_command{
@@ -120,20 +129,51 @@ func (c *CmdBuffer) CreateRect(x, y, w, h float32, radius int, shape RoundedRect
 			shape:  shape,
 		},
 	}
-	c.AddCommand(cmd)
+	c.AddCommand(cmd, clip)
 }
-
-func (c *CmdBuffer) AddCommand(cmd Command) {
+func checkSliceForNull(s [4]float32) bool {
+	return (s[0] == 0) && (s[1] == 0) && (s[2] == 0) && (s[3] == 0)
+}
+func (c *CmdBuffer) AddCommand(cmd Command, clip ClipRectCompose) {
 	c.commands = append(c.commands, cmd)
 
 	switch cmd.Type {
 	case SeparateBuffer:
-		c.Inf = append(c.Inf, Info{
+		mainRect := clip.MainClipRect
+		innerRect := clip.ClipRect
+
+		x, x2 := int32(mainRect[0]), int32(innerRect[0])
+		y, y2 := int32(mainRect[1]), int32(innerRect[1])
+		w, w2 := int32(mainRect[2]), int32(innerRect[2])
+		h, h2 := int32(mainRect[3]), int32(innerRect[3])
+
+		var useInnerClip bool
+		useInnerClip = !checkSliceForNull(innerRect)
+		xl := x+w < x2+w2
+		yl := y+h < y2+h2
+
+		overlapWidth := useInnerClip && xl
+		overlapHeigth := useInnerClip && yl
+
+		inf := Info{
 			Elems:       c.VertCount - c.lastElems,
 			IndexOffset: c.ofs,
 			TexId:       cmd.sb.texid,
-			ClipRect:    cmd.sb.clipRect,
-		})
+		}
+		if !useInnerClip {
+			inf.ClipRect = cmd.sb.mainClipRect
+		} else if overlapWidth && overlapHeigth {
+			inf.ClipRect = cmd.sb.mainClipRect
+		} else if overlapWidth {
+			inf.ClipRect = cmd.sb.mainClipRect
+		} else if overlapHeigth {
+			var tmp = cmd.sb.clipRect
+			inf.ClipRect = [4]float32{tmp[0], tmp[1], tmp[2], cmd.sb.mainClipRect[3] - (tmp[1] - cmd.sb.mainClipRect[1])}
+		} else {
+			inf.ClipRect = cmd.sb.clipRect
+		}
+
+		c.Inf = append(c.Inf, inf)
 		c.ofs += c.VertCount - c.lastElems
 		c.lastElems = c.VertCount
 	case RectType:
@@ -143,7 +183,7 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 				c.RectangleR(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.Clr)
 			} else {
 				c.RectangleT(r.X, c.displaySize.Y-r.Y, r.W, r.H, uint32(r.TexId), 0, 1, r.Clr)
-				c.SeparateBuffer(r.TexId, c.InnerWindowSpace) // don't forget to slice buffer
+				c.SeparateBuffer(r.TexId, clip) // don't forget to slice buffer
 			}
 		} else {
 			if r.TexId == 0 {
@@ -157,7 +197,7 @@ func (c *CmdBuffer) AddCommand(cmd Command) {
 		// size := c.camera.GetProjectionSize()
 		// c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
 		c.Text(t.Text, t.Font, t.X, c.displaySize.Y-t.Y, t.Size, t.Clr)
-		c.SeparateBuffer(t.Font.TextureId, c.InnerWindowSpace) // don't forget to slice buffer
+		c.SeparateBuffer(t.Font.TextureId, clip) // don't forget to slice buffer
 	}
 
 }

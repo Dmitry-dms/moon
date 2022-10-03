@@ -12,10 +12,8 @@ type Command struct {
 	Type     CmdType
 	WidgetId string
 
-	// TextureId uint32 
+	sb *separate_buff
 
-	sb *separate_buff // special cmd 
-	// priority int
 	Shown    bool
 	Rect     *Rect_command
 	triangle *triangle_command
@@ -27,8 +25,9 @@ type Command struct {
 }
 
 type separate_buff struct {
-	texid uint32
-	clipRect [4]float32
+	texid        uint32
+	clipRect     [4]float32
+	mainClipRect [4]float32
 }
 
 type Text_command struct {
@@ -39,7 +38,7 @@ type Text_command struct {
 	Clr    [4]float32
 	Id     string
 	// Scale int
-	Size  int
+	Size int
 }
 
 type Rect_command struct {
@@ -47,7 +46,7 @@ type Rect_command struct {
 	Clr        [4]float32
 	TexId      uint32
 	radius     int
-	shape RoundedRectShape
+	shape      RoundedRectShape
 	// ScaleFactor float32
 	// Texture     *gogl.Texture
 }

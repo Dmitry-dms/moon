@@ -1,9 +1,11 @@
 package styles
 
 type Style struct {
+
+	// widget space
 	Margin     float32
 	Padding    float32
-	TopMargin  float32
+	TopMargin,BotMargin  float32
 	LeftMargin float32
 
 	//btn
@@ -19,6 +21,7 @@ type Style struct {
 var (
 	DefaultStyle = Style{
 		TopMargin:       10,
+		BotMargin:       10,
 		LeftMargin:      10,
 		Padding:         10,
 		BtnColor:        [4]float32{124, 90, 156, 1},
