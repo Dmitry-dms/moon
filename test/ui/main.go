@@ -102,12 +102,15 @@ func main() {
 
 		uiCtx.NewFrame([2]float32{float32(Width), float32(Height)})
 
-		firstWindow()
+		//firstWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
-			fmt.Println(uiCtx.ActiveWidget)
+			//fmt.Println(uiCtx.ActiveWidget)
+			//fmt.Println(uiCtx.ActiveWidgetSpaceId)
+			fmt.Println(uiCtx.HoveredWindow)
+			fmt.Println(uiCtx.ActiveWindow)
 		}
-		// secondWindow()
+		secondWindow()
 
 		// fb.Bind()
 		uiCtx.EndFrame([2]float32{float32(Width), float32(Height)})
@@ -187,26 +190,20 @@ func secondWindow() {
 
 	uiCtx.Image("#im4", tex)
 
-	// uiCtx.VSpace("#dfdf")
-	// // if uiCtx.ButtonRR(tex) {
-	// // 	fmt.Println("button clicked f 2")
-	// // }
-	// if uiCtx.Button("#v3245g") {
-	// 	fmt.Println("button clicked f 2")
-	// }
-	// uiCtx.VSpace("#vs3354")
-	// // if uiCtx.ButtonRR(tex) {
-	// // 	fmt.Println("button clicked f 2")
-	// // }
-	// if uiCtx.Button("#354362") {
-	// 	fmt.Println("button clicked f 2")
-	// }
-	// if uiCtx.Button("#vs243646547") {
-	// 	fmt.Println("button clicked f 2")
-	// }
-	// if uiCtx.Button("#vs234634") {
-	// 	fmt.Println("button clicked f 2")
-	// }
+	uiCtx.Row("row 13214", func() {
+		uiCtx.Image("#im4kjdg464", tex)
+		uiCtx.Column("col fdfd", func() {
+			uiCtx.Image("#im76", tex2)
+			uiCtx.Image("#im4", tex)
+		})
+
+		uiCtx.Column("col fdfdвава", func() {
+			uiCtx.Button("ASsfdffb")
+			uiCtx.Button("ASsfdffbbb")
+		})
+
+		uiCtx.Image("#im4kj", tex)
+	})
 
 	uiCtx.EndWindow()
 }

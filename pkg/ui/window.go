@@ -3,6 +3,7 @@ package ui
 import (
 	// "fmt"
 	"fmt"
+	"time"
 
 	"math/rand"
 
@@ -31,13 +32,23 @@ type Window struct {
 	mainWidgetSpace    *WidgetSpace
 	currentWidgetSpace *WidgetSpace
 
+	widgSpaces []*WidgetSpace
+
 	capturedV, capturedH bool
 	capturedWin          bool
 }
 
+func genWindowId() string {
+	rand.Seed(time.Now().Unix())
+	return fmt.Sprint(rand.Intn(100000))
+}
+
 func NewWindow(x, y, w, h float32) *Window {
 	tb := NewToolbar(x, y, w, 30)
+	id := genWindowId()
+
 	wnd := Window{
+		Id:              id,
 		toolbar:         tb,
 		x:               x,
 		y:               y,
@@ -46,8 +57,9 @@ func NewWindow(x, y, w, h float32) *Window {
 		outerRect:       utils.Rect{Min: utils.Vec2{X: x, Y: y}, Max: utils.Vec2{X: x + w, Y: y + h}},
 		minW:            200,
 		minH:            50,
-		mainWidgetSpace: newWidgetSpace(x, y+tb.h, w, h-tb.h),
+		mainWidgetSpace: newWidgetSpace(fmt.Sprintf("main-widg-space-%s", id), x, y+tb.h, w, h-tb.h),
 		buffer:          draw.NewBuffer(UiCtx.Io().DisplaySize),
+		widgSpaces:      make([]*WidgetSpace, 0),
 	}
 
 	wnd.currentWidgetSpace = wnd.mainWidgetSpace
@@ -159,10 +171,16 @@ func (c *UiContext) BeginWindow(id string) {
 	wnd.mainWidgetSpace.cursorX = wnd.mainWidgetSpace.X + UiCtx.CurrentStyle.LeftMargin
 	wnd.mainWidgetSpace.cursorY = wnd.mainWidgetSpace.Y + UiCtx.CurrentStyle.TopMargin
 
+	//hovered := c.hoverBehavior(wnd, utils.NewRectS(wnd.mainWidgetSpace.ClipRect))
+	//if hovered {
+	//
+	//	c.ActiveWidgetSpaceId = wnd.mainWidgetSpace.id
+	//}
+
 	// Scrollbar behavior
 	if wnd.mainWidgetSpace.isVertScrollShown {
 		wnd.mainWidgetSpace.vertScrollBar()
-		if c.ActiveWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidget == "" {
+		if c.ActiveWindow == wnd && c.HoveredWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidgetSpaceId == wnd.mainWidgetSpace.id {
 			// wnd.mainWidgetSpace.handleMouseDrag()
 			wnd.mainWidgetSpace.handleMouseScroll(float32(c.io.ScrollY))
 		}
@@ -180,6 +198,7 @@ func (c *UiContext) BeginWindow(id string) {
 			BtnClr:    [4]float32{255, 0, 0, 1},
 		}
 	}
+
 	wnd.mainWidgetSpace.ClipRect = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y, wnd.mainWidgetSpace.W - wnd.mainWidgetSpace.verticalScrollbar.w, wnd.mainWidgetSpace.H}
 	//wnd.buffer.InnerWindowSpace = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y, wnd.mainWidgetSpace.W - wnd.mainWidgetSpace.verticalScrollbar.w, wnd.mainWidgetSpace.H}
 	wnd.createWindow(cmdw, draw.ClipRectCompose{
@@ -211,7 +230,6 @@ func (wnd *Window) getWidget(id string, f func() widgets.Widget) widgets.Widget 
 	if !ok {
 		widg = f()
 		wnd.addWidget(widg)
-		// wnd.currentWidgetSpace.AddVirtualHeight(float32(int(widg.Height())))
 	}
 	return widg
 }
@@ -446,57 +464,56 @@ func (c *UiContext) Column(id string, widgFunc func()) {
 func (c *UiContext) SubWidgetSpace(id string, widgFunc func()) {
 	wnd := c.windowStack.Peek()
 	var ws *WidgetSpace
-	var cmdw draw.Window_command
+
 	x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
 	ws, ok := c.widgSpaceCache.Get(id)
 	if !ok {
-		ws = newWidgetSpace(x, y, 100, 200)
+		ws = newWidgetSpace(id, x, y, 100, 200)
 		c.widgSpaceCache.Add(id, ws)
+
+		wnd.widgSpaces = append(wnd.widgSpaces, ws)
 	}
 	var prevWS = wnd.currentWidgetSpace
 	wnd.currentWidgetSpace = ws
+
+	y -= prevWS.scrlY
 	ws.X = x
 	ws.Y = y
 	ws.cursorY = y
 	ws.cursorX = x
 
-	ws.ClipRect = [4]float32{x, y, ws.W - ws.verticalScrollbar.w, ws.H}
+	outOfWindow := false
+	if y < wnd.mainWidgetSpace.Y {
+		outOfWindow = true
+		ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W - ws.verticalScrollbar.w, ws.H - (wnd.mainWidgetSpace.Y - y)}
+	} else {
+		ws.ClipRect = [4]float32{x, y, ws.W - ws.verticalScrollbar.w, ws.H}
+	}
 
 	// Scrollbar behavior
 	if ws.isVertScrollShown {
 		ws.vertScrollBar()
-		if c.ActiveWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidget == "" {
+		if c.ActiveWindow == wnd && c.HoveredWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidgetSpaceId == wnd.currentWidgetSpace.id {
 			// wnd.mainWidgetSpace.handleMouseDrag()
 			ws.handleMouseScroll(float32(c.io.ScrollY))
 		}
-		cmdw.Scrollbar = draw.Scrollbar_command{
-			X:         ws.verticalScrollbar.x,
-			Y:         ws.verticalScrollbar.y,
-			W:         ws.verticalScrollbar.w,
-			H:         ws.verticalScrollbar.h,
-			Xb:        ws.verticalScrollbar.bX,
-			Yb:        ws.verticalScrollbar.bY,
-			Wb:        ws.verticalScrollbar.bW,
-			Hb:        ws.verticalScrollbar.bH,
-			Radius:    5,
-			ScrollClr: ws.verticalScrollbar.clr,
-			BtnClr:    [4]float32{255, 0, 0, 1},
-		}
 	}
-	//wnd.buffer.InnerWindowSpace = [4]float32{ws.X, ws.Y, ws.W - ws.verticalScrollbar.w, ws.H}
-	var clip = draw.ClipRectCompose{MainClipRect: [4]float32{ws.X, ws.Y, ws.W - ws.verticalScrollbar.w, ws.H}, ClipRect: wnd.mainWidgetSpace.ClipRect}
+
+	var clip = draw.ClipRectCompose{MainClipRect: ws.ClipRect, ClipRect: wnd.mainWidgetSpace.ClipRect}
 
 	if ws.isVertScrollShown {
-		var scrlClip = draw.ClipRectCompose{ClipRect: [4]float32{ws.X, ws.Y, ws.W, ws.H}, MainClipRect: wnd.mainWidgetSpace.ClipRect}
+		cl := [4]float32{ws.X, ws.Y, ws.W, ws.H}
+		if outOfWindow {
+			cl[1] = wnd.mainWidgetSpace.Y
+		}
+		var scrlClip = draw.ClipRectCompose{ClipRect: cl, MainClipRect: wnd.mainWidgetSpace.ClipRect}
 		scrl := ws.verticalScrollbar
 
 		wnd.buffer.CreateRect(scrl.x, scrl.y, scrl.w, scrl.h, 5, draw.AllRounded, 0, scrl.clr, scrlClip)
-		wnd.buffer.CreateRect(scrl.bX, scrl.bY, scrl.bW, scrl.bH, 5, draw.AllRounded, 0, cmdw.Scrollbar.BtnClr, scrlClip)
+		wnd.buffer.CreateRect(scrl.bX, scrl.bY, scrl.bW, scrl.bH, 5, draw.AllRounded, 0, [4]float32{255, 0, 0, 1}, scrlClip)
 
 		wnd.buffer.SeparateBuffer(0, scrlClip)
 	}
-
-	//wnd.buffer.SeparateBuffer(0, clip)
 
 	widgFunc()
 
@@ -509,6 +526,8 @@ func (c *UiContext) SubWidgetSpace(id string, widgFunc func()) {
 	ws.virtualHeight = 0
 	//ws.cursorY = 0
 	wnd.currentWidgetSpace = prevWS
+
+	wnd.currentWidgetSpace.AddVirtualHeight(ws.H)
 	wnd.addCursor(ws.W, ws.H)
 }
 

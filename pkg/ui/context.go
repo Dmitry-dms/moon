@@ -24,11 +24,16 @@ type UiContext struct {
 	io       *Io
 
 	//Widgets
-	Windows           []*Window
-	sortedWindows     []*Window
-	ActiveWidget      string
-	ActiveWindow      *Window
-	currentWindow     int
+	Windows       []*Window
+	sortedWindows []*Window
+	ActiveWidget  string
+
+	ActiveWindow *Window
+
+	//widg space
+	ActiveWidgetSpaceId string
+	ActiveWidgetSpace   *WidgetSpace
+
 	PriorWindow       *Window
 	HoveredWindow     *Window
 	LastHoveredWindow *Window
@@ -253,14 +258,11 @@ func (c *UiContext) EndFrame(size [2]float32) {
 		return
 	}
 	for _, v := range c.sortedWindows {
-		// fmt.Println(v.Id, len(v.buffer.Vertices))
 		c.renderer.Draw(size, *v.buffer)
 		v.buffer.Clear()
 	}
 
 	// c.renderer.End()
-
-	c.currentWindow = 0
 
 	if !c.io.IsDragging && c.wantResizeH == true {
 		c.wantResizeH = false
@@ -273,6 +275,23 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	c.io.ScrollY = 0
 
 	c.ActiveWidget = ""
+
+	if c.ActiveWindow != nil {
+		founded := false
+		for _, w := range c.ActiveWindow.widgSpaces {
+			if utils.PointInRect(c.io.MousePos, utils.NewRectS(w.ClipRect)) {
+				c.ActiveWidgetSpaceId = w.id
+				founded = true
+				break
+			}
+		}
+		if !founded {
+			c.ActiveWidgetSpaceId = c.ActiveWindow.mainWidgetSpace.id
+		}
+	} else {
+		c.ActiveWidgetSpaceId = ""
+	}
+
 }
 
 type UiRenderer interface {

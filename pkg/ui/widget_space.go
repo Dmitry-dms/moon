@@ -7,6 +7,7 @@ import (
 
 type WidgetSpace struct {
 	X, Y, W, H float32
+	id         string
 
 	//inner widgets
 	cursorX, cursorY                 float32
@@ -27,26 +28,26 @@ type WidgetSpace struct {
 }
 
 var defScrollWidth float32 = 10
-var scrolconst float32 = 0
 
 func (ws *WidgetSpace) vertScrollBar() {
 	vB := ws.verticalScrollbar
 	vB.x = ws.X + ws.W - vB.w
 	vB.y = ws.Y
 	vB.h = ws.H
-	// ws.ratio = (ws.H) / (ws.virtualHeight)
-	ws.ratio = (ws.H) / (ws.lastVirtualHeight)
+
+	ws.ratio = ws.H / ws.lastVirtualHeight
 	// top border
-	if ws.scrlY < 0 {
-		ws.scrlY = 0
-	}
+	//if ws.scrlY < 0 {
+	//	ws.scrlY = 0
+	//}
 
 	// this is here because we need to update scroll btn position every frame
 	ws.handleMouseDrag()
 }
 
-func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
+func newWidgetSpace(id string, x, y, w, h float32) *WidgetSpace {
 	vs := WidgetSpace{
+		id:            id,
 		X:             x,
 		Y:             y,
 		W:             w,
@@ -55,19 +56,17 @@ func newWidgetSpace(x, y, w, h float32) *WidgetSpace {
 		cursorY:       y,
 		widgetCounter: 0,
 		widgets:       []widgets.Widget{},
-		virtualHeight: 10,
+		virtualHeight: 0,
 		verticalScrollbar: NewScrolBar(utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, h),
 			utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, 50),
 			[4]float32{150, 155, 155, 1}),
 		rowStack: utils.NewStack[*widgets.HybridLayout](),
-		// colStack: utils.NewStack[*widgets.Column](),
 	}
 	return &vs
 }
 
 // FIXME: is this right?
 func (ws *WidgetSpace) setScrollY(scrollY float32) {
-	// if scrollY <= ws.virtualHeight {
 	if scrollY <= ws.lastVirtualHeight {
 		ws.scrlY = scrollY * (1 - ws.ratio)
 	}
@@ -75,48 +74,55 @@ func (ws *WidgetSpace) setScrollY(scrollY float32) {
 
 func (ws *WidgetSpace) handleMouseDrag() {
 	vB := ws.verticalScrollbar
-
 	UiCtx.dragBehavior(utils.NewRect(vB.bX, vB.bY, vB.bW, vB.bH), &ws.captured)
-	// endReached := ws.scrlY+ws.H <= ws.virtualHeight
-	endReached := ws.scrlY+ws.H <= ws.lastVirtualHeight
 	delta := UiCtx.io.MouseDelta.Y
-	if ws.captured && endReached {
-		// prevent top glitch
-		if ws.scrlY <= 0 {
-			if delta > 0 {
-				ws.scrlY += delta
-			}
+	if ws.captured {
+		// Предотвращение неправильного расчета позиции скроллинга при резком перемещении мыши (delta > 70)
+		if ws.H+ws.scrlY+delta > ws.lastVirtualHeight {
+			ws.scrlY = ws.lastVirtualHeight - ws.H
 		} else {
 			ws.scrlY += delta
 		}
-	} else if ws.captured && !endReached {
-		if delta < 0 {
-			ws.scrlY += delta
+
+		if ws.scrlY < 0 {
+			ws.scrlY = 0
 		}
 	}
-
 	vB.bH = ws.H * ws.ratio
 	vB.bX = ws.X + ws.W - vB.w
 	vB.bY = ws.Y + ws.scrlY*ws.ratio
 }
 func (ws *WidgetSpace) handleMouseScroll(scrollY float32) {
-	var factor float32 = scrollY * float32(step)
-	currentPos := ws.scrlY
-	var topBorder float32 = 0
-	// botBorder := ws.virtualHeight
+	var factor = scrollY * step
+	//currentPos := ws.scrlY
+	//var topBorder float32 = 0
+
 	botBorder := ws.lastVirtualHeight
 
-	if currentPos <= topBorder {
-		if factor > 0 {
-			ws.scrlY += factor * ws.ratio
-		}
-	} else if currentPos+ws.H >= botBorder {
-		if factor < 0 {
-			ws.scrlY += factor * ws.ratio
-		}
+	// up scroll border
+	//if currentPos <= topBorder {
+	//	if factor > 0 {
+	//		ws.scrlY += factor * ws.ratio
+	//	} else {
+	//		//ws.scrlY = 0
+	//	}
+	//	// 	down scroll border
+	//} else if currentPos+ws.H >= botBorder {
+	//	if factor < 0 {
+	//		ws.scrlY += factor * ws.ratio
+	//	}
+	//} else {
+	// FIXED: uncorrect scroll position
+	if ws.H+ws.scrlY+factor > botBorder {
+		ws.scrlY = ws.lastVirtualHeight - ws.H
 	} else {
 		ws.scrlY += factor * ws.ratio
 	}
+
+	if ws.scrlY < 0 {
+		ws.scrlY = 0
+	}
+	//}
 }
 
 func (ws *WidgetSpace) checkVerScroll() {
