@@ -84,8 +84,6 @@ func (t *TextBatch) Init() {
 	gl.BindVertexArray(0)
 }
 
-var first = true
-
 func (t *TextBatch) FlushBatch() {
 	//Clear GPU buffer and upload cpu contents and draw
 	gl.BindBuffer(gl.ARRAY_BUFFER, t.Vbo)

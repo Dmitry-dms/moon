@@ -189,11 +189,13 @@ var slCounter float32 = 0
 
 func secondWindow() {
 	uiCtx.BeginWindow("second wnd")
+	uiCtx.Row("row 1dfdf14", func() {
+		uiCtx.Image("#im4", tex)
+		uiCtx.Image("#im4", tex)
+	})
 
-	uiCtx.Image("#im4", tex)
-
+	uiCtx.Text("text-1dff", "Hello, world!", 14)
 	uiCtx.Slider("slider-1", &slCounter, 0, 255)
-	fmt.Println(slCounter)
 
 	uiCtx.Row("row 13214", func() {
 		uiCtx.Image("#im4kjdg464", tex)

@@ -18,24 +18,24 @@ const (
 	Right
 )
 
-func NewTextButton(id string, x, y float32, textSize [2]float32,
+func NewTextButton(id string, x, y, w, h float32,
 	text string, align TextAlign, style *styles.Style) *TextButton {
 	tb := TextButton{
 		Id:    id,
 		align: align,
 		style: style,
 	}
-	txt := NewText("", text, x, y, textSize[0], textSize[1], style.TextSize, style.TextColor)
-	btn := NewButton("", x, y, 2*style.Padding+textSize[0], 2*style.Padding+textSize[1], style.BtnColor)
+	txt := NewText("", text, x, y, w, h, style)
+	btn := NewButton("", x, y, 2*style.Padding+w, 2*style.Padding+h, style.BtnColor)
 	tb.Button = btn
 	tb.Text = txt
 
-	tb.UpdateTextPos(tb.Button.BoundingBox[0],tb.Button.BoundingBox[1])
+	tb.UpdateTextPos(tb.Button.BoundingBox[0], tb.Button.BoundingBox[1])
 
 	return &tb
 }
 
-func (tb *TextButton) UpdateTextPos(x,y float32) {
+func (tb *TextButton) UpdateTextPos(x, y float32) {
 	// x := tb.Button.BoundingBox[0]
 	// y := tb.Button.BoundingBox[1]
 	switch tb.align {
@@ -58,7 +58,7 @@ func (tb *TextButton) ChangeActive() {
 
 func (tb *TextButton) UpdatePosition(pos [4]float32) {
 	tb.Button.UpdatePosition(pos)
-	tb.UpdateTextPos(tb.Button.BoundingBox[0],tb.Button.BoundingBox[1])
+	tb.UpdateTextPos(tb.Button.BoundingBox[0], tb.Button.BoundingBox[1])
 }
 func (tb TextButton) WidgetId() string {
 	return tb.Id
@@ -67,7 +67,7 @@ func (tb TextButton) Height() float32 {
 	return tb.Button.Height()
 }
 
-func (tb TextButton) Box() [4]float32{
+func (tb TextButton) Box() [4]float32 {
 	return tb.Button.BoundingBox
 }
 func (tb TextButton) Width() float32 {

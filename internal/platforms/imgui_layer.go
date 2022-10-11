@@ -46,23 +46,28 @@ func NewImgui() *ImgUi {
 	tex.Init("assets/images/mario.png")
 	return &g
 }
+
 var open bool
+
 func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt float32, currentScene scenes.Scene) {
 
 	imgui.NewFrame()
 
-	// imgui.Begin("id string")
+	imgui.Begin("id string")
 	// imgui.Button("btn")
 	// imgui.Image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
 	// imgui.Text("text string")
-	imgui.ShowDemoWindow(&open)
-	// imgui.BeginPopup("name string")
+	//imgui.ShowDemoWindow(&open)
+	//imgui.BeginPopup("name string")
+	imgui.BeginTooltip()
+	imgui.Button("btn")
+	imgui.EndTooltip()
+
 	// imgui.Image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
 	// imgui.Text("text string 2")
 	// imgui.Button("btn")
 	// imgui.Button("btn")
-	// imgui.Button("btn")
-	// imgui.End()
+	imgui.End()
 
 	// editor.Imgui(16/9, texId)
 

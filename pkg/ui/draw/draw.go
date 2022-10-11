@@ -79,24 +79,26 @@ func (c *CmdBuffer) SeparateBuffer(texId uint32, clip ClipRectCompose) {
 func (c *CmdBuffer) CreateButtonT(x, y float32, btn *widgets.TextButton, font fonts.Font, clip ClipRectCompose) {
 	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Button.CurrentColor, clip)
 	btn.UpdateTextPos(x, y)
-	c.CreateText(btn.Text.BoundingBox[0], btn.Text.BoundingBox[1], btn.Text, font, clip)
+	c.CreateText(btn.Text.Rectangle()[0], btn.Text.Rectangle()[1], btn.Text, font, clip)
 }
 
 func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font, clip ClipRectCompose) {
 	tcmd := Text_command{
-		X:    x,
-		Y:    y,
-		Clr:  txt.CurrentColor,
-		Text: txt.Message,
-		Font: font,
-		Size: txt.Size,
+		X:       x,
+		Y:       y,
+		Clr:     txt.CurrentColor,
+		Text:    txt.Message,
+		Font:    font,
+		Size:    txt.Size,
+		Padding: txt.Padding,
 	}
-
 	cmd := Command{
 		Text:     &tcmd,
 		Type:     Text,
-		WidgetId: txt.Id,
+		WidgetId: txt.WidgetId(),
 	}
+
+	c.CreateRect(x, y, txt.Width(), txt.Height(), 0, StraightCorners, 0, txt.BackgroundColor(), clip)
 	c.AddCommand(cmd, clip)
 	c.SeparateBuffer(font.TextureId, clip)
 }
@@ -110,7 +112,6 @@ func (c *CmdBuffer) CreateWindow(wnd Window_command, clip ClipRectCompose) {
 		c.CreateRect(scrl.X, scrl.Y, scrl.W, scrl.H, scrl.Radius, AllRounded, 0, scrl.ScrollClr, clip)
 		c.CreateRect(scrl.Xb, scrl.Yb, scrl.Wb, scrl.Hb, scrl.Radius, AllRounded, 0, scrl.BtnClr, clip)
 	}
-	//var cl = clip.MainClipRect
 
 	c.SeparateBuffer(0, clip)
 }
@@ -182,7 +183,7 @@ func (c *CmdBuffer) AddCommand(cmd Command, clip ClipRectCompose) {
 			if r.TexId == 0 {
 				c.RectangleR(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.Clr)
 			} else {
-				c.RectangleT(r.X, c.displaySize.Y-r.Y, r.W, r.H, uint32(r.TexId), 0, 1, r.Clr)
+				c.RectangleT(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.TexId, 0, 1, r.Clr)
 				c.SeparateBuffer(r.TexId, clip) // don't forget to slice buffer
 			}
 		} else {
@@ -194,9 +195,7 @@ func (c *CmdBuffer) AddCommand(cmd Command, clip ClipRectCompose) {
 		}
 	case Text:
 		t := cmd.Text
-		// size := c.camera.GetProjectionSize()
-		// c.Text(t.Text, t.Font, t.X, size.Y()-t.Y, t.Size, t.Clr)
-		c.Text(t.Text, t.Font, t.X, c.displaySize.Y-t.Y, t.Size, t.Clr)
+		c.Text(t.Text, t.Font, t.X, c.displaySize.Y-(t.Y+float32(t.Padding)), t.Size, t.Clr)
 		c.SeparateBuffer(t.Font.TextureId, clip) // don't forget to slice buffer
 	}
 

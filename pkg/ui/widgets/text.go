@@ -1,52 +1,58 @@
 package widgets
 
+import "github.com/Dmitry-dms/moon/pkg/ui/styles"
+
 type Text struct {
-	Message         string
-	Id              string
+	base         baseWidget
+	Message      string
+	CurrentColor [4]float32
 
-	BoundingBox     [4]float32 //x,y,w,h
-	CurrentColor    [4]float32
-	BackgroundColor [4]float32
-
-	Size int
+	Size    int
+	Padding int
 }
 
-func NewText(id, text string, x, y, w, h float32, size int, clr [4]float32) *Text {
+func NewText(id, text string, x, y, w, h float32, style *styles.Style) *Text {
 	t := Text{
-		Message:      text,
-		Id:           id,
-		BoundingBox:  [4]float32{x, y, w, h},
-		CurrentColor: clr,
-		Size: size,
+		Message: text,
+		base: baseWidget{
+			id:              id,
+			boundingBox:     [4]float32{x, y, w, h + float32(style.TextPadding)},
+			backgroundColor: style.TransparentColor,
+		},
+		CurrentColor: style.TextColor,
+		Size:         style.TextSize,
+		Padding:      style.TextPadding,
 	}
 	return &t
 }
 
 func (t *Text) UpdatePosition(pos [4]float32) {
-	t.BoundingBox = pos
+	t.base.boundingBox = pos
 }
 
 func (t *Text) SetBackGroundColor(clr [4]float32) {
-	t.BackgroundColor = clr
+	t.base.backgroundColor = clr
 }
 
-func (i Text) Rectangle() [4]float32 {
-	return i.BoundingBox
+func (i *Text) Rectangle() [4]float32 {
+	return i.base.boundingBox
 }
-
-func (i Text) Color() [4]float32 {
+func (i *Text) BackgroundColor() [4]float32 {
+	return i.base.backgroundColor
+}
+func (i *Text) Color() [4]float32 {
 	return i.CurrentColor
 }
-func (i Text) WidgetId() string {
-	return i.Id
+func (i *Text) WidgetId() string {
+	return i.base.id
 }
 
-func (i Text) Height() float32 {
-	return i.BoundingBox[3]
+func (i *Text) Height() float32 {
+	return i.base.height()
 }
-func (i Text) Visible() bool {
+func (i *Text) Visible() bool {
 	return true
 }
-func (i Text) Width() float32 {
-	return i.BoundingBox[2]
+func (i *Text) Width() float32 {
+	return i.base.width()
 }

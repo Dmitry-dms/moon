@@ -2,6 +2,9 @@ package styles
 
 type Style struct {
 
+	//misc
+	TransparentColor [4]float32
+
 	// widget space
 	Margin               float32
 	Padding              float32
@@ -14,8 +17,9 @@ type Style struct {
 	BtnActiveColor  [4]float32
 
 	//text
-	TextColor [4]float32
-	TextSize  int
+	TextColor   [4]float32
+	TextSize    int
+	TextPadding int
 
 	//slider
 	SliderColor    [4]float32
@@ -26,19 +30,21 @@ type Style struct {
 
 var (
 	DefaultStyle = Style{
-		Margin:          10,
-		Padding:         10,
-		TopMargin:       10,
-		BotMargin:       10,
-		LeftMargin:      10,
-		BtnColor:        [4]float32{124, 90, 156, 1},
-		BtnHoveredColor: [4]float32{200, 270, 30, 1},
-		BtnActiveColor:  [4]float32{255, 0, 0, 1},
-		TextColor:       [4]float32{255, 255, 255, 1},
-		TextSize:        20,
-		SliderColor:     [4]float32{231, 240, 162, 0.8},
-		SliderBtnColor:  [4]float32{0, 0, 0, 1},
-		SliderHeight:    10,
-		SliderBtnWidth:  20,
+		TransparentColor: [4]float32{0, 0, 0, 0},
+		Margin:           10,
+		Padding:          10,
+		TopMargin:        10,
+		BotMargin:        10,
+		LeftMargin:       10,
+		BtnColor:         [4]float32{124, 90, 156, 1},
+		BtnHoveredColor:  [4]float32{200, 270, 30, 1},
+		BtnActiveColor:   [4]float32{255, 0, 0, 1},
+		TextColor:        [4]float32{255, 255, 255, 1},
+		TextSize:         20,
+		TextPadding:      10,
+		SliderColor:      [4]float32{231, 240, 162, 0.8},
+		SliderBtnColor:   [4]float32{0, 0, 0, 1},
+		SliderHeight:     10,
+		SliderBtnWidth:   20,
 	}
 )

@@ -31,14 +31,14 @@ type separate_buff struct {
 }
 
 type Text_command struct {
-	Widget *widgets.Text
-	Text   string
-	Font   fonts.Font
-	X, Y   float32
-	Clr    [4]float32
-	Id     string
-	// Scale int
-	Size int
+	Widget  *widgets.Text
+	Text    string
+	Font    fonts.Font
+	X, Y    float32
+	Clr     [4]float32
+	Id      string
+	Padding int
+	Size    int
 }
 
 type Rect_command struct {
