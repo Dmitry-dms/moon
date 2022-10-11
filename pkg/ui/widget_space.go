@@ -36,10 +36,6 @@ func (ws *WidgetSpace) vertScrollBar() {
 	vB.h = ws.H
 
 	ws.ratio = ws.H / ws.lastVirtualHeight
-	// top border
-	//if ws.scrlY < 0 {
-	//	ws.scrlY = 0
-	//}
 
 	// this is here because we need to update scroll btn position every frame
 	ws.handleMouseDrag()

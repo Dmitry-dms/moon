@@ -185,10 +185,15 @@ func firstWindow() {
 	uiCtx.EndWindow()
 }
 
+var slCounter float32 = 0
+
 func secondWindow() {
 	uiCtx.BeginWindow("second wnd")
 
 	uiCtx.Image("#im4", tex)
+
+	uiCtx.Slider("slider-1", &slCounter, 0, 255)
+	fmt.Println(slCounter)
 
 	uiCtx.Row("row 13214", func() {
 		uiCtx.Image("#im4kjdg464", tex)

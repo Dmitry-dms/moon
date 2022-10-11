@@ -84,6 +84,21 @@ func (c *UiContext) Initialize(frontRenderer UiRenderer) {
 	c.renderer = frontRenderer
 }
 
+func (c *UiContext) dragBehaviorInWindow(rect utils.Rect, captured *bool) {
+	if !*captured {
+		*captured = utils.PointInRect(c.io.MousePos, rect) && c.io.DragStarted(rect) && c.io.IsDragging
+		if c.ActiveWindow != nil {
+			c.ActiveWindow.capturedInsideWin = *captured
+		}
+	}
+	if c.io.MouseReleased[0] {
+		*captured = false
+		if c.ActiveWindow != nil {
+			c.ActiveWindow.capturedInsideWin = false
+		}
+	}
+}
+
 func (c *UiContext) dragBehavior(rect utils.Rect, captured *bool) {
 	if !*captured {
 		*captured = utils.PointInRect(c.io.MousePos, rect) && c.io.DragStarted(rect) && c.io.IsDragging
@@ -129,8 +144,6 @@ func (c *UiContext) pushWindowFront(w *Window) {
 		}
 	}
 }
-
-var initHover = false
 
 func (c *UiContext) findHoveredWindow() {
 	var hovered *Window

@@ -31,18 +31,18 @@ func (b *Button) AddWidth(w float32) {
 func (b *Button) AddHeight(h float32) {
 	b.BoundingBox[3] += h
 }
-func (b Button) WidgetId() string {
+func (b *Button) WidgetId() string {
 	return b.Id
 }
 
-func (b Button) Height() float32 {
+func (b *Button) Height() float32 {
 	return b.BoundingBox[3]
 }
-func (b Button) Width() float32 {
+func (b *Button) Width() float32 {
 	return b.BoundingBox[2]
 }
 
-func (b Button) Rectangle() [4]float32 {
+func (b *Button) Rectangle() [4]float32 {
 	return b.BoundingBox
 }
 

@@ -36,6 +36,7 @@ type Window struct {
 
 	capturedV, capturedH bool
 	capturedWin          bool
+	capturedInsideWin    bool
 }
 
 func genWindowId() string {
@@ -65,10 +66,6 @@ func NewWindow(x, y, w, h float32) *Window {
 	wnd.currentWidgetSpace = wnd.mainWidgetSpace
 	return &wnd
 }
-
-// func (w *Window) AddCommand(cmd draw.Command) {
-// 	w.buffer.AddCommand(cmd)
-// }
 
 var counter int = 0
 
@@ -131,7 +128,7 @@ func (c *UiContext) BeginWindow(id string) {
 
 		c.dragBehavior(wnd.outerRect, &wnd.capturedWin)
 		// Изменение положения окна
-		if c.ActiveWindow == wnd && wnd.capturedWin && !c.wantResizeV && !c.wantResizeH {
+		if c.ActiveWindow == wnd && wnd.capturedWin && !c.wantResizeV && !c.wantResizeH && !wnd.capturedInsideWin {
 			newX += c.io.MouseDelta.X
 			newY += c.io.MouseDelta.Y
 		}
@@ -171,12 +168,6 @@ func (c *UiContext) BeginWindow(id string) {
 	wnd.mainWidgetSpace.cursorX = wnd.mainWidgetSpace.X + UiCtx.CurrentStyle.LeftMargin
 	wnd.mainWidgetSpace.cursorY = wnd.mainWidgetSpace.Y + UiCtx.CurrentStyle.TopMargin
 
-	//hovered := c.hoverBehavior(wnd, utils.NewRectS(wnd.mainWidgetSpace.ClipRect))
-	//if hovered {
-	//
-	//	c.ActiveWidgetSpaceId = wnd.mainWidgetSpace.id
-	//}
-
 	// Scrollbar behavior
 	if wnd.mainWidgetSpace.isVertScrollShown {
 		wnd.mainWidgetSpace.vertScrollBar()
@@ -208,7 +199,6 @@ func (c *UiContext) BeginWindow(id string) {
 	c.windowStack.Push(wnd)
 }
 
-var visibleRatio float32
 var step float32 = 40
 var r, g, b float32 = 231, 158, 162
 
@@ -222,6 +212,8 @@ func (w *Window) addWidget(widg widgets.Widget) bool {
 
 var (
 	whiteColor = [4]float32{255, 255, 255, 1}
+	softGreen  = [4]float32{231, 240, 162, 0.8}
+	black      = [4]float32{0, 0, 0, 1}
 )
 
 func (wnd *Window) getWidget(id string, f func() widgets.Widget) widgets.Widget {
@@ -274,6 +266,52 @@ func (c *UiContext) ButtonT(id string, msg string) bool {
 		wnd.currentWidgetSpace.AddVirtualHeight(tBtn.Height())
 	}
 	return clicked
+}
+
+func (c *UiContext) Slider(id string, i *float32, min, max float32) {
+	wnd := c.windowStack.Peek()
+	var slider *widgets.Slider
+	//var hovered, clicked bool
+	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
+
+	slider = wnd.getWidget(id, func() widgets.Widget {
+		return widgets.NewSlider(id, x, y, 100, 50, min, max, c.CurrentStyle)
+	}).(*widgets.Slider)
+
+	y -= wnd.currentWidgetSpace.scrlY
+	// logic
+	{
+		slider.HandleMouseDrag(c.io.MouseDelta.X, c.dragBehaviorInWindow)
+		slider.CalculateNumber(i)
+
+		//hovered = c.hoverBehavior(wnd, utils.NewRectS(tBtn.Box()))
+		//if hovered {
+		//	c.setActiveWidget(tBtn.Id)
+		//	tBtn.Button.SetColor(c.CurrentStyle.BtnHoveredColor)
+		//	if c.io.MouseClicked[0] {
+		//		tBtn.ChangeActive()
+		//	}
+		//} else if tBtn.Active() {
+		//	tBtn.Button.SetColor(c.CurrentStyle.BtnActiveColor)
+		//} else {
+		//	tBtn.Button.SetColor(c.CurrentStyle.BtnColor)
+		//}
+		//clicked = c.io.MouseClicked[0] && hovered
+	}
+	slider.UpdatePosition([4]float32{x, y, slider.Width(), slider.Height()})
+
+	wnd.buffer.CreateRect(slider.MainSliderPos()[0], slider.MainSliderPos()[1], slider.MainSliderPos()[2], slider.MainSliderPos()[3], 0,
+		draw.StraightCorners, 0, softGreen,
+		draw.ClipRectCompose{MainClipRect: slider.BoundingBox(), ClipRect: wnd.currentWidgetSpace.ClipRect})
+
+	wnd.buffer.CreateRect(slider.BtnSliderPos()[0], slider.BtnSliderPos()[1], slider.BtnSliderPos()[2], slider.BtnSliderPos()[3], 0,
+		draw.StraightCorners, 0, black,
+		draw.ClipRectCompose{MainClipRect: slider.BoundingBox(), ClipRect: wnd.currentWidgetSpace.ClipRect})
+
+	wnd.addCursor(slider.Width(), slider.Height())
+	if !isRow {
+		wnd.currentWidgetSpace.AddVirtualHeight(slider.Height())
+	}
 }
 
 func (c *UiContext) Text(id string, msg string, size int) {

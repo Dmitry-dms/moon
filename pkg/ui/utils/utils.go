@@ -111,6 +111,8 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
+type CapturedDragBehavior func(r Rect, captured *bool)
+
 var src = rand.NewSource(time.Now().UnixNano())
 
 func RandString(n int) string {
