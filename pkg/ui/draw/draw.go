@@ -89,7 +89,7 @@ func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font,
 		Clr:     txt.CurrentColor,
 		Text:    txt.Message,
 		Font:    font,
-		Size:    txt.Size,
+		Scale:   txt.Scale,
 		Padding: txt.Padding,
 	}
 	cmd := Command{
@@ -195,7 +195,7 @@ func (c *CmdBuffer) AddCommand(cmd Command, clip ClipRectCompose) {
 		}
 	case Text:
 		t := cmd.Text
-		c.Text(t.Text, t.Font, t.X, c.displaySize.Y-(t.Y+float32(t.Padding)), t.Size, t.Clr)
+		c.Text(t.Text, t.Font, t.X, c.displaySize.Y-(t.Y+float32(t.Padding)), t.Scale, t.Clr)
 		c.SeparateBuffer(t.Font.TextureId, clip) // don't forget to slice buffer
 	}
 
@@ -236,7 +236,7 @@ func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 	r.render(vert, ind, 6)
 }
 
-func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, clr [4]float32) {
+func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, scale float32, clr [4]float32) {
 
 	texId := font.TextureId
 	inf := font.GetXHeight()
@@ -246,7 +246,7 @@ func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, c
 	var dx, dy float32
 	dx = x
 	prevR := rune(-1)
-	scale := float32(1) / (float32(font.DefaultFontSize) / float32(size))
+
 	dy = y - scale*inf
 
 	var maxDescend float32
@@ -277,8 +277,8 @@ func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, size int, c
 				maxDescend = d
 			}
 		}
-		b.addCharacter(xPos, yPos, scale, uint32(texId), info, clr)
-		dx += float32(info.Width) * float32(scale)
+		b.addCharacter(xPos, yPos, scale, texId, info, clr)
+		dx += float32(info.Width) * scale
 		prevR = r
 	}
 }

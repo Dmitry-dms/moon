@@ -20,6 +20,7 @@ type Style struct {
 	TextColor   [4]float32
 	TextSize    int
 	TextPadding int
+	FontScale   float32
 
 	//slider
 	SliderColor    [4]float32
@@ -39,12 +40,13 @@ var (
 		BtnColor:         [4]float32{124, 90, 156, 1},
 		BtnHoveredColor:  [4]float32{200, 270, 30, 1},
 		BtnActiveColor:   [4]float32{255, 0, 0, 1},
-		TextColor:        [4]float32{255, 255, 255, 1},
+		TextColor:        [4]float32{5, 134, 222, 1},
 		TextSize:         20,
 		TextPadding:      10,
 		SliderColor:      [4]float32{231, 240, 162, 0.8},
 		SliderBtnColor:   [4]float32{0, 0, 0, 1},
 		SliderHeight:     10,
 		SliderBtnWidth:   20,
+		FontScale:        1,
 	}
 )

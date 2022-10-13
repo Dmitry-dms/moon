@@ -24,8 +24,8 @@ import (
 )
 
 type Font struct {
-	Filepath        string
-	DefaultFontSize int32
+	Filepath string
+	FontSize int32
 
 	CharMap map[int]*CharInfo
 
@@ -35,13 +35,11 @@ type Font struct {
 	Face font.Face
 }
 
-const DefaultFontSize = 70
-
-func NewFont(filepath string) *Font {
+func NewFont(filepath string, fontSize int32) *Font {
 	f := Font{
-		Filepath:        filepath,
-		DefaultFontSize: DefaultFontSize,
-		CharMap:         make(map[int]*CharInfo, 50),
+		Filepath: filepath,
+		FontSize: fontSize,
+		CharMap:  make(map[int]*CharInfo, 50),
 	}
 
 	f.generateAndUploadBitmap()
@@ -57,7 +55,7 @@ func (f *Font) GetXHeight() float32 {
 
 var first = true
 
-func (f *Font) CalculateTextBounds(text string, size int) (width, height float32) {
+func (f *Font) CalculateTextBounds(text string, scale float32) (width, height float32) {
 	//var dx, dy float32
 	prevR := rune(-1)
 
@@ -65,8 +63,9 @@ func (f *Font) CalculateTextBounds(text string, size int) (width, height float32
 
 	faceHeight := f.Face.Metrics().Height
 
-	scale := 1 / (float32(DefaultFontSize) / float32(size))
+	//scale := 1 / (float32(FontSize) / float32(size))
 	height = scale * inf
+	//height = inf
 
 	var maxDescend float32
 	for _, r := range text {
@@ -91,11 +90,13 @@ func (f *Font) CalculateTextBounds(text string, size int) (width, height float32
 
 		if info.Descend != 0 {
 			d := float32(info.Descend) * scale
+			//d := float32(info.Descend)
 			if d > maxDescend {
 				maxDescend = d
 			}
 		}
 		width += float32(info.Width) * scale
+		//width += float32(info.Width)
 		prevR = r
 	}
 	height += maxDescend
@@ -106,19 +107,19 @@ func (f *Font) CalculateTextBounds(text string, size int) (width, height float32
 
 func (f *Font) generateAndUploadBitmap() {
 	cp := charmap.Windows1251
-	letters := []rune{}
+	var letters []rune
 	for i := 32; i < 256; i++ {
 		r := cp.DecodeByte(byte(i))
 		letters = append(letters, r)
 	}
 
 	var (
-		DPI = 144.0
+		DPI = 157.0
 		// DPI          = 256.0
 		width        = siz
 		height       = siz
 		startingDotX = 0
-		startingDotY = int(f.DefaultFontSize) + int(DPI)/3
+		startingDotY = int(f.FontSize) * 2 //+ int(DPI)/3
 	)
 	var face font.Face
 	{
@@ -132,7 +133,7 @@ func (f *Font) generateAndUploadBitmap() {
 			log.Fatalf("Parse: %v", err)
 		}
 		face, err = opentype.NewFace(parsed, &opentype.FaceOptions{
-			Size:    float64(f.DefaultFontSize),
+			Size:    float64(f.FontSize),
 			DPI:     DPI,
 			Hinting: font.HintingFull,
 		})
@@ -249,7 +250,7 @@ func (f *Font) generateAndUploadBitmap() {
 	}
 	encoder.Encode(pngFile, dst3)
 	// if opengl {
-	t2 := gogl.UploadTextureFromMemory(dst3)
+	t2 := gogl.UploadRGBATextureFromMemory(dst3)
 	f.TextureId = t2.GetId()
 	f.Texture = t2
 	// }

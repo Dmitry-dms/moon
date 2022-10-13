@@ -87,53 +87,37 @@ func (t *Texture) GetId() uint32 {
 	return t.TextureId
 }
 
-func UploadTextureFromMemory(data image.Image) *Texture {
-	// p := data.Pix
+// TODO: Replace gl.RGBA with gl.RED (probably requires changing shader: separate font shader from general sahder gui.glsl)
+func UploadRGBATextureFromMemory(data image.Image) *Texture {
 	w := data.Bounds().Max.X
 	h := data.Bounds().Max.Y
-
 	pixels := make([]byte, w*h*4)
 	bIndex := 0
 
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
+			//r, _, _, _ := data.At(x, y).RGBA()
 			r, g, b, a := data.At(x, y).RGBA()
-
-			if r != 0 {
-				r = 255
-			}
-			if g != 0 {
-				g = 255
-			}
-			if b != 0 {
-				b = 255
-			}
-
-			pixels[bIndex] = byte(r )
+			pixels[bIndex] = byte(r)
 			bIndex++
-			pixels[bIndex] = byte(g )
+			pixels[bIndex] = byte(g)
 			bIndex++
-			pixels[bIndex] = byte(b )
+			pixels[bIndex] = byte(b)
 			bIndex++
 			if r == 0 && g == 0 && b == 0 {
 				pixels[bIndex] = byte(0)
-				// pixels[bIndex] = byte(a / 256)
 			} else {
 				pixels[bIndex] = byte(a)
 			}
 			bIndex++
 		}
 	}
-
 	texture := genBindTexture()
-
-
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
-	// gl.GenerateMipmap(gl.TEXTURE_2D)
 
 	textureStruct := Texture{
 		TextureId: texture,
@@ -176,7 +160,7 @@ func TextureFromPNG(filepath string) (*Texture, error) {
 	}
 
 	texture := genBindTexture()
-	
+
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)

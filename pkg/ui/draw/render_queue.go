@@ -38,7 +38,7 @@ type Text_command struct {
 	Clr     [4]float32
 	Id      string
 	Padding int
-	Size    int
+	Scale   float32
 }
 
 type Rect_command struct {

@@ -236,7 +236,7 @@ func (c *UiContext) ButtonT(id string, msg string) bool {
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	tBtn = wnd.getWidget(id, func() widgets.Widget {
-		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.TextSize)
+		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
 		return widgets.NewTextButton(id, x, y, w, h, msg, widgets.Center, c.CurrentStyle)
 	}).(*widgets.TextButton)
 
@@ -308,10 +308,15 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	txt = wnd.getWidget(id, func() widgets.Widget {
-		w, h := c.font.CalculateTextBounds(msg, size)
+		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
 		return widgets.NewText(id, msg, x, y, w, h, c.CurrentStyle)
 	}).(*widgets.Text)
 
+	if msg != txt.Message {
+		txt.Message = msg
+		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+		txt.SetWH(w, h)
+	}
 	y -= wnd.currentWidgetSpace.scrlY
 	// logic
 	{
@@ -325,6 +330,7 @@ func (c *UiContext) Text(id string, msg string, size int) {
 			txt.SetBackGroundColor(transparent)
 		}
 	}
+	//txt.CurrentColor = [4]float32{255, 255, 255, 1}
 
 	txt.UpdatePosition([4]float32{x, y, txt.Width(), txt.Height()})
 	wnd.buffer.CreateText(x, y, txt, *c.font, draw.ClipRectCompose{MainClipRect: wnd.mainWidgetSpace.ClipRect, ClipRect: wnd.currentWidgetSpace.ClipRect})
@@ -474,7 +480,7 @@ func (c *UiContext) Tooltip(msg string) {
 	wnd := c.windowStack.Peek()
 	var txt *widgets.Text
 	txt = wnd.getWidget(msg, func() widgets.Widget {
-		w, h := c.font.CalculateTextBounds(msg, 24)
+		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
 		return widgets.NewText(msg, msg, x, y, w, h, c.CurrentStyle)
 	}).(*widgets.Text)
 

@@ -9,6 +9,7 @@ type Text struct {
 
 	Size    int
 	Padding int
+	Scale   float32
 }
 
 func NewText(id, text string, x, y, w, h float32, style *styles.Style) *Text {
@@ -21,13 +22,19 @@ func NewText(id, text string, x, y, w, h float32, style *styles.Style) *Text {
 		},
 		CurrentColor: style.TextColor,
 		Size:         style.TextSize,
-		Padding:      style.TextPadding,
+		Padding:      style.TextPadding * int(style.FontScale),
+		Scale:        style.FontScale,
 	}
 	return &t
 }
 
 func (t *Text) UpdatePosition(pos [4]float32) {
 	t.base.boundingBox = pos
+}
+
+func (t *Text) SetWH(width, height float32) {
+	t.base.boundingBox[2] = width
+	t.base.boundingBox[3] = height + float32(t.Padding)
 }
 
 func (t *Text) SetBackGroundColor(clr [4]float32) {

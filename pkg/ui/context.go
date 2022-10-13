@@ -77,7 +77,7 @@ func NewContext(frontRenderer UiRenderer) *UiContext {
 }
 
 func (c *UiContext) UploadFont(path string, size int) {
-	c.font = fonts.NewFont(path)
+	c.font = fonts.NewFont(path, int32(size))
 }
 
 func (c *UiContext) Initialize(frontRenderer UiRenderer) {

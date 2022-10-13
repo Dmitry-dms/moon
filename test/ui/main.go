@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image"
-
 	"os"
 	"runtime"
 
@@ -77,8 +76,10 @@ func main() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 50)
-	// ui.UiCtx.UploadFont("assets/fonts/rany.otf", 50)
+	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 16)
+	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 24)
+	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 16)
+	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 16)
 
 	beginTime := float32(glfw.GetTime())
 	var endTime float32
@@ -86,6 +87,7 @@ func main() {
 	dt = dt
 
 	var time float32 = 0
+
 	tex, _ = tex.Init("assets/images/mario.png")
 	tex2, _ = tex2.Init("assets/images/goomba.png")
 
@@ -194,7 +196,10 @@ func secondWindow() {
 		uiCtx.Image("#im4", tex)
 	})
 
-	uiCtx.Text("text-1dff", "Hello, world!", 14)
+	cl := fmt.Sprintf("%.0f", slCounter)
+	//uiCtx.Text("text-1dff", "The quick brown fox jumps over the lazy dog", 16)
+	uiCtx.Text("text-1dff", "Съешь еще этих мягких", 16)
+	uiCtx.Text("text-1dfhjyf", cl, 16)
 	uiCtx.Slider("slider-1", &slCounter, 0, 255)
 
 	uiCtx.Row("row 13214", func() {
