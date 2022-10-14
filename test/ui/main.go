@@ -76,7 +76,7 @@ func main() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 16)
+	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 70)
 	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 24)
 	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 16)
 	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 16)

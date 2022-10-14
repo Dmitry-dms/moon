@@ -135,7 +135,7 @@ func (f *Font) generateAndUploadBitmap() {
 		face, err = opentype.NewFace(parsed, &opentype.FaceOptions{
 			Size:    float64(f.FontSize),
 			DPI:     DPI,
-			Hinting: font.HintingFull,
+			Hinting: font.HintingNone,
 		})
 
 		if err != nil {
@@ -248,9 +248,9 @@ func (f *Font) generateAndUploadBitmap() {
 	encoder := png.Encoder{
 		CompressionLevel: png.BestCompression,
 	}
+	t2 := gogl.UploadRGBATextureFromMemory(dst3)
 	encoder.Encode(pngFile, dst3)
 	// if opengl {
-	t2 := gogl.UploadRGBATextureFromMemory(dst3)
 	f.TextureId = t2.GetId()
 	f.Texture = t2
 	// }

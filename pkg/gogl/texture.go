@@ -98,16 +98,23 @@ func UploadRGBATextureFromMemory(data image.Image) *Texture {
 		for x := 0; x < w; x++ {
 			//r, _, _, _ := data.At(x, y).RGBA()
 			r, g, b, a := data.At(x, y).RGBA()
-			pixels[bIndex] = byte(r)
+			rb := byte(r)
+			gb := byte(g)
+			bb := byte(b)
+			ab := byte(a)
+			pixels[bIndex] = rb
 			bIndex++
-			pixels[bIndex] = byte(g)
+			pixels[bIndex] = gb
 			bIndex++
-			pixels[bIndex] = byte(b)
+			pixels[bIndex] = bb
 			bIndex++
-			if r == 0 && g == 0 && b == 0 {
+			if rb == 0 && gb == 0 && bb == 0 {
+				pixels[bIndex] = byte(0)
+			} else if rb <= 150 && gb <= 150 && bb <= 150 { // removes char outlining
 				pixels[bIndex] = byte(0)
 			} else {
-				pixels[bIndex] = byte(a)
+				//fmt.Println(r, g, b)
+				pixels[bIndex] = ab
 			}
 			bIndex++
 		}
