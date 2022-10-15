@@ -77,7 +77,7 @@ func main() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 70)
-	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 24)
+	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 14)
 	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 16)
 	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 16)
 
@@ -104,7 +104,7 @@ func main() {
 
 		uiCtx.NewFrame([2]float32{float32(Width), float32(Height)})
 
-		//firstWindow()
+		firstWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 			//fmt.Println(uiCtx.ActiveWidget)
@@ -112,7 +112,7 @@ func main() {
 			fmt.Println(uiCtx.HoveredWindow)
 			fmt.Println(uiCtx.ActiveWindow)
 		}
-		secondWindow()
+		//secondWindow()
 
 		// fb.Bind()
 		uiCtx.EndFrame([2]float32{float32(Width), float32(Height)})
@@ -162,21 +162,21 @@ func firstWindow() {
 	// uiCtx.Text("#t3", "hello world!", 40)
 	//uiCtx.VSpace("#vs1fdgdf")
 
-	//uiCtx.Row("row 13214", func() {
-	//	uiCtx.Image("#im4kjdg464", tex)
-	//	uiCtx.Column("col fdfd", func() {
-	//		uiCtx.Image("#im76", tex2)
-	//		uiCtx.Image("#im4", tex)
-	//	})
-	//
-	//	uiCtx.Column("col fdfdвава", func() {
-	//		uiCtx.Button("ASsfdffb")
-	//		uiCtx.Button("ASsfdffbbb")
-	//	})
-	//
-	//	uiCtx.Image("#im4kj", tex)
-	//})
-	uiCtx.SubWidgetSpace("widhsp-1", func() {
+	uiCtx.Row("row 13214", func() {
+		uiCtx.Image("#im4kjdg464", tex)
+		uiCtx.Column("col fdfd", func() {
+			uiCtx.Image("#im76", tex2)
+			uiCtx.Image("#im4", tex)
+		})
+
+		uiCtx.Column("col fdfdвава", func() {
+			uiCtx.Button("ASsfdffb")
+			uiCtx.Button("ASsfdffbbb")
+		})
+
+		uiCtx.Image("#im4kj", tex)
+	})
+	uiCtx.SubWidgetSpace("widhsp-1", ui.Default, func() {
 		uiCtx.Image("#im4kjdg464tht", tex2)
 		uiCtx.Image("#im76erewr", tex)
 		uiCtx.Text("#t3df", "world!", 24)

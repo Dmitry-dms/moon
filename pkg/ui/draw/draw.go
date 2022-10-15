@@ -107,11 +107,11 @@ func (c *CmdBuffer) CreateWindow(wnd Window_command, clip ClipRectCompose) {
 	c.CreateRect(wnd.X, wnd.Y, wnd.W, wnd.H, 10, AllRounded, 0, wnd.Clr, clip)
 	toolbar := wnd.Toolbar
 	c.CreateRect(toolbar.X, toolbar.Y, toolbar.W, toolbar.H, 10, TopRect, 0, toolbar.Clr, clip)
-	if wnd.Scrollbar.H != 0 {
-		scrl := wnd.Scrollbar
-		c.CreateRect(scrl.X, scrl.Y, scrl.W, scrl.H, scrl.Radius, AllRounded, 0, scrl.ScrollClr, clip)
-		c.CreateRect(scrl.Xb, scrl.Yb, scrl.Wb, scrl.Hb, scrl.Radius, AllRounded, 0, scrl.BtnClr, clip)
-	}
+	//if wnd.Scrollbar.H != 0 {
+	//	scrl := wnd.Scrollbar
+	//	c.CreateRect(scrl.X, scrl.Y, scrl.W, scrl.H, scrl.Radius, AllRounded, 0, scrl.ScrollClr, clip)
+	//	c.CreateRect(scrl.Xb, scrl.Yb, scrl.Wb, scrl.Hb, scrl.Radius, AllRounded, 0, scrl.BtnClr, clip)
+	//}
 
 	c.SeparateBuffer(0, clip)
 }

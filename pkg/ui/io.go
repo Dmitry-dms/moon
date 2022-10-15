@@ -72,8 +72,6 @@ func (io *Io) KeyCallback(key GuiKey, pressed bool) {
 	}
 }
 
-var lastMousePos = utils.Vec2{}
-
 func (io *Io) DragStarted(rect utils.Rect) bool {
 	return utils.PointInRect(io.dragStarted, rect)
 }

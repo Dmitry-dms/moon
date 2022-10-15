@@ -5,6 +5,19 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
 
+type WidgetSpaceFlag uint32
+
+const (
+	ShowScrollbar WidgetSpaceFlag = 1 << iota
+	Resizable
+	NotResizable
+	HideScrollbar
+	NotScrollable
+	Scrollable
+
+	Default = Resizable | ShowScrollbar | Scrollable
+)
+
 type WidgetSpace struct {
 	X, Y, W, H float32
 	id         string
@@ -19,12 +32,14 @@ type WidgetSpace struct {
 	verticalScrollbar *Scrollbar
 	captured          bool
 
-	isVertScrollShown bool
-	scrlY             float32
+	isVertScrollShown bool    // used to decide create draw command or not
+	scrlY             float32 // main scroll state
 
 	ratio float32
 
 	rowStack utils.Stack[*widgets.HybridLayout]
+
+	flags WidgetSpaceFlag
 }
 
 var defScrollWidth float32 = 10
@@ -41,7 +56,7 @@ func (ws *WidgetSpace) vertScrollBar() {
 	ws.handleMouseDrag()
 }
 
-func newWidgetSpace(id string, x, y, w, h float32) *WidgetSpace {
+func newWidgetSpace(id string, x, y, w, h float32, flags WidgetSpaceFlag) *WidgetSpace {
 	vs := WidgetSpace{
 		id:            id,
 		X:             x,
@@ -52,6 +67,7 @@ func newWidgetSpace(id string, x, y, w, h float32) *WidgetSpace {
 		cursorY:       y,
 		widgetCounter: 0,
 		widgets:       []widgets.Widget{},
+		flags:         flags,
 		virtualHeight: 0,
 		verticalScrollbar: NewScrolBar(utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, h),
 			utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, 50),
@@ -70,44 +86,33 @@ func (ws *WidgetSpace) setScrollY(scrollY float32) {
 
 func (ws *WidgetSpace) handleMouseDrag() {
 	vB := ws.verticalScrollbar
-	UiCtx.dragBehavior(utils.NewRect(vB.bX, vB.bY, vB.bW, vB.bH), &ws.captured)
-	delta := UiCtx.io.MouseDelta.Y
-	if ws.captured {
-		// Предотвращение неправильного расчета позиции скроллинга при резком перемещении мыши (delta > 70)
-		if ws.H+ws.scrlY+delta > ws.lastVirtualHeight {
-			ws.scrlY = ws.lastVirtualHeight - ws.H
-		} else {
-			ws.scrlY += delta
+	if ws.flags&ShowScrollbar != 0 && ws.isVertScrollShown {
+		UiCtx.dragBehavior(utils.NewRect(vB.bX, vB.bY, vB.bW, vB.bH), &ws.captured)
+		delta := UiCtx.io.MouseDelta.Y
+		if ws.captured {
+			// Предотвращение неправильного расчета позиции скроллинга при резком перемещении мыши (delta > 70)
+			if ws.H+ws.scrlY+delta > ws.lastVirtualHeight {
+				ws.scrlY = ws.lastVirtualHeight - ws.H
+			} else {
+				ws.scrlY += delta
+			}
+
+			if ws.scrlY < 0 {
+				ws.scrlY = 0
+			}
 		}
 
-		if ws.scrlY < 0 {
-			ws.scrlY = 0
-		}
 	}
 	vB.bH = ws.H * ws.ratio
 	vB.bX = ws.X + ws.W - vB.w
 	vB.bY = ws.Y + ws.scrlY*ws.ratio
+
 }
 func (ws *WidgetSpace) handleMouseScroll(scrollY float32) {
 	var factor = scrollY * step
-	//currentPos := ws.scrlY
-	//var topBorder float32 = 0
 
 	botBorder := ws.lastVirtualHeight
 
-	// up scroll border
-	//if currentPos <= topBorder {
-	//	if factor > 0 {
-	//		ws.scrlY += factor * ws.ratio
-	//	} else {
-	//		//ws.scrlY = 0
-	//	}
-	//	// 	down scroll border
-	//} else if currentPos+ws.H >= botBorder {
-	//	if factor < 0 {
-	//		ws.scrlY += factor * ws.ratio
-	//	}
-	//} else {
 	// FIXED: uncorrect scroll position
 	if ws.H+ws.scrlY+factor > botBorder {
 		ws.scrlY = ws.lastVirtualHeight - ws.H
@@ -118,7 +123,6 @@ func (ws *WidgetSpace) handleMouseScroll(scrollY float32) {
 	if ws.scrlY < 0 {
 		ws.scrlY = 0
 	}
-	//}
 }
 
 func (ws *WidgetSpace) checkVerScroll() {
