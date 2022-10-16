@@ -15,7 +15,7 @@ const (
 	NotScrollable
 	Scrollable
 
-	Default = Resizable | ShowScrollbar | Scrollable
+	Default = NotResizable | ShowScrollbar | Scrollable
 )
 
 type WidgetSpace struct {
@@ -171,5 +171,6 @@ func (ws *WidgetSpace) getCursorPosition() (x float32, y float32, isRow bool) {
 		y = ws.cursorY
 	}
 	isRow = ok
+	y -= ws.scrlY
 	return
 }
