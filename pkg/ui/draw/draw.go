@@ -43,6 +43,16 @@ type ClipRectCompose struct {
 	MainClipRect [4]float32 // main window clipping rectangle
 }
 
+var EmptyClip = [4]float32{0, 0, 0, 0}
+
+func NewClip(inner, main [4]float32) ClipRectCompose {
+	c := ClipRectCompose{
+		ClipRect:     inner,
+		MainClipRect: main,
+	}
+	return c
+}
+
 func NewBuffer(size *utils.Vec2) *CmdBuffer {
 	return &CmdBuffer{
 		commands:    []Command{},
@@ -148,8 +158,7 @@ func (c *CmdBuffer) AddCommand(cmd Command, clip ClipRectCompose) {
 		w, w2 := int32(mainRect[2]), int32(innerRect[2])
 		h, h2 := int32(mainRect[3]), int32(innerRect[3])
 
-		var useInnerClip bool
-		useInnerClip = !checkSliceForNull(innerRect)
+		useInnerClip := !checkSliceForNull(innerRect)
 		xl := x+w < x2+w2
 		yl := y+h < y2+h2
 
@@ -205,6 +214,13 @@ func (r *CmdBuffer) render(vert []float32, indeces []int32, vertCount int) {
 	r.Vertices = append(r.Vertices, vert...)
 	r.Indeces = append(r.Indeces, indeces...)
 	r.VertCount += vertCount
+}
+
+func (r *CmdBuffer) CreateBorderBox(x, y, w, h, lineWidth float32, clr [4]float32) {
+	r.CreateRect(x, y, w, lineWidth, 0, StraightCorners, 0, clr, ClipRectCompose{})
+	r.CreateRect(x+w-lineWidth, y, lineWidth, h, 0, StraightCorners, 0, clr, ClipRectCompose{})
+	r.CreateRect(x, y, lineWidth, h, 0, StraightCorners, 0, clr, ClipRectCompose{})
+	r.CreateRect(x, y+h-lineWidth, w, lineWidth, 0, StraightCorners, 0, clr, ClipRectCompose{})
 }
 
 func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
@@ -305,13 +321,6 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	fillVertices(vert, &offset, x1, y1, ux1, uy1, float32(texId), clr)
 	fillVertices(vert, &offset, x0, y1, ux0, uy1, float32(texId), clr)
 
-	// h := scale*float32(info.Heigth)
-	// w := scale*float32(info.Width)
-
-	// fillVertices(vert, &offset, x0, y0, ux1, uy1, float32(texId), clr)
-	// fillVertices(vert, &offset, x0, y0-h, ux1, uy0, float32(texId), clr)
-	// fillVertices(vert, &offset, x0+w, y0-h, ux0, uy0, float32(texId), clr)
-
 	ind[0] = int32(ind0)
 	ind[1] = int32(ind1)
 	ind[2] = int32(ind2)
@@ -319,7 +328,7 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	last := ind2 + 1
 
 	fillVertices(vert, &offset, x0, y0, ux0, uy0, float32(texId), clr)
-	// fillVertices(vert, &offset, x0+w, y0, ux1, uy0, float32(texId), clr)
+
 	ind[3] = int32(ind0)
 	ind[4] = int32(ind2)
 	ind[5] = int32(last)

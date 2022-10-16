@@ -109,8 +109,8 @@ func main() {
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 			//fmt.Println(uiCtx.ActiveWidget)
 			//fmt.Println(uiCtx.ActiveWidgetSpaceId)
-			fmt.Println(uiCtx.HoveredWindow)
-			fmt.Println(uiCtx.ActiveWindow)
+			fmt.Println(uiCtx.ActiveWidget)
+			//fmt.Println(uiCtx.ActiveWindow)
 		}
 		//secondWindow()
 
@@ -155,12 +155,15 @@ var ish bool = false
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 
-	//if uiCtx.ButtonT("Нажать", "Press") {
-	//	ish = !ish
-	//}
-	// uiCtx.Text("#t3","xello world!", 40)
-	// uiCtx.Text("#t3", "hello world!", 40)
-	//uiCtx.VSpace("#vs1fdgdf")
+	if uiCtx.ButtonT("Нажать", "Press") {
+		ish = !ish
+	}
+	if ish {
+		uiCtx.Text("#t3hghg", "xello world!", 14)
+		uiCtx.Text("#t3j", "hello world!", 14)
+	}
+
+	uiCtx.VSpace("#vs1fdgdf")
 
 	uiCtx.Row("row 13214", func() {
 		uiCtx.Image("#im4kjdg464", tex)
@@ -172,6 +175,7 @@ func firstWindow() {
 		uiCtx.Column("col fdfdвава", func() {
 			uiCtx.Button("ASsfdffb")
 			uiCtx.Button("ASsfdffbbb")
+			uiCtx.Slider("slider-1", &slCounter, 0, 255)
 		})
 
 		uiCtx.Image("#im4kj", tex)
@@ -181,8 +185,16 @@ func firstWindow() {
 		uiCtx.Image("#im76erewr", tex)
 		uiCtx.Text("#t3df", "world!", 24)
 	})
-	// uiCtx.VSpace("#vs1")
+	uiCtx.VSpace("#vs1")
 	uiCtx.Image("#imgj4", tex2)
+
+	if uiCtx.ActiveWidget == "#imgj4" {
+		uiCtx.Tooltip("ttp-1", func() {
+			uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
+			uiCtx.Text("text-ttp-2", "Hello World", 16)
+			uiCtx.Text("text-ttp-3", "Hello World", 16)
+		})
+	}
 
 	uiCtx.EndWindow()
 }

@@ -27,6 +27,7 @@ type WidgetSpace struct {
 	widgetCounter                    int
 	widgets                          []widgets.Widget
 	virtualHeight, lastVirtualHeight float32
+	virtualWidth, lastVirtualWidth   float32
 	ClipRect                         [4]float32
 
 	verticalScrollbar *Scrollbar
@@ -142,7 +143,16 @@ func (ws *WidgetSpace) addWidget(widg widgets.Widget) bool {
 func (ws *WidgetSpace) AddVirtualHeight(height float32) {
 	ws.virtualHeight += height
 }
-
+func (ws *WidgetSpace) AddVirtualWH(width, height float32) {
+	if ws.virtualWidth == 0 {
+		ws.virtualWidth += width
+	} else {
+		if ws.virtualWidth < width {
+			ws.virtualWidth += width
+		}
+	}
+	ws.virtualHeight += height
+}
 func (ws *WidgetSpace) getCurrentRow() (*widgets.HybridLayout, bool) {
 	if ws.rowStack.Length() == 0 {
 		return nil, false

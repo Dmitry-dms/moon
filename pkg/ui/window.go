@@ -173,7 +173,7 @@ func (c *UiContext) BeginWindow(id string) {
 		if wnd.mainWidgetSpace.flags&ShowScrollbar != 0 && wnd.mainWidgetSpace.isVertScrollShown {
 			cl := [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}
 
-			var scrlClip = draw.ClipRectCompose{MainClipRect: cl}
+			scrlClip := draw.NewClip(draw.EmptyClip, cl)
 			scrl := wnd.mainWidgetSpace.verticalScrollbar
 
 			wnd.buffer.CreateRect(scrl.x, scrl.y, scrl.w, scrl.h, 5, draw.AllRounded, 0, scrl.clr, scrlClip)
@@ -185,9 +185,8 @@ func (c *UiContext) BeginWindow(id string) {
 
 	wnd.mainWidgetSpace.ClipRect = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y, wnd.mainWidgetSpace.W - wnd.mainWidgetSpace.verticalScrollbar.w, wnd.mainWidgetSpace.H}
 
-	wnd.createWindow(cmdw, draw.ClipRectCompose{
-		MainClipRect: [4]float32{wnd.x, wnd.y, wnd.w, wnd.h},
-	})
+	wnd.createWindow(cmdw, draw.NewClip(draw.EmptyClip, [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}))
+
 	c.windowStack.Push(wnd)
 }
 
@@ -205,6 +204,7 @@ var (
 	whiteColor    = [4]float32{255, 255, 255, 1}
 	softGreen     = [4]float32{231, 240, 162, 0.8}
 	black         = [4]float32{0, 0, 0, 1}
+	red           = [4]float32{255, 0, 0, 1}
 	transparent   = [4]float32{0, 0, 0, 0}
 	mainWindowClr = [4]float32{231, 158, 162, 0.8}
 )
@@ -248,14 +248,10 @@ func (c *UiContext) ButtonT(id string, msg string) bool {
 		clicked = c.io.MouseClicked[0] && hovered
 	}
 	//
-	wnd.buffer.CreateButtonT(x, y, tBtn, *c.font, draw.ClipRectCompose{MainClipRect: wnd.mainWidgetSpace.ClipRect, ClipRect: wnd.currentWidgetSpace.ClipRect})
-	//
-	tBtn.UpdatePosition([4]float32{x, y, tBtn.Width(), tBtn.Height()})
 
-	wnd.addCursor(tBtn.Width(), tBtn.Height())
-	if !isRow {
-		wnd.currentWidgetSpace.AddVirtualHeight(tBtn.Height())
-	}
+	wnd.buffer.CreateButtonT(x, y, tBtn, *c.font, draw.NewClip(wnd.mainWidgetSpace.ClipRect, wnd.currentWidgetSpace.ClipRect))
+
+	wnd.endWidget(x, y, isRow, tBtn)
 	return clicked
 }
 
@@ -275,20 +271,18 @@ func (c *UiContext) Slider(id string, i *float32, min, max float32) {
 		slider.HandleMouseDrag(c.io.MouseDelta.X, c.dragBehaviorInWindow)
 		slider.CalculateNumber(i)
 	}
-	slider.UpdatePosition([4]float32{x, y, slider.Width(), slider.Height()})
+
+	clip := draw.NewClip(slider.BoundingBox(), wnd.currentWidgetSpace.ClipRect)
+
+	wnd.endWidget(x, y, isRow, slider)
 
 	wnd.buffer.CreateRect(slider.MainSliderPos()[0], slider.MainSliderPos()[1], slider.MainSliderPos()[2], slider.MainSliderPos()[3], 0,
 		draw.StraightCorners, 0, softGreen,
-		draw.ClipRectCompose{MainClipRect: slider.BoundingBox(), ClipRect: wnd.currentWidgetSpace.ClipRect})
+		clip)
 
 	wnd.buffer.CreateRect(slider.BtnSliderPos()[0], slider.BtnSliderPos()[1], slider.BtnSliderPos()[2], slider.BtnSliderPos()[3], 0,
 		draw.StraightCorners, 0, black,
-		draw.ClipRectCompose{MainClipRect: slider.BoundingBox(), ClipRect: wnd.currentWidgetSpace.ClipRect})
-
-	wnd.addCursor(slider.Width(), slider.Height())
-	if !isRow {
-		wnd.currentWidgetSpace.AddVirtualHeight(slider.Height())
-	}
+		clip)
 }
 
 func (c *UiContext) Text(id string, msg string, size int) {
@@ -322,13 +316,9 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	}
 	//txt.CurrentColor = [4]float32{255, 255, 255, 1}
 
-	txt.UpdatePosition([4]float32{x, y, txt.Width(), txt.Height()})
-	wnd.buffer.CreateText(x, y, txt, *c.font, draw.ClipRectCompose{MainClipRect: wnd.mainWidgetSpace.ClipRect, ClipRect: wnd.currentWidgetSpace.ClipRect})
+	wnd.buffer.CreateText(x, y, txt, *c.font, draw.NewClip(wnd.currentWidgetSpace.ClipRect, wnd.mainWidgetSpace.ClipRect))
 
-	wnd.addCursor(txt.Width(), txt.Height())
-	if !isRow {
-		wnd.currentWidgetSpace.AddVirtualHeight(txt.Height())
-	}
+	wnd.endWidget(x, y, isRow, txt)
 }
 
 func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
@@ -361,14 +351,19 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 		}
 		clicked = c.io.MouseClicked[0] && hovered
 	}
-	wnd.buffer.CreateRect(x, y, img.Width(), img.Height(), 0, draw.StraightCorners, tex.TextureId, clr, draw.ClipRectCompose{MainClipRect: wnd.mainWidgetSpace.ClipRect, ClipRect: wnd.currentWidgetSpace.ClipRect})
-	img.UpdatePosition([4]float32{x, y, img.Width(), img.Height()})
-	// wnd.addYcursor(img.Height())
-	wnd.addCursor(img.Width(), img.Height())
-	if !isRow {
-		wnd.currentWidgetSpace.AddVirtualHeight(img.Height())
-	}
+	wnd.buffer.CreateRect(x, y, img.Width(), img.Height(), 0, draw.StraightCorners, tex.TextureId, clr, draw.NewClip(wnd.currentWidgetSpace.ClipRect, wnd.mainWidgetSpace.ClipRect))
+
+	wnd.endWidget(x, y, isRow, img)
 	return clicked
+}
+
+// TODO: measure performance
+func (wnd *Window) endWidget(xPos, yPos float32, isRow bool, w widgets.Widget) {
+	w.UpdatePosition([4]float32{xPos, yPos, w.Width(), w.Height()})
+	wnd.addCursor(w.Width(), w.Height())
+	if !isRow {
+		wnd.currentWidgetSpace.AddVirtualWH(w.Width(), w.Height())
+	}
 }
 
 func (c *UiContext) VSpace(id string) {
@@ -383,12 +378,8 @@ func (c *UiContext) VSpace(id string) {
 		}
 		return s
 	}).(*widgets.VSpace)
-	s.UpdatePosition([4]float32{x, y, float32(100), float32(20)})
-	// wnd.addYcursor(s.Height())
-	wnd.addCursor(0, s.Height())
-	if !isRow {
-		wnd.currentWidgetSpace.AddVirtualHeight(s.Height())
-	}
+
+	wnd.endWidget(x, y, isRow, s)
 }
 
 func (c *UiContext) hoverBehavior(wnd *Window, rect utils.Rect) bool {
@@ -431,13 +422,9 @@ func (c *UiContext) Button(id string) bool {
 		clicked = c.io.MouseClicked[0] && hovered
 	}
 	//
-	wnd.buffer.CreateRect(x, y, w, h, 0, draw.StraightCorners, 0, btn.CurrentColor, draw.ClipRectCompose{MainClipRect: wnd.mainWidgetSpace.ClipRect, ClipRect: wnd.currentWidgetSpace.ClipRect})
-	//
-	btn.UpdatePosition([4]float32{x, y, w, h})
-	wnd.addCursor(btn.Width(), btn.Height())
-	if !isRow {
-		wnd.currentWidgetSpace.AddVirtualHeight(btn.Height())
-	}
+	wnd.buffer.CreateRect(x, y, w, h, 0, draw.StraightCorners, 0, btn.CurrentColor, draw.NewClip(wnd.currentWidgetSpace.ClipRect, wnd.mainWidgetSpace.ClipRect))
+
+	wnd.endWidget(x, y, isRow, btn)
 	return clicked
 }
 
@@ -465,18 +452,47 @@ func (c *UiContext) setActiveWidget(id string) {
 	c.ActiveWidget = id
 }
 
-func (c *UiContext) Tooltip(msg string) {
-	x, y := c.io.MousePos.X, c.io.MousePos.Y
+func (c *UiContext) Tooltip(id string, widgFunc func()) {
+	x, y := c.io.MousePos.X+10, c.io.MousePos.Y+5
 	wnd := c.windowStack.Peek()
-	var txt *widgets.Text
-	txt = wnd.getWidget(msg, func() widgets.Widget {
-		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
-		return widgets.NewText(msg, msg, x, y, w, h, c.CurrentStyle)
-	}).(*widgets.Text)
+	var ws *WidgetSpace
+	ws, ok := c.widgSpaceCache.Get(id)
+	if !ok {
+		ws = newWidgetSpace(id, x, y, 0, 0, NotScrollable)
+		c.widgSpaceCache.Add(id, ws)
+	}
+	prevWs := wnd.currentWidgetSpace
+	wnd.currentWidgetSpace = ws
 
-	txt.SetBackGroundColor(black)
-	txt.UpdatePosition([4]float32{x, y, txt.Width(), txt.Height()})
-	wnd.buffer.CreateText(x, y, txt, *c.font, draw.ClipRectCompose{MainClipRect: txt.Rectangle()})
+	ws.X = x
+	ws.Y = y
+	ws.H = ws.lastVirtualHeight
+	ws.W = ws.lastVirtualWidth
+	ws.cursorX = x //+ c.CurrentStyle.Margin
+	ws.cursorY = y //+ c.CurrentStyle.Margin
+
+	ws.ClipRect = [4]float32{ws.X, ws.Y, ws.W, ws.H}
+	clip := draw.NewClip(ws.ClipRect, draw.EmptyClip)
+	//var clip = draw.ClipRectCompose{ClipRect: ws.ClipRect}
+
+	prev := wnd.mainWidgetSpace.ClipRect
+	wnd.mainWidgetSpace.ClipRect = ws.ClipRect
+
+	if ws.lastVirtualHeight != 0 {
+		wnd.buffer.CreateRect(x, y, ws.W, ws.H, 0, draw.StraightCorners, 0, black, clip)
+		wnd.buffer.CreateBorderBox(ws.X, ws.Y, ws.W, ws.H, 2, red)
+	}
+	//wnd.buffer.SeparateBuffer(0, clip)
+
+	widgFunc()
+	wnd.mainWidgetSpace.ClipRect = prev
+	ws.lastVirtualHeight = ws.virtualHeight
+	ws.virtualHeight = 0
+	ws.lastVirtualWidth = ws.virtualWidth
+	ws.virtualWidth = 0
+
+	wnd.currentWidgetSpace = prevWs
+
 }
 
 func (c *UiContext) Column(id string, widgFunc func()) {
@@ -539,7 +555,8 @@ func (c *UiContext) SubWidgetSpace(id string, flags WidgetSpaceFlag, widgFunc fu
 			if outOfWindow {
 				cl[1] = wnd.mainWidgetSpace.Y
 			}
-			var scrlClip = draw.ClipRectCompose{ClipRect: cl, MainClipRect: wnd.mainWidgetSpace.ClipRect}
+			scrlClip := draw.NewClip(cl, wnd.mainWidgetSpace.ClipRect)
+
 			scrl := ws.verticalScrollbar
 
 			wnd.buffer.CreateRect(scrl.x, scrl.y, scrl.w, scrl.h, 5, draw.AllRounded, 0, scrl.clr, scrlClip)
@@ -555,10 +572,13 @@ func (c *UiContext) SubWidgetSpace(id string, flags WidgetSpaceFlag, widgFunc fu
 
 	ws.checkVerScroll()
 
-	var clip = draw.ClipRectCompose{MainClipRect: ws.ClipRect, ClipRect: wnd.mainWidgetSpace.ClipRect}
+	clip := draw.NewClip(wnd.mainWidgetSpace.ClipRect, ws.ClipRect)
+
 	wnd.buffer.SeparateBuffer(0, clip)
 	ws.lastVirtualHeight = ws.virtualHeight
 	ws.virtualHeight = 0
+	ws.lastVirtualWidth = ws.virtualWidth
+	ws.virtualWidth = 0
 
 	wnd.currentWidgetSpace = prevWS
 

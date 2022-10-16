@@ -241,39 +241,15 @@ func (b *GLRender) Draw(displaySize [2]float32, buffer draw.CmdBuffer) {
 		y := int32(clipRect[1])
 		w := int32(clipRect[2])
 		h := int32(clipRect[3])
-		//x, x2 := int32(mainRect[0]), int32(innerRect[0])
-		//y, y2 := int32(mainRect[1]), int32(innerRect[1])
-		//w, w2 := int32(mainRect[2]), int32(innerRect[2])
-		//h, h2 := int32(mainRect[3]), int32(innerRect[3])
-
-		//var isClipOverlaps bool
-		//var useInnerClip bool
-		//useInnerClip = !checkSliceForNull(innerRect)
-		//xl := x+w < x2+w2
-		//yl := y+h < y2+h2
-		//isClipOverlaps = useInnerClip && (xl || yl)
 
 		y = int32(displayHeight) - (y + h)
-		//y2 = int32(displayHeight) - (y2 + h2)
-
 		// fmt.Printf("type = %s, elems = %d, ofs = %d, texId = %d \n", cmd.Type, cmd.Elems, cmd.IndexOffset, cmd.TexId)
 		if cmd.TexId != 0 {
 			gl.ActiveTexture(gl.TEXTURE0 + cmd.TexId)
 			gl.BindTexture(gl.TEXTURE_2D, cmd.TexId)
 			b.shader.UploadTexture("Texture", int32(cmd.TexId))
 		}
-		//if !useInnerClip {
-		//gl.Scissor(x, y, w, h)
-		//} else if isClipOverlaps {
 		gl.Scissor(x, y, w, h)
-		//} else {
-		//	gl.Scissor(x2, y2, w2, h2)
-		//}
-		//if !isClipOverlaps {
-		//	gl.Scissor(x, y, w, h)
-		//} else {
-		//	gl.Scissor(x2, y2, w2, h2)
-		//}
 		gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(cmd.Elems), gl.UNSIGNED_INT,
 			uintptr(cmd.IndexOffset*4), 0)
 
