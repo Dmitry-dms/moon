@@ -41,7 +41,7 @@ func (t *Text) SetBackGroundColor(clr [4]float32) {
 	t.base.backgroundColor = clr
 }
 
-func (i *Text) Rectangle() [4]float32 {
+func (i *Text) BoundingBox() [4]float32 {
 	return i.base.boundingBox
 }
 func (i *Text) BackgroundColor() [4]float32 {

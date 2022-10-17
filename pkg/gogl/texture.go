@@ -110,8 +110,8 @@ func UploadRGBATextureFromMemory(data image.Image) *Texture {
 			bIndex++
 			if rb == 0 && gb == 0 && bb == 0 {
 				pixels[bIndex] = byte(0)
-			} else if rb <= 150 && gb <= 150 && bb <= 150 { // removes char outlining
-				pixels[bIndex] = byte(0)
+				//} else if rb <= 150 && gb <= 150 && bb <= 150 { // removes char outlining
+				//	pixels[bIndex] = byte(0)
 			} else {
 				//fmt.Println(r, g, b)
 				pixels[bIndex] = ab

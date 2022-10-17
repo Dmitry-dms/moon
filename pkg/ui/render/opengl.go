@@ -1,3 +1,5 @@
+//go:build opengl
+
 package render
 
 import (

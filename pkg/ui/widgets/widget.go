@@ -5,6 +5,7 @@ type Widget interface {
 	UpdatePosition([4]float32)
 	Height() float32
 	Width() float32
+	BoundingBox() [4]float32
 }
 
 type baseWidget struct {
@@ -22,12 +23,3 @@ func (b *baseWidget) updatePosition(p [4]float32) {
 func (b *baseWidget) width() float32 {
 	return b.boundingBox[2]
 }
-
-type WidgetType int
-
-const (
-	ImageWidget WidgetType = iota
-	ButtonWidget
-	VerticalSpacingWidget
-	TextWidget
-)

@@ -27,7 +27,7 @@ type Column struct {
 
 func (c *HybridLayout) UpdateColWidth(w float32) {
 	if c.CurrentColW < w {
-		c.CurrentColW= w
+		c.CurrentColW = w
 	}
 }
 func (c *HybridLayout) AddColHeight(h float32) {
@@ -44,13 +44,13 @@ func NewHLayout(id string, x, y float32, style *styles.Style) *HybridLayout {
 	return &r
 }
 
-func (r HybridLayout) Height() float32 {
+func (r *HybridLayout) Height() float32 {
 	return r.H
 }
-func (r HybridLayout) Width() float32 {
+func (r *HybridLayout) Width() float32 {
 	return r.W
 }
-func (r HybridLayout) WidgetId() string {
+func (r *HybridLayout) WidgetId() string {
 	return r.Id
 }
 
@@ -68,4 +68,8 @@ func (r *HybridLayout) UpdatePosition(pos [4]float32) {
 	r.CursorY = pos[1]
 
 	r.InitY = pos[1]
+}
+
+func (r *HybridLayout) BoundingBox() [4]float32 {
+	return [4]float32{}
 }

@@ -292,7 +292,7 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	if c.ActiveWindow != nil {
 		founded := false
 		for _, w := range c.ActiveWindow.widgSpaces {
-			if utils.PointInRect(c.io.MousePos, utils.NewRectS(w.ClipRect)) {
+			if utils.PointInRect(c.io.MousePos, utils.NewRectS(w.ClipRect)) && w.flags&Scrollable != 0 {
 				c.ActiveWidgetSpaceId = w.id
 				founded = true
 				break

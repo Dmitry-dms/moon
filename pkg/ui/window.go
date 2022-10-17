@@ -230,10 +230,9 @@ func (c *UiContext) ButtonT(id string, msg string) bool {
 		return widgets.NewTextButton(id, x, y, w, h, msg, widgets.Center, c.CurrentStyle)
 	}).(*widgets.TextButton)
 
-	//y -= wnd.currentWidgetSpace.scrlY
 	// logic
 	{
-		hovered = c.hoverBehavior(wnd, utils.NewRectS(tBtn.Box()))
+		hovered = c.hoverBehavior(wnd, utils.NewRectS(tBtn.BoundingBox()))
 		if hovered {
 			c.setActiveWidget(tBtn.Id)
 			tBtn.Button.SetColor(c.CurrentStyle.BtnHoveredColor)
@@ -266,7 +265,6 @@ func (c *UiContext) Slider(id string, i *float32, min, max float32) {
 		return widgets.NewSlider(id, x, y, 100, 50, min, max, c.CurrentStyle)
 	}).(*widgets.Slider)
 
-	//y -= wnd.currentWidgetSpace.scrlY
 	// logic
 	{
 		slider.HandleMouseDrag(c.io.MouseDelta.X, c.dragBehaviorInWindow)
@@ -305,7 +303,7 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	//y -= wnd.currentWidgetSpace.scrlY
 	// logic
 	{
-		hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.Rectangle()))
+		hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox()))
 		if hovered {
 			c.setActiveWidget(txt.WidgetId())
 			txt.SetBackGroundColor(black)
@@ -337,21 +335,17 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	img = wnd.getWidget(id, func() widgets.Widget {
-		img = &widgets.Image{
-			Id:           id,
-			CurrentColor: whiteColor,
-			BoundingBox:  [4]float32{x, y, float32(100), float32(100)},
-		}
+		img = widgets.NewImage(id, x, y, 100, 100, whiteColor)
 		return img
 	}).(*widgets.Image)
 
-	clr := img.CurrentColor
+	clr := img.Color()
 	//y -= wnd.currentWidgetSpace.scrlY
 	// logic
 	{
-		hovered := c.hoverBehavior(wnd, utils.NewRectS(img.BoundingBox))
+		hovered := c.hoverBehavior(wnd, utils.NewRectS(img.BoundingBox()))
 		if hovered {
-			c.setActiveWidget(img.Id)
+			c.setActiveWidget(img.WidgetId())
 			//c.Tooltip("This is important tooltip")
 		}
 		clicked = c.io.MouseClicked[0] && hovered
@@ -379,10 +373,7 @@ func (c *UiContext) VSpace(id string) {
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	s = wnd.getWidget(id, func() widgets.Widget {
-		s := &widgets.VSpace{
-			BoundingBox: [4]float32{x, y, float32(100), float32(20)},
-			Id:          id,
-		}
+		s := widgets.NewVertSpace(id, [4]float32{x, y, 100, 20})
 		return s
 	}).(*widgets.VSpace)
 
@@ -408,7 +399,7 @@ func (c *UiContext) TreeNode(id string, msg string, widgFunc func()) bool {
 
 	// logic
 	{
-		hovered = c.hoverBehavior(wnd, utils.NewRectS(tBtn.Box()))
+		hovered = c.hoverBehavior(wnd, utils.NewRectS(tBtn.BoundingBox()))
 		if hovered {
 			c.setActiveWidget(tBtn.Id)
 			tBtn.Button.SetColor(c.CurrentStyle.BtnHoveredColor)
@@ -424,7 +415,7 @@ func (c *UiContext) TreeNode(id string, msg string, widgFunc func()) bool {
 	}
 	//
 	wnd.endWidget(x, y, isRow, tBtn)
-	tBtn.SetWidth(wnd.currentWidgetSpace.W)
+	tBtn.SetWidth(wnd.w)
 	wnd.buffer.CreateButtonT(x, y, tBtn, *c.font, wnd.DefaultClip())
 
 	if tBtn.Active() {
@@ -435,8 +426,6 @@ func (c *UiContext) TreeNode(id string, msg string, widgFunc func()) bool {
 
 	return tBtn.Active()
 }
-
-//func (c *UiContext) implButton(id string)
 
 func (c *UiContext) Button(id string) bool {
 
@@ -453,9 +442,9 @@ func (c *UiContext) Button(id string) bool {
 
 	// logic
 	{
-		hovered = c.hoverBehavior(wnd, utils.NewRectS(btn.BoundingBox))
+		hovered = c.hoverBehavior(wnd, utils.NewRectS(btn.BoundingBox()))
 		if hovered {
-			c.setActiveWidget(btn.Id)
+			c.setActiveWidget(btn.WidgetId())
 			if c.io.MouseClicked[0] {
 				btn.ChangeActive()
 			}
@@ -468,7 +457,7 @@ func (c *UiContext) Button(id string) bool {
 		clicked = c.io.MouseClicked[0] && hovered
 	}
 	//
-	wnd.buffer.CreateRect(x, y, w, h, 0, draw.StraightCorners, 0, btn.CurrentColor, wnd.DefaultClip())
+	wnd.buffer.CreateRect(x, y, w, h, 0, draw.StraightCorners, 0, btn.Color(), wnd.DefaultClip())
 
 	wnd.endWidget(x, y, isRow, btn)
 	return clicked
@@ -497,7 +486,14 @@ func (wnd *Window) addYcursor(x float32) {
 func (c *UiContext) setActiveWidget(id string) {
 	c.ActiveWidget = id
 }
+func (c *UiContext) ContextMenu(ownerWidgetId string, shown *bool, widgFunc func()) {
+	//wnd := c.windowStack.Peek()
+	//widg, ok := c.GetWidget(ownerWidgetId)
+	//if !ok {
+	//	return
+	//}
 
+}
 func (c *UiContext) Tooltip(id string, widgFunc func()) {
 	x, y := c.io.MousePos.X+10, c.io.MousePos.Y+5
 	wnd := c.windowStack.Peek()

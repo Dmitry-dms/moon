@@ -190,7 +190,7 @@ func (f *Font) generateAndUploadBitmap() {
 		// 	fmt.Println(d.Dot.X.Ceil(), dx, b.Min.X.Ceil())
 		// }
 
-		dx += a.Ceil()
+		dx += a.Ceil() + 5
 
 		// d.Dot = fixed.P(dx, dy)
 

@@ -30,7 +30,7 @@ func NewTextButton(id string, x, y, w, h float32,
 	tb.Button = btn
 	tb.Text = txt
 
-	tb.UpdateTextPos(tb.Button.BoundingBox[0], tb.Button.BoundingBox[1])
+	tb.UpdateTextPos(tb.Button.BoundingBox()[0], tb.Button.BoundingBox()[1])
 
 	return &tb
 }
@@ -58,18 +58,18 @@ func (tb *TextButton) ChangeActive() {
 
 func (tb *TextButton) UpdatePosition(pos [4]float32) {
 	tb.Button.UpdatePosition(pos)
-	tb.UpdateTextPos(tb.Button.BoundingBox[0], tb.Button.BoundingBox[1])
+	tb.UpdateTextPos(tb.Button.BoundingBox()[0], tb.Button.BoundingBox()[1])
 }
-func (tb TextButton) WidgetId() string {
+func (tb *TextButton) WidgetId() string {
 	return tb.Id
 }
-func (tb TextButton) Height() float32 {
+func (tb *TextButton) Height() float32 {
 	return tb.Button.Height()
 }
 
-func (tb TextButton) Box() [4]float32 {
-	return tb.Button.BoundingBox
+func (tb *TextButton) BoundingBox() [4]float32 {
+	return tb.Button.BoundingBox()
 }
-func (tb TextButton) Width() float32 {
+func (tb *TextButton) Width() float32 {
 	return tb.Button.Width()
 }

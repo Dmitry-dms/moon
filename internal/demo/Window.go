@@ -111,7 +111,7 @@ func Show(keepOpen *bool) {
 		bulletText("Sections below are demonstrating many aspects of the wrapper.")
 		bulletText("This demo may not be complete. Refer to the \"native\" demo window for a full overview.")
 		bulletText("The \"Examples\" menu above leads to more demo contents.")
-		bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
+		bulletText("The \"Tools\" menu above gives access to: About BoundingBox, Style Editor,\n" +
 			"and Metrics (general purpose Dear ImGui debugging tool).")
 		imgui.Separator()
 

@@ -87,9 +87,9 @@ func (c *CmdBuffer) SeparateBuffer(texId uint32, clip ClipRectCompose) {
 }
 
 func (c *CmdBuffer) CreateButtonT(x, y float32, btn *widgets.TextButton, font fonts.Font, clip ClipRectCompose) {
-	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Button.CurrentColor, clip)
+	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Button.Color(), clip)
 	btn.UpdateTextPos(x, y)
-	c.CreateText(btn.Text.Rectangle()[0], btn.Text.Rectangle()[1], btn.Text, font, clip)
+	c.CreateText(btn.Text.BoundingBox()[0], btn.Text.BoundingBox()[1], btn.Text, font, clip)
 }
 
 func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font, clip ClipRectCompose) {

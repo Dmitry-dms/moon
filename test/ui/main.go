@@ -77,7 +77,7 @@ func main() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 70)
-	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 14)
+	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 18)
 	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 16)
 	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 16)
 
@@ -167,6 +167,10 @@ func firstWindow() {
 	uiCtx.TreeNode("tree1", "Configuration", func() {
 		uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
 		uiCtx.Text("#t3j", "hello world!", 14)
+		uiCtx.TreeNode("tree1yuy2", "Configuration", func() {
+			uiCtx.Text("texiyt-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
+			uiCtx.Text("#tiy3j", "hello world!", 14)
+		})
 	})
 
 	//uiCtx.VSpace("#vs1fdgdf")
@@ -200,6 +204,9 @@ func firstWindow() {
 			uiCtx.Text("text-ttp-2", "Hello World", 16)
 			uiCtx.Text("text-ttp-3", "Hello World", 16)
 		})
+	}
+	if uiCtx.ActiveWidget == "widgId" {
+
 	}
 
 	uiCtx.EndWindow()
