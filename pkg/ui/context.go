@@ -33,6 +33,7 @@ type UiContext struct {
 	//widg space
 	ActiveWidgetSpaceId string
 	ActiveWidgetSpace   *WidgetSpace
+	FocusedWidgetSpace  *WidgetSpace
 
 	PriorWindow       *Window
 	HoveredWindow     *Window
@@ -291,6 +292,7 @@ func (c *UiContext) EndFrame(size [2]float32) {
 
 	if c.ActiveWindow != nil {
 		founded := false
+		// Для правильного скроллинга
 		for _, w := range c.ActiveWindow.widgSpaces {
 			if utils.PointInRect(c.io.MousePos, utils.NewRectS(w.ClipRect)) && w.flags&Scrollable != 0 {
 				c.ActiveWidgetSpaceId = w.id
@@ -305,6 +307,14 @@ func (c *UiContext) EndFrame(size [2]float32) {
 		c.ActiveWidgetSpaceId = ""
 	}
 
+	// Используется для удаления фокуса, если ЛКМ была кликнута снаружи WidgetSpace
+	if c.FocusedWidgetSpace != nil {
+		if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(c.FocusedWidgetSpace.ClipRect)) {
+			c.FocusedWidgetSpace = nil
+		}
+	}
+
+	c.io.MouseClickedPos[0] = utils.Vec2{}
 }
 
 type UiRenderer interface {

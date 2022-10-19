@@ -96,6 +96,13 @@ func (r Rect) Contains(p Vec2) bool {
 	return p.X >= r.Min.X && p.Y >= r.Min.Y && p.X < r.Max.X && p.Y < r.Max.Y
 }
 
+func PointOutsideRect(point Vec2, box Rect) bool {
+	if point.X == 0 && point.Y == 0 {
+		return false
+	}
+	return !PointInRect(point, box)
+}
+
 func PointInRect(point Vec2, box Rect) bool {
 	min := box.Min
 	max := box.Max

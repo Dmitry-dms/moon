@@ -42,11 +42,11 @@ var (
 		BtnActiveColor:   [4]float32{255, 0, 0, 1},
 		TextColor:        [4]float32{5, 134, 222, 1},
 		TextSize:         20,
-		TextPadding:      10,
-		SliderColor:      [4]float32{231, 240, 162, 0.8},
-		SliderBtnColor:   [4]float32{0, 0, 0, 1},
-		SliderHeight:     10,
-		SliderBtnWidth:   20,
-		FontScale:        1,
+		//TextPadding:      10,
+		SliderColor:    [4]float32{231, 240, 162, 0.8},
+		SliderBtnColor: [4]float32{0, 0, 0, 1},
+		SliderHeight:   10,
+		SliderBtnWidth: 20,
+		FontScale:      1,
 	}
 )

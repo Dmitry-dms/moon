@@ -14,8 +14,9 @@ const (
 	HideScrollbar
 	NotScrollable
 	Scrollable
+	IgnoreClipping
 
-	Default = NotResizable | ShowScrollbar | Scrollable
+	Default = Resizable | ShowScrollbar | Scrollable
 )
 
 type WidgetSpace struct {
@@ -148,7 +149,7 @@ func (ws *WidgetSpace) AddVirtualWH(width, height float32) {
 		ws.virtualWidth += width
 	} else {
 		if ws.virtualWidth < width {
-			ws.virtualWidth += width
+			ws.virtualWidth += width - ws.virtualWidth
 		}
 	}
 	ws.virtualHeight += height

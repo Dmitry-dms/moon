@@ -13,3 +13,5 @@ require (
 )
 
 require golang.org/x/image v0.0.0-20220302094943-723b81ca9867
+
+require github.com/nuberu/webgl v0.0.0-20191001145845-3cc81fb0203d // indirect

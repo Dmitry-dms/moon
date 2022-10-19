@@ -1,8 +1,6 @@
 package ui
 
 import (
-
-
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 )
 
@@ -59,7 +57,7 @@ type Io struct {
 
 type Key int
 
-func (io *Io) SetDisplaySize(w,h float32) {
+func (io *Io) SetDisplaySize(w, h float32) {
 	io.DisplaySize.X = w
 	io.DisplaySize.Y = h
 }

@@ -1,6 +1,8 @@
 package widgets
 
-import "github.com/Dmitry-dms/moon/pkg/ui/styles"
+import (
+	"github.com/Dmitry-dms/moon/pkg/ui/styles"
+)
 
 type TextButton struct {
 	Id    string
@@ -35,17 +37,22 @@ func NewTextButton(id string, x, y, w, h float32,
 	return &tb
 }
 
+// UpdateTextPos TODO: Need to improve correct calculation of text position
 func (tb *TextButton) UpdateTextPos(x, y float32) {
-	// x := tb.Button.BoundingBox[0]
-	// y := tb.Button.BoundingBox[1]
+	var xNew, yNew float32
 	switch tb.align {
 	case Center:
-		tb.Text.UpdatePosition([4]float32{x + tb.style.Padding, y + tb.style.Padding, tb.Text.Width(), tb.Text.Height()})
+		xNew = ((tb.Width() - tb.Text.Width() - tb.style.Padding*2) / 2) + tb.style.Padding
 	case Left:
-		tb.Text.UpdatePosition([4]float32{x, y + tb.style.Padding, tb.Text.Width(), tb.Text.Height()})
+		xNew = tb.style.Padding
 	case Right:
-		tb.Text.UpdatePosition([4]float32{x + tb.Button.Width() - tb.Text.Width(), y + tb.style.Padding, tb.Text.Width(), tb.Text.Height()})
+		xNew = tb.Width() - tb.Text.Width() - tb.style.Padding*3
 	}
+	yNew = tb.style.Padding
+	if tb.Width() <= tb.Text.Width()+tb.style.Padding*3 {
+		xNew = tb.style.Padding
+	}
+	tb.Text.UpdatePosition([4]float32{x + xNew, y + yNew, tb.Text.Width(), tb.Text.Height()})
 }
 
 func (tb *TextButton) Active() bool {

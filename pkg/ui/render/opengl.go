@@ -1,4 +1,4 @@
-//go:build opengl
+////go:build opengl
 
 package render
 
