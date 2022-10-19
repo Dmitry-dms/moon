@@ -40,6 +40,7 @@ type WidgetSpace struct {
 	ratio float32
 
 	rowStack utils.Stack[*widgets.HybridLayout]
+	tabStack utils.Stack[*widgets.TabBar]
 
 	flags WidgetSpaceFlag
 }
@@ -75,6 +76,7 @@ func newWidgetSpace(id string, x, y, w, h float32, flags WidgetSpaceFlag) *Widge
 			utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, 50),
 			[4]float32{150, 155, 155, 1}),
 		rowStack: utils.NewStack[*widgets.HybridLayout](),
+		tabStack: utils.NewStack[*widgets.TabBar](),
 	}
 	return &vs
 }
@@ -159,6 +161,14 @@ func (ws *WidgetSpace) getCurrentRow() (*widgets.HybridLayout, bool) {
 		return nil, false
 	} else {
 		return ws.rowStack.Peek(), true
+	}
+}
+
+func (ws *WidgetSpace) getCurrentTabBar() (*widgets.TabBar, bool) {
+	if ws.tabStack.Length() == 0 {
+		return nil, false
+	} else {
+		return ws.tabStack.Peek(), true
 	}
 }
 

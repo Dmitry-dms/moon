@@ -449,7 +449,7 @@ func (c *UiContext) TreeNode(id string, msg string, widgFunc func()) bool {
 	if tBtn.Active() {
 		//wnd.currentWidgetSpace.cursorX += 50
 		x += 50
-		ws := c.subWidgetHelper(id, x, y+tBtn.Height(), 0, 0, NotScrollable|Resizable, widgFunc)
+		ws := c.subWidgetSpaceHelper(id, x, y+tBtn.Height(), 0, 0, NotScrollable|Resizable, widgFunc)
 		wnd.currentWidgetSpace.AddVirtualHeight(ws.H)
 		wnd.addCursor(ws.W, ws.H)
 		//c.SubWidgetSpace(id, NotScrollable|Resizable, widgFunc)
@@ -536,7 +536,7 @@ func (c *UiContext) ContextMenu(ownerWidgetId string, widgFunc func()) {
 			ws.ClipRect = [4]float32{ws.X, ws.Y, ws.W, ws.H}
 			clip := draw.NewClip(ws.ClipRect, draw.EmptyClip)
 			wnd.buffer.CreateRect(bb[0], bb[1]+widg.Height(), ws.W, ws.H, 0, draw.StraightCorners, 0, black, clip)
-			c.subWidgetHelper(id, bb[0], bb[1]+widg.Height(), 0, 0, Resizable, widgFunc)
+			c.subWidgetSpaceHelper(id, bb[0], bb[1]+widg.Height(), 0, 0, Resizable, widgFunc)
 		}
 		wnd.addDelayedWidget(f)
 	}
@@ -549,7 +549,7 @@ func (c *UiContext) Tooltip(id string, widgFunc func()) {
 
 	wnd.addDelayedWidget(func() {
 		wnd.buffer.CreateRect(x, y, ws.W, ws.H, 0, draw.StraightCorners, 0, black, draw.NewClip(draw.EmptyClip, ws.ClipRect))
-		c.subWidgetHelper(id, x, y, 0, 0, Resizable|IgnoreClipping, widgFunc)
+		c.subWidgetSpaceHelper(id, x, y, 0, 0, Resizable|IgnoreClipping, widgFunc)
 	})
 }
 
@@ -587,7 +587,7 @@ func (c *UiContext) getWidgetSpace(id string, width, height float32, wnd *Window
 	return ws
 }
 
-func (c *UiContext) subWidgetHelper(id string, x, y, width, height float32, flags WidgetSpaceFlag, widgFunc func()) *WidgetSpace {
+func (c *UiContext) subWidgetSpaceHelper(id string, x, y, width, height float32, flags WidgetSpaceFlag, widgFunc func()) *WidgetSpace {
 	wnd := c.windowStack.Peek()
 
 	ws := c.getWidgetSpace(id, width, height, wnd, flags)
@@ -603,7 +603,6 @@ func (c *UiContext) subWidgetHelper(id string, x, y, width, height float32, flag
 	outOfWindow := false
 	if y < wnd.mainWidgetSpace.Y {
 		outOfWindow = true
-		//ws.ClipRect = [4]float32{x, y, ws.W, ws.H}
 		ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W - ws.verticalScrollbar.w, ws.H - (wnd.mainWidgetSpace.Y - y)}
 	} else {
 		if ws.flags&ShowScrollbar != 0 {
@@ -619,7 +618,6 @@ func (c *UiContext) subWidgetHelper(id string, x, y, width, height float32, flag
 
 	// Scrollbar behavior
 	if ws.flags&Scrollable != 0 {
-		//if ws.isVertScrollShown {
 		ws.vertScrollBar()
 		if c.ActiveWindow == wnd && c.HoveredWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidgetSpaceId == wnd.currentWidgetSpace.id && c.FocusedWidgetSpace == nil {
 			ws.handleMouseScroll(float32(c.io.ScrollY))
@@ -667,80 +665,57 @@ func (c *UiContext) SubWidgetSpace(id string, width, height float32, flags Widge
 	var ws *WidgetSpace
 
 	x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
-	ws = c.subWidgetHelper(id, x, y, width, height, flags, widgFunc)
-	//ws, ok := c.widgSpaceCache.Get(id)
-	//if !ok {
-	//	ws = newWidgetSpace(id, x, y, 100, 200, flags)
-	//	c.widgSpaceCache.Add(id, ws)
-	//	wnd.widgSpaces = append(wnd.widgSpaces, ws)
-	//}
-	//var prevWS = wnd.currentWidgetSpace
-	//wnd.currentWidgetSpace = ws
-	//
-	////y -= prevWS.scrlY
-	//ws.X = x
-	//ws.Y = y
-	//ws.cursorY = y
-	//ws.cursorX = x
-	//
-	//outOfWindow := false
-	//if y < wnd.mainWidgetSpace.Y {
-	//	outOfWindow = true
-	//	ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W - ws.verticalScrollbar.w, ws.H - (wnd.mainWidgetSpace.Y - y)}
-	//} else {
-	//	if ws.flags&ShowScrollbar != 0 {
-	//		ws.ClipRect = [4]float32{x, y, ws.W - ws.verticalScrollbar.w, ws.H}
-	//	} else {
-	//		ws.ClipRect = [4]float32{x, y, ws.W, ws.H}
-	//	}
-	//}
-	//
-	//// Scrollbar behavior
-	//if ws.flags&Scrollable != 0 {
-	//	//if ws.isVertScrollShown {
-	//	ws.vertScrollBar()
-	//	if c.ActiveWindow == wnd && c.HoveredWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidgetSpaceId == wnd.currentWidgetSpace.id {
-	//		ws.handleMouseScroll(float32(c.io.ScrollY))
-	//	}
-	//	if ws.flags&ShowScrollbar != 0 && ws.isVertScrollShown {
-	//		cl := [4]float32{ws.X, ws.Y, ws.W, ws.H}
-	//		if outOfWindow {
-	//			cl[1] = wnd.mainWidgetSpace.Y
-	//		}
-	//		scrlClip := draw.NewClip(cl, wnd.mainWidgetSpace.ClipRect)
-	//
-	//		scrl := ws.verticalScrollbar
-	//
-	//		wnd.buffer.CreateRect(scrl.x, scrl.y, scrl.w, scrl.h, 5, draw.AllRounded, 0, scrl.clr, scrlClip)
-	//		wnd.buffer.CreateRect(scrl.bX, scrl.bY, scrl.bW, scrl.bH, 5, draw.AllRounded, 0, [4]float32{255, 0, 0, 1}, scrlClip)
-	//
-	//		wnd.buffer.SeparateBuffer(0, scrlClip)
-	//	}
-	//
-	//	//}
-	//}
-	//
-	//widgFunc()
-	//
-	//ws.checkVerScroll()
-	//
-	//clip := draw.NewClip(wnd.mainWidgetSpace.ClipRect, ws.ClipRect)
-	//
-	//wnd.buffer.SeparateBuffer(0, clip)
-	//ws.lastVirtualHeight = ws.virtualHeight
-	//ws.virtualHeight = 0
-	//ws.lastVirtualWidth = ws.virtualWidth
-	//ws.virtualWidth = 0
-	//
-	//if ws.flags&Resizable != 0 {
-	//	ws.H = ws.lastVirtualHeight
-	//	ws.W = ws.lastVirtualWidth
-	//}
-	//
-	//wnd.currentWidgetSpace = prevWS
+	ws = c.subWidgetSpaceHelper(id, x, y, width, height, flags, widgFunc)
 
 	wnd.currentWidgetSpace.AddVirtualHeight(ws.H)
 	wnd.addCursor(ws.W, ws.H)
+}
+
+func (c *UiContext) TabItem(name string, widgFunc func()) {
+	wnd := c.windowStack.Peek()
+	var tb *widgets.TabBar
+	tb, ok := wnd.currentWidgetSpace.getCurrentTabBar()
+	if !ok {
+		return
+	}
+	wspId := name + "-wsp-" + tb.WidgetId()
+	_, index := tb.FindTabItem(name, wspId)
+	//ws := c.getWidgetSpace(wspId, 0, 0, wnd, Default)
+	if index == tb.CurrentTab {
+		c.SubWidgetSpace(wspId, 0, 0, Resizable|HideScrollbar, widgFunc)
+	}
+	//tb.SetHeight(ws.H)
+	//tb.SetWidth(ws.W)
+}
+func (c *UiContext) TabBar(id string, widgFunc func()) {
+	wnd := c.windowStack.Peek()
+	var tab *widgets.TabBar
+	x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
+
+	tab = wnd.getWidget(id, func() widgets.Widget {
+		return widgets.NewTabBar(id, x, y, 0, 0)
+	}).(*widgets.TabBar)
+
+	tab.UpdatePosition([4]float32{x, y, wnd.w, wnd.h})
+
+	ws := c.subWidgetSpaceHelper(id, x, y, 0, 0, Default, func() {
+		c.Row("rowds", func() {
+			for i, item := range tab.Bars {
+				if c.ButtonT(fmt.Sprint(id, "-", i), item.Name) {
+					tab.CurrentTab = i
+				}
+				row, _ := wnd.currentWidgetSpace.getCurrentRow()
+				row.CursorX += 20
+			}
+		})
+
+		wnd.currentWidgetSpace.tabStack.Push(tab)
+		widgFunc()
+		wnd.currentWidgetSpace.tabStack.Pop()
+	})
+
+	wnd.addCursor(ws.W, ws.H)
+	wnd.currentWidgetSpace.AddVirtualHeight(ws.H)
 }
 
 func (c *UiContext) Row(id string, widgFunc func()) {
