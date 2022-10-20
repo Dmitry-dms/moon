@@ -31,9 +31,11 @@ type UiContext struct {
 	ActiveWindow *Window
 
 	//widg space
-	ActiveWidgetSpaceId string
-	ActiveWidgetSpace   *WidgetSpace
-	FocusedWidgetSpace  *WidgetSpace
+	ActiveWidgetSpaceId              string
+	WantScrollFocusWidgetSpaceId     string
+	WantScrollFocusWidgetSpaceLastId string
+	ActiveWidgetSpace                *WidgetSpace
+	FocusedWidgetSpace               *WidgetSpace
 
 	PriorWindow       *Window
 	HoveredWindow     *Window
@@ -291,18 +293,21 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	c.ActiveWidget = ""
 
 	if c.ActiveWindow != nil {
-		founded := false
-		// Для правильного скроллинга
-		for _, w := range c.ActiveWindow.widgSpaces {
-			if utils.PointInRect(c.io.MousePos, utils.NewRectS(w.ClipRect)) && w.flags&Scrollable != 0 {
-				c.ActiveWidgetSpaceId = w.id
-				founded = true
-				break
-			}
-		}
-		if !founded {
-			c.ActiveWidgetSpaceId = c.ActiveWindow.mainWidgetSpace.id
-		}
+		//founded := false
+		////Для правильного скроллинга
+		//for _, w := range c.ActiveWindow.widgSpaces {
+		//	if utils.PointInRect(c.io.MousePos, utils.NewRectS(w.ClipRect)) {
+		//		c.ActiveWidgetSpaceId = w.id
+		//		if w.flags&Scrollable != 0 {
+		//			c.WantScrollFocusWidgetSpaceId = w.id
+		//		}
+		//		founded = true
+		//		break
+		//	}
+		//}
+		//if !founded {
+		//	c.ActiveWidgetSpaceId = c.ActiveWindow.mainWidgetSpace.id
+		//}
 	} else {
 		c.ActiveWidgetSpaceId = ""
 	}
@@ -313,6 +318,8 @@ func (c *UiContext) EndFrame(size [2]float32) {
 			c.FocusedWidgetSpace = nil
 		}
 	}
+	c.WantScrollFocusWidgetSpaceLastId = c.WantScrollFocusWidgetSpaceId
+	c.WantScrollFocusWidgetSpaceId = ""
 
 	c.io.MouseClickedPos[0] = utils.Vec2{}
 	c.ActiveWindow.widgSpaces = []*WidgetSpace{}

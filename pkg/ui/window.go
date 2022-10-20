@@ -142,6 +142,7 @@ func (c *UiContext) BeginWindow(id string) {
 	wnd.y = newY
 	wnd.h = newH
 	wnd.w = newW
+
 	wnd.outerRect = utils.NewRect(wnd.x, wnd.y, wnd.w-wnd.mainWidgetSpace.verticalScrollbar.w, wnd.h)
 
 	wnd.mainWidgetSpace.X = newX
@@ -170,26 +171,13 @@ func (c *UiContext) BeginWindow(id string) {
 	wnd.mainWidgetSpace.cursorX = wnd.mainWidgetSpace.X + UiCtx.CurrentStyle.LeftMargin
 	wnd.mainWidgetSpace.cursorY = wnd.mainWidgetSpace.Y + UiCtx.CurrentStyle.TopMargin
 
-	// Scrollbar behavior
-	if wnd.mainWidgetSpace.flags&Scrollable != 0 {
-		wnd.mainWidgetSpace.vertScrollBar()
-		if c.ActiveWindow == wnd && c.HoveredWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidgetSpaceId == wnd.mainWidgetSpace.id && c.FocusedWidgetSpace == nil {
-			wnd.mainWidgetSpace.handleMouseScroll(float32(c.io.ScrollY))
-		}
-		if wnd.mainWidgetSpace.flags&ShowScrollbar != 0 && wnd.mainWidgetSpace.isVertScrollShown {
-			cl := [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}
+	wnd.mainWidgetSpace.ClipRect = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y,
+		wnd.mainWidgetSpace.W - wnd.mainWidgetSpace.verticalScrollbar.w, wnd.mainWidgetSpace.H}
 
-			scrlClip := draw.NewClip(draw.EmptyClip, cl)
-			scrl := wnd.mainWidgetSpace.verticalScrollbar
-
-			wnd.buffer.CreateRect(scrl.x, scrl.y, scrl.w, scrl.h, 5, draw.AllRounded, 0, scrl.clr, scrlClip)
-			wnd.buffer.CreateRect(scrl.bX, scrl.bY, scrl.bW, scrl.bH, 5, draw.AllRounded, 0, [4]float32{255, 0, 0, 1}, scrlClip)
-			wnd.buffer.SeparateBuffer(0, scrlClip)
-		}
-
-	}
-
-	wnd.mainWidgetSpace.ClipRect = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y, wnd.mainWidgetSpace.W - wnd.mainWidgetSpace.verticalScrollbar.w, wnd.mainWidgetSpace.H}
+	wnd.widgetSpaceLogic(wnd.mainWidgetSpace, func() draw.ClipRectCompose {
+		cl := [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}
+		return draw.NewClip(draw.EmptyClip, cl)
+	})
 
 	wnd.createWindow(cmdw, draw.NewClip(draw.EmptyClip, [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}))
 
@@ -197,6 +185,33 @@ func (c *UiContext) BeginWindow(id string) {
 }
 
 var step float32 = 40
+
+func (wnd *Window) widgetSpaceLogic(ws *WidgetSpace, clip func() draw.ClipRectCompose) {
+	c := UiCtx
+
+	if c.hoverBehavior(wnd, utils.NewRectS(ws.ClipRect)) {
+		c.ActiveWidgetSpaceId = ws.id
+		if ws.flags&Scrollable != 0 {
+			c.WantScrollFocusWidgetSpaceId = ws.id
+		}
+	}
+	// Scrollbar behavior
+	if ws.flags&Scrollable != 0 {
+		ws.vertScrollBar()
+		if c.ActiveWindow == wnd && c.HoveredWindow == wnd && c.io.ScrollY != 0 && c.WantScrollFocusWidgetSpaceLastId == ws.id && c.FocusedWidgetSpace == nil {
+			ws.handleMouseScroll(float32(c.io.ScrollY))
+		}
+		if ws.flags&ShowScrollbar != 0 && ws.isVertScrollShown {
+			scrlClip := clip()
+			scrl := ws.verticalScrollbar
+
+			wnd.buffer.CreateRect(scrl.x, scrl.y, scrl.w, scrl.h, 5, draw.AllRounded, 0, scrl.clr, scrlClip)
+			wnd.buffer.CreateRect(scrl.bX, scrl.bY, scrl.bW, scrl.bH, 5, draw.AllRounded, 0, [4]float32{255, 0, 0, 1}, scrlClip)
+			wnd.buffer.SeparateBuffer(0, scrlClip)
+		}
+	}
+
+}
 
 func (w *Window) createWindow(wnd draw.Window_command, clip draw.ClipRectCompose) {
 	w.buffer.CreateWindow(wnd, clip)
@@ -585,8 +600,8 @@ func (c *UiContext) getWidgetSpace(id string, width, height float32, wnd *Window
 	if !ok {
 		ws = newWidgetSpace(id, 0, 0, width, height, flags)
 		c.widgSpaceCache.Add(id, ws)
-		wnd.widgSpaces = append(wnd.widgSpaces, ws)
 	}
+	wnd.widgSpaces = append(wnd.widgSpaces, ws)
 	return ws
 }
 
@@ -620,40 +635,17 @@ func (c *UiContext) subWidgetSpaceHelper(id string, x, y, width, height float32,
 		}
 	}
 
-	if c.hoverBehavior(wnd, utils.NewRectS(ws.ClipRect)) {
-		c.ActiveWidgetSpaceId = ws.id
-	}
-
-	// Scrollbar behavior
-	if ws.flags&Scrollable != 0 {
-		ws.vertScrollBar()
-		if c.ActiveWindow == wnd && c.HoveredWindow == wnd && c.io.ScrollY != 0 && c.ActiveWidgetSpaceId == wnd.currentWidgetSpace.id && c.FocusedWidgetSpace == nil {
-			ws.handleMouseScroll(float32(c.io.ScrollY))
+	wnd.widgetSpaceLogic(ws, func() draw.ClipRectCompose {
+		cl := [4]float32{ws.X, ws.Y, ws.W, ws.H}
+		if outOfWindow {
+			cl[1] = wnd.mainWidgetSpace.Y
 		}
-		if ws.flags&ShowScrollbar != 0 && ws.isVertScrollShown {
-			cl := [4]float32{ws.X, ws.Y, ws.W, ws.H}
-			if outOfWindow {
-				cl[1] = wnd.mainWidgetSpace.Y
-			}
-			scrlClip := draw.NewClip(cl, wnd.mainWidgetSpace.ClipRect)
-
-			scrl := ws.verticalScrollbar
-
-			wnd.buffer.CreateRect(scrl.x, scrl.y, scrl.w, scrl.h, 5, draw.AllRounded, 0, scrl.clr, scrlClip)
-			wnd.buffer.CreateRect(scrl.bX, scrl.bY, scrl.bW, scrl.bH, 5, draw.AllRounded, 0, [4]float32{255, 0, 0, 1}, scrlClip)
-
-			wnd.buffer.SeparateBuffer(0, scrlClip)
-		}
-
-		//}
-	}
+		return draw.NewClip(cl, wnd.mainWidgetSpace.ClipRect)
+	})
 
 	widgFunc()
 	ws.checkVerScroll()
 
-	//clip := draw.NewClip(ws.ClipRect, wnd.mainWidgetSpace.ClipRect)
-	//
-	//wnd.buffer.SeparateBuffer(0, clip)
 	ws.lastVirtualHeight = ws.virtualHeight
 	ws.virtualHeight = 0
 	ws.lastVirtualWidth = ws.virtualWidth
@@ -733,10 +725,7 @@ func (c *UiContext) TabBar(id string, widgFunc func()) {
 	})
 	ws.W = tab.Width()
 	ws.H = tab.Height() + tab.BarHeight
-	//tab.UpdatePosition([4]float32{x, y, ws.W, ws.H})
-	//fmt.Println(tab.Width(), tab.Height())
-	//wnd.addCursor(tab.Width(), tab.Height()+tab.BarHeight)
-	//wnd.currentWidgetSpace.AddVirtualWH(tab.Width(), tab.Height()+tab.BarHeight)
+
 	wnd.addCursor(ws.W, ws.H)
 	wnd.currentWidgetSpace.AddVirtualWH(ws.W, ws.H)
 }
@@ -776,12 +765,14 @@ func (c *UiContext) EndWindow() {
 	wnd.delayedWidgets = []func(){}
 	wnd = c.windowStack.Pop()
 	wnd.mainWidgetSpace.checkVerScroll()
-	var clip = draw.ClipRectCompose{MainClipRect: wnd.mainWidgetSpace.ClipRect}
+	var clip = draw.NewClip(draw.EmptyClip, wnd.mainWidgetSpace.ClipRect)
 	wnd.buffer.SeparateBuffer(0, clip) // Make sure that we didn't miss anything
 	wnd.mainWidgetSpace.AddVirtualHeight(c.CurrentStyle.BotMargin)
 
 	wnd.mainWidgetSpace.lastVirtualHeight = wnd.mainWidgetSpace.virtualHeight
 	wnd.mainWidgetSpace.virtualHeight = 0
+	wnd.mainWidgetSpace.lastVirtualWidth = wnd.mainWidgetSpace.virtualWidth
+	wnd.mainWidgetSpace.virtualWidth = 0
 }
 
 func RegionHit(mouseX, mouseY, x, y, w, h float32) bool {

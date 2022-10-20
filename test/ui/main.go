@@ -108,7 +108,7 @@ func main() {
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 			//fmt.Println(uiCtx.ActiveWidget)
-			fmt.Println(uiCtx.ActiveWidgetSpaceId)
+			fmt.Println(uiCtx.ActiveWidgetSpaceId, uiCtx.WantScrollFocusWidgetSpaceId)
 			//fmt.Println(uiCtx.ActiveWidget)
 			//fmt.Println(uiCtx.ActiveWindow)
 		}
