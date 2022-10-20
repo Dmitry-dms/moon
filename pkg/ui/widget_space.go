@@ -24,9 +24,9 @@ type WidgetSpace struct {
 	id         string
 
 	//inner widgets
-	cursorX, cursorY                 float32
-	widgetCounter                    int
-	widgets                          []widgets.Widget
+	cursorX, cursorY float32
+	widgetCounter    int
+	//widgets                          []widgets.Widget
 	virtualHeight, lastVirtualHeight float32
 	virtualWidth, lastVirtualWidth   float32
 	ClipRect                         [4]float32
@@ -69,7 +69,7 @@ func newWidgetSpace(id string, x, y, w, h float32, flags WidgetSpaceFlag) *Widge
 		cursorX:       x,
 		cursorY:       y,
 		widgetCounter: 0,
-		widgets:       []widgets.Widget{},
+		//widgets:       []widgets.Widget{},
 		flags:         flags,
 		virtualHeight: 0,
 		verticalScrollbar: NewScrolBar(utils.NewRect(x+w-defScrollWidth, y, defScrollWidth, h),
@@ -139,7 +139,7 @@ func (ws *WidgetSpace) checkVerScroll() {
 }
 
 func (ws *WidgetSpace) addWidget(widg widgets.Widget) bool {
-	ws.widgets = append(ws.widgets, widg)
+	//ws.widgets = append(ws.widgets, widg)
 	return UiCtx.AddWidget(widg.WidgetId(), widg)
 }
 

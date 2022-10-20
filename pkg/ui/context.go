@@ -315,6 +315,7 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	}
 
 	c.io.MouseClickedPos[0] = utils.Vec2{}
+	c.ActiveWindow.widgSpaces = []*WidgetSpace{}
 }
 
 type UiRenderer interface {

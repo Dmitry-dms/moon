@@ -108,7 +108,7 @@ func main() {
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 			//fmt.Println(uiCtx.ActiveWidget)
-			fmt.Println(uiCtx.ActiveWidgetSpaceId, uiCtx.FocusedWidgetSpace)
+			fmt.Println(uiCtx.ActiveWidgetSpaceId)
 			//fmt.Println(uiCtx.ActiveWidget)
 			//fmt.Println(uiCtx.ActiveWindow)
 		}
@@ -210,17 +210,18 @@ func firstWindow() {
 	//uiCtx.VSpace("#hhvs1")
 	//uiCtx.Image("#imgj4", tex2)
 	//uiCtx.VSpace("#dfff234")
-
+	uiCtx.Text("#t3dgdgdf", "world!", 24)
 	uiCtx.TabBar("bar1", func() {
 		uiCtx.TabItem("Config", func() {
 			uiCtx.Text("textre-ttp-2", "Hello World", 16)
 			uiCtx.Text("textrt-ttp-3", "Привет, мир!?", 16)
 		})
 		uiCtx.TabItem("Config 2", func() {
-			uiCtx.Text("textаа", "Ну как так", 16)
-			uiCtx.Text("textrtа", "dfdfkdjfksld 32", 16)
-			uiCtx.VSpace("#hhvs1")
-			uiCtx.Image("#imgj4", tex2)
+			uiCtx.SubWidgetSpace("widhspdf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
+				uiCtx.Image("#im4kjdg464tht", tex2)
+				uiCtx.Image("#im76erewr", tex)
+				uiCtx.Text("#t3df", "world!", 24)
+			})
 		})
 		uiCtx.TabItem("Config 3", func() {
 			uiCtx.Text("te45xtаа", "Очень важная опция - ?", 16)
@@ -229,7 +230,7 @@ func firstWindow() {
 			uiCtx.Image("#iваmgj4", tex)
 		})
 	})
-	uiCtx.Image("#im4kjdg464tht", tex2)
+	uiCtx.Image("#im4kjdg464tht", tex)
 	uiCtx.EndWindow()
 }
 

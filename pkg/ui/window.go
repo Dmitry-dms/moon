@@ -459,8 +459,11 @@ func (c *UiContext) TreeNode(id string, msg string, widgFunc func()) bool {
 	return tBtn.Active()
 }
 
-func (c *UiContext) Button(id string) bool {
+//func (c *UiContext) button(id string, x, y, w, h float32) (btn *widgets.Button, hovered, clicked bool) {
+//
+//}
 
+func (c *UiContext) Button(id string) bool {
 	wnd := c.windowStack.Peek()
 	var btn *widgets.Button
 	var clicked, hovered bool
@@ -603,7 +606,12 @@ func (c *UiContext) subWidgetSpaceHelper(id string, x, y, width, height float32,
 	outOfWindow := false
 	if y < wnd.mainWidgetSpace.Y {
 		outOfWindow = true
-		ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W - ws.verticalScrollbar.w, ws.H - (wnd.mainWidgetSpace.Y - y)}
+		// vs-clip-1.png
+		if ws.isVertScrollShown {
+			ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W - ws.verticalScrollbar.w, ws.H - (wnd.mainWidgetSpace.Y - y)}
+		} else {
+			ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W, ws.H - (wnd.mainWidgetSpace.Y - y)}
+		}
 	} else {
 		if ws.flags&ShowScrollbar != 0 {
 			ws.ClipRect = [4]float32{x, y, ws.W - ws.verticalScrollbar.w, ws.H}
@@ -675,17 +683,21 @@ func (c *UiContext) TabItem(name string, widgFunc func()) {
 	wnd := c.windowStack.Peek()
 	var tb *widgets.TabBar
 	tb, ok := wnd.currentWidgetSpace.getCurrentTabBar()
+	x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
 	if !ok {
 		return
 	}
 	wspId := name + "-wsp-" + tb.WidgetId()
 	_, index := tb.FindTabItem(name, wspId)
-	//ws := c.getWidgetSpace(wspId, 0, 0, wnd, Default)
+
+	var ws *WidgetSpace
 	if index == tb.CurrentTab {
-		c.SubWidgetSpace(wspId, 0, 0, Resizable|HideScrollbar, widgFunc)
+		ws = c.subWidgetSpaceHelper(wspId, x, y, 0, 0, Resizable|HideScrollbar, widgFunc)
 	}
-	//tb.SetHeight(ws.H)
-	//tb.SetWidth(ws.W)
+	if ws != nil {
+		tb.SetHeight(ws.H)
+		tb.SetWidth(ws.W)
+	}
 }
 func (c *UiContext) TabBar(id string, widgFunc func()) {
 	wnd := c.windowStack.Peek()
@@ -696,9 +708,8 @@ func (c *UiContext) TabBar(id string, widgFunc func()) {
 		return widgets.NewTabBar(id, x, y, 0, 0)
 	}).(*widgets.TabBar)
 
-	tab.UpdatePosition([4]float32{x, y, wnd.w, wnd.h})
-
-	ws := c.subWidgetSpaceHelper(id, x, y, 0, 0, Default, func() {
+	var rowHeight, rowWidth float32
+	ws := c.subWidgetSpaceHelper(id, x, y, 0, 0, Resizable|NotScrollable, func() {
 		c.Row("rowds", func() {
 			for i, item := range tab.Bars {
 				if c.ButtonT(fmt.Sprint(id, "-", i), item.Name) {
@@ -706,16 +717,28 @@ func (c *UiContext) TabBar(id string, widgFunc func()) {
 				}
 				row, _ := wnd.currentWidgetSpace.getCurrentRow()
 				row.CursorX += 20
+				row.W += 20
+				if row.Height() > rowHeight {
+					rowHeight = row.Height()
+				}
+				rowWidth = row.Width()
 			}
 		})
 
+		tab.BarHeight = rowHeight
+		tab.SetWidth(rowWidth)
 		wnd.currentWidgetSpace.tabStack.Push(tab)
 		widgFunc()
 		wnd.currentWidgetSpace.tabStack.Pop()
 	})
-
+	ws.W = tab.Width()
+	ws.H = tab.Height() + tab.BarHeight
+	//tab.UpdatePosition([4]float32{x, y, ws.W, ws.H})
+	//fmt.Println(tab.Width(), tab.Height())
+	//wnd.addCursor(tab.Width(), tab.Height()+tab.BarHeight)
+	//wnd.currentWidgetSpace.AddVirtualWH(tab.Width(), tab.Height()+tab.BarHeight)
 	wnd.addCursor(ws.W, ws.H)
-	wnd.currentWidgetSpace.AddVirtualHeight(ws.H)
+	wnd.currentWidgetSpace.AddVirtualWH(ws.W, ws.H)
 }
 
 func (c *UiContext) Row(id string, widgFunc func()) {
@@ -728,14 +751,15 @@ func (c *UiContext) Row(id string, widgFunc func()) {
 	row = wnd.getWidget(id, func() widgets.Widget {
 		return widgets.NewHLayout(id, x, y, c.CurrentStyle)
 	}).(*widgets.HybridLayout)
+	row.UpdatePosition([4]float32{x, y, wnd.w, 0})
 
 	wnd.currentWidgetSpace.rowStack.Push(row)
-	row.UpdatePosition([4]float32{x, y, wnd.w, 0})
 
 	widgFunc()
 
 	hl := wnd.currentWidgetSpace.rowStack.Pop()
 	wnd.addCursor(0, hl.H)
+	//wnd.endWidget(x, y, false, row)
 
 	wnd.currentWidgetSpace.AddVirtualHeight(hl.H)
 	hl.H = 0
