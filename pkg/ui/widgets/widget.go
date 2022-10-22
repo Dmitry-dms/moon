@@ -7,6 +7,15 @@ type Widget interface {
 	Width() float32
 	BoundingBox() [4]float32
 }
+type PaddingType uint
+
+const (
+	LeftPadding PaddingType = 1 << iota
+	TopPadding
+	RightPadding
+	BotPadding
+	AllPadding = LeftPadding | TopPadding | RightPadding | BotPadding
+)
 
 type baseWidget struct {
 	id              string

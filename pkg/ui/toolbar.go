@@ -8,11 +8,11 @@ type Toolbar struct {
 
 func NewToolbar(x, y, w, h float32) Toolbar {
 	tb := Toolbar{
-		x: x,
-		y: y,
-		w: w,
-		h: h,
-		clr: [4]float32{255,0,0,1},
+		x:   x,
+		y:   y,
+		w:   w,
+		h:   h,
+		clr: [4]float32{35, 53, 79, 1},
 	}
 	return tb
 }

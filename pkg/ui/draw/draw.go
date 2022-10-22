@@ -87,7 +87,7 @@ func (c *CmdBuffer) SeparateBuffer(texId uint32, clip ClipRectCompose) {
 }
 
 func (c *CmdBuffer) CreateButtonT(x, y float32, btn *widgets.TextButton, font fonts.Font, clip ClipRectCompose) {
-	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Button.Color(), clip)
+	c.CreateRect(x, y, btn.Button.Width(), btn.Button.Height(), 0, StraightCorners, 0, btn.Color(), clip)
 	btn.UpdateTextPos(x, y)
 	c.CreateText(btn.Text.BoundingBox()[0], btn.Text.BoundingBox()[1], btn.Text, font, clip)
 }
@@ -117,11 +117,6 @@ func (c *CmdBuffer) CreateWindow(wnd Window_command, clip ClipRectCompose) {
 	c.CreateRect(wnd.X, wnd.Y, wnd.W, wnd.H, 10, AllRounded, 0, wnd.Clr, clip)
 	toolbar := wnd.Toolbar
 	c.CreateRect(toolbar.X, toolbar.Y, toolbar.W, toolbar.H, 10, TopRect, 0, toolbar.Clr, clip)
-	//if wnd.Scrollbar.H != 0 {
-	//	scrl := wnd.Scrollbar
-	//	c.CreateRect(scrl.X, scrl.Y, scrl.W, scrl.H, scrl.Radius, AllRounded, 0, scrl.ScrollClr, clip)
-	//	c.CreateRect(scrl.Xb, scrl.Yb, scrl.Wb, scrl.Hb, scrl.Radius, AllRounded, 0, scrl.BtnClr, clip)
-	//}
 
 	c.SeparateBuffer(0, clip)
 }

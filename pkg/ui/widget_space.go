@@ -113,7 +113,7 @@ func (ws *WidgetSpace) handleMouseDrag() {
 
 }
 func (ws *WidgetSpace) handleMouseScroll(scrollY float32) {
-	var factor = scrollY * step
+	var factor = -scrollY * step
 
 	botBorder := ws.lastVirtualHeight
 
@@ -136,11 +136,6 @@ func (ws *WidgetSpace) checkVerScroll() {
 		ws.scrlY = 0
 		ws.isVertScrollShown = false
 	}
-}
-
-func (ws *WidgetSpace) addWidget(widg widgets.Widget) bool {
-	//ws.widgets = append(ws.widgets, widg)
-	return UiCtx.AddWidget(widg.WidgetId(), widg)
 }
 
 func (ws *WidgetSpace) AddVirtualHeight(height float32) {

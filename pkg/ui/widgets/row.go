@@ -5,9 +5,10 @@ import (
 )
 
 type HybridLayout struct {
-	X, Y, W, H       float32
-	CursorX, CursorY float32
-	InitY            float32
+	X, Y, W, H            float32
+	CursorX, CursorY      float32
+	InitY                 float32
+	LastWidth, LastHeight float32
 
 	RequiereColumn           bool
 	CurrentColH, CurrentColW float32
@@ -45,10 +46,10 @@ func NewHLayout(id string, x, y float32, style *styles.Style) *HybridLayout {
 }
 
 func (r *HybridLayout) Height() float32 {
-	return r.H
+	return r.LastHeight
 }
 func (r *HybridLayout) Width() float32 {
-	return r.W
+	return r.LastWidth
 }
 func (r *HybridLayout) WidgetId() string {
 	return r.Id

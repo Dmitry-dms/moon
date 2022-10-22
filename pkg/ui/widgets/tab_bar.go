@@ -44,6 +44,15 @@ func (t *TabBar) UpdatePosition(pos [4]float32) {
 	t.updatePosition(pos)
 	t.CursorX = pos[0]
 }
+func (t *TabBar) ChangeActive(b *TabItem) {
+	for _, bar := range t.Bars {
+		if bar != b {
+			bar.Active = false
+		} else {
+			bar.Active = true
+		}
+	}
+}
 func (t *TabBar) SetHeight(h float32) {
 	//if h > t.height() {
 	t.boundingBox[3] = h

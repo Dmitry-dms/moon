@@ -77,7 +77,7 @@ func main() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 70)
-	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 18)
+	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 14)
 	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 16)
 	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 16)
 
@@ -159,42 +159,42 @@ func firstWindow() {
 	//	//	ish = !ish
 	//	//
 	//}
-	//uiCtx.ContextMenu("Нажать", func() {
-	//	uiCtx.Text("#t3fdj", "Опция 1", 14)
-	//	uiCtx.Text("#t3аваfdj", "Опция 2", 14)
-	//	uiCtx.Text("#t3ававаfdj", "Опция 3", 14)
-	//})
+	uiCtx.ContextMenu("texiyt-ttp-1", func() {
+		uiCtx.Text("#t3fdj", "Опция 1", 14)
+		uiCtx.Text("#t3аваfdj", "Опция 2", 14)
+		uiCtx.Text("#t3ававаfdj", "Опция 3", 14)
+	})
 	////if ish {
 	////	uiCtx.Text("#er", "Wdff213 ello world!", 14)
 	//uiCtx.Text("#fgfgd", "hello world! dfdgdfgfd 434554654 gf ", 14)
 	////}
 	//
-	//uiCtx.TreeNode("tree1", "Configuration", func() {
-	//	uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
-	//	uiCtx.Text("#t3j", "hello world!", 14)
-	//	uiCtx.TreeNode("tree1yuy2", "Настройки", func() {
-	//		uiCtx.Text("texiyt-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
-	//		uiCtx.Text("#tiy3j", "hello world!", 14)
-	//	})
-	//})
+	uiCtx.TreeNode("tree1", "Configuration", func() {
+		uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
+		uiCtx.Text("#t3j", "hello world!", 14)
+		uiCtx.TreeNode("tree1yuy2", "Настройки", func() {
+			uiCtx.Text("texiyt-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
+			uiCtx.Text("#tiy3j", "hello world!", 14)
+		})
+	})
 	//
 	//uiCtx.VSpace("#vs1fdgdf")
 	//
-	//uiCtx.Row("row 13214", func() {
-	//	uiCtx.Image("#im4kjdg464", tex)
-	//	uiCtx.Column("col fdfd", func() {
-	//		uiCtx.Image("#im76", tex2)
-	//		uiCtx.Image("#im4", tex)
-	//	})
-	//
-	//	uiCtx.Column("col fdfdвава", func() {
-	//		uiCtx.Button("ASsfdffb")
-	//		uiCtx.Button("ASsfdffbbb")
-	//		uiCtx.Slider("slider-1", &slCounter, 0, 255)
-	//	})
-	//
-	//	uiCtx.Image("#im4kj", tex)
-	//})
+	uiCtx.Row("row 13214", func() {
+		uiCtx.Image("#im4kjdg464", tex)
+		uiCtx.Column("col fdfd", func() {
+			uiCtx.Image("#im76", tex2)
+			uiCtx.Image("#im4", tex)
+		})
+
+		uiCtx.Column("col fdfdвава", func() {
+			uiCtx.Button("ASsfdffb")
+			uiCtx.Button("ASsfdffbbb")
+			uiCtx.Slider("slider-1", &slCounter, 0, 255)
+		})
+
+		uiCtx.Image("#im4kj", tex)
+	})
 	//if uiCtx.ActiveWidget == "#im4kj" {
 	//	uiCtx.Tooltip("ttp-1", func() {
 	//		uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
@@ -202,17 +202,22 @@ func firstWindow() {
 	//		uiCtx.Text("text-ttp-3", "Hello World", 16)
 	//	})
 	//}
-	//uiCtx.SubWidgetSpace("widhspdf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
-	//	uiCtx.Image("#im4kjdg464tht", tex2)
-	//	uiCtx.Image("#im76erewr", tex)
-	//	uiCtx.Text("#t3df", "world!", 24)
-	//})
-	//uiCtx.VSpace("#hhvs1")
-	//uiCtx.Image("#imgj4", tex2)
-	//uiCtx.VSpace("#dfff234")
+	uiCtx.SubWidgetSpace("widhspdf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
+		uiCtx.Image("#im4kjdg464tht", tex2)
+		uiCtx.Image("#im76erewr", tex)
+		uiCtx.Text("#t3df", "world!", 24)
+	})
+	uiCtx.VSpace("#hhvs1")
+	uiCtx.Image("#imgj4", tex2)
+	uiCtx.VSpace("#dfff234")
+	uiCtx.ButtonT("sad3r3", "Hello!?")
 	uiCtx.Text("#t3dgdgdf", "world!", 24)
 	uiCtx.TabBar("bar1", func() {
 		uiCtx.TabItem("Config", func() {
+			uiCtx.Button("fdffdf")
+			//uiCtx.PushStyleVar4f(ui.ButtonHoveredColor, [4]float32{100, 140, 76, 1})
+			uiCtx.Button("fgfdffdf")
+			//uiCtx.PopStyleVar()
 			uiCtx.Text("textre-ttp-2", "Hello World", 16)
 			uiCtx.Text("textrt-ttp-3", "Привет, мир!?", 16)
 		})
@@ -224,13 +229,14 @@ func firstWindow() {
 			})
 		})
 		uiCtx.TabItem("Config 3", func() {
+			uiCtx.Button("fdf4343545fdf")
 			uiCtx.Text("te45xtаа", "Очень важная опция - ?", 16)
 			uiCtx.VSpace("#hhvs1")
 			uiCtx.Text("text23rtа", "2+2=4", 16)
 			uiCtx.Image("#iваmgj4", tex)
 		})
 	})
-	uiCtx.Image("#im4kjdg464tht", tex)
+	//uiCtx.Image("#im4kjdg464tht", tex)
 	uiCtx.EndWindow()
 }
 

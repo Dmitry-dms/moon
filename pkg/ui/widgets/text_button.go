@@ -7,6 +7,7 @@ import (
 type TextButton struct {
 	Id    string
 	align TextAlign
+	pad   PaddingType
 	style *styles.Style
 	*Text
 	*Button
@@ -21,14 +22,27 @@ const (
 )
 
 func NewTextButton(id string, x, y, w, h float32,
-	text string, align TextAlign, style *styles.Style) *TextButton {
+	text string, align TextAlign, pad PaddingType, style *styles.Style) *TextButton {
 	tb := TextButton{
 		Id:    id,
 		align: align,
 		style: style,
+		pad:   pad,
 	}
 	txt := NewText("", text, x, y, w, h, style)
+	//var btnW, btnH float32
+	//switch pad {
+	//case LeftPadding | RightPadding:
+	//	btnW += style.Padding
+	//case TopPadding | BotPadding:
+	//	btnH += style.Padding
+	//case AllPadding:
+	//	btnW += 2 * style.Padding
+	//	btnH += 2 * style.Padding
+	//}
+
 	btn := NewButton("", x, y, 2*style.Padding+w, 2*style.Padding+h, style.BtnColor)
+	//btn := NewButton("", x, y, btnW+w, btnH+h, style.BtnColor)
 	tb.Button = btn
 	tb.Text = txt
 
@@ -57,6 +71,13 @@ func (tb *TextButton) UpdateTextPos(x, y float32) {
 
 func (tb *TextButton) Active() bool {
 	return tb.Button.IsActive
+}
+
+func (tb *TextButton) Color() [4]float32 {
+	return tb.Button.Color()
+}
+func (tb *TextButton) SetBackgroundColor(clr [4]float32) {
+	tb.Button.SetColor(clr)
 }
 
 func (tb *TextButton) ChangeActive() {

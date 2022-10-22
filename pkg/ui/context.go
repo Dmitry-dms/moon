@@ -56,7 +56,10 @@ type UiContext struct {
 	wantResizeH, wantResizeV bool
 
 	//style
-	CurrentStyle *styles.Style
+	CurrentStyle       *styles.Style
+	prevStyle          *styles.Style
+	styleChangeCounter int
+	StyleChanged       bool
 
 	//fonts
 	font *fonts.Font
@@ -323,6 +326,50 @@ func (c *UiContext) EndFrame(size [2]float32) {
 
 	c.io.MouseClickedPos[0] = utils.Vec2{}
 	c.ActiveWindow.widgSpaces = []*WidgetSpace{}
+}
+
+type StyleVar4f uint
+type StyleVar1f uint
+
+const (
+	ButtonActiveColor StyleVar4f = iota
+	ButtonHoveredColor
+)
+
+const (
+	Margin StyleVar1f = iota
+)
+
+func (c *UiContext) PushStyleVar1f(v StyleVar1f, val float32) {
+	if c.styleChangeCounter == 0 {
+		prev := *c.CurrentStyle
+		c.prevStyle = &prev
+	}
+	switch v {
+	case Margin:
+		c.CurrentStyle.Margin = val
+	}
+	c.StyleChanged = true
+	c.styleChangeCounter++
+}
+
+func (c *UiContext) PushStyleVar4f(v StyleVar4f, m [4]float32) {
+	if c.styleChangeCounter == 0 {
+		prev := *c.CurrentStyle
+		c.prevStyle = &prev
+	}
+	switch v {
+	case ButtonHoveredColor:
+		c.CurrentStyle.BtnHoveredColor = m
+	case ButtonActiveColor:
+		c.CurrentStyle.BtnActiveColor = m
+	}
+	c.StyleChanged = true
+	c.styleChangeCounter++
+}
+func (c *UiContext) PopStyleVar() {
+	c.CurrentStyle = c.prevStyle
+	c.styleChangeCounter = 0
 }
 
 type UiRenderer interface {
