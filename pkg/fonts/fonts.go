@@ -1,6 +1,9 @@
 package fonts
 
 import (
+	"fmt"
+	"github.com/Dmitry-dms/moon/pkg/ui/utils"
+	"golang.org/x/image/colornames"
 	"image"
 	"image/draw"
 	"image/png"
@@ -25,7 +28,7 @@ import (
 
 type Font struct {
 	Filepath string
-	FontSize int32
+	FontSize int
 
 	CharMap map[int]*CharInfo
 
@@ -35,7 +38,7 @@ type Font struct {
 	Face font.Face
 }
 
-func NewFont(filepath string, fontSize int32) *Font {
+func NewFont(filepath string, fontSize int) *Font {
 	f := Font{
 		Filepath: filepath,
 		FontSize: fontSize,
@@ -53,56 +56,55 @@ func (f *Font) GetXHeight() float32 {
 	return float32(c.Heigth)
 }
 
-var first = true
-
-func (f *Font) CalculateTextBounds(text string, scale float32) (width, height float32) {
-	//var dx, dy float32
+func (font *Font) CalculateTextBounds(text string, scale float32) (width, height float32, pos []utils.Vec2) {
 	prevR := rune(-1)
-
-	inf := f.GetXHeight()
-
-	faceHeight := f.Face.Metrics().Height
-
-	//scale := 1 / (float32(FontSize) / float32(size))
+	inf := font.GetXHeight()
+	faceHeight := font.FontSize
 	height = scale * inf
-	//height = inf
+	pos = make([]utils.Vec2, len(text))
 
-	var maxDescend float32
-	for _, r := range text {
-		info := f.GetCharacter(r)
+	var maxDescend, baseline float32
+	baseline = scale * inf
+	for i, r := range text {
+		info := font.GetCharacter(r)
 		if info.Width == 0 {
 			log.Printf("Unknown char = %q", r)
 			continue
 		}
 		if prevR >= 0 {
-			kern := f.Face.Kern(prevR, r).Ceil()
+			kern := font.Face.Kern(prevR, r).Ceil()
 			width += float32(kern)
-			if first {
-				//fmt.Printf("%q %.1f \n", r, width)
-			}
+		}
+		if r != ' ' {
+			width += float32(info.LeftBearing)
 		}
 		if r == '\n' {
 			width = 0
-			height += float32(faceHeight.Ceil())
+			height += float32(faceHeight)
+			baseline -= float32(faceHeight)
 			prevR = rune(-1)
 			continue
 		}
-
+		xPos := width
+		yPos := baseline
 		if info.Descend != 0 {
 			d := float32(info.Descend) * scale
-			//d := float32(info.Descend)
+			yPos += d
 			if d > maxDescend {
 				maxDescend = d
 			}
 		}
+
+		pos[i] = utils.Vec2{X: xPos, Y: yPos}
+
 		width += float32(info.Width) * scale
-		//width += float32(info.Width)
+		if r != ' ' {
+			width += float32(info.RigthBearing)
+		}
 		prevR = r
 	}
 	height += maxDescend
-	first = false
 	return
-	//return [2]float32{dx, dy}
 }
 
 func (f *Font) generateAndUploadBitmap() {
@@ -114,12 +116,11 @@ func (f *Font) generateAndUploadBitmap() {
 	}
 
 	var (
-		DPI = 157.0
-		// DPI          = 256.0
+		DPI          = 157.0
 		width        = siz
 		height       = siz
 		startingDotX = 0
-		startingDotY = int(f.FontSize) * 2 //+ int(DPI)/3
+		startingDotY = int(f.FontSize) * 2
 	)
 	var face font.Face
 	{
@@ -145,7 +146,7 @@ func (f *Font) generateAndUploadBitmap() {
 	f.Face = face
 	defer face.Close()
 
-	dst := image.NewGray(image.Rect(0, 0, width, height))
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
 	d := font.Drawer{
 		Dst:  dst,
 		Src:  image.White,
@@ -153,52 +154,38 @@ func (f *Font) generateAndUploadBitmap() {
 		Dot:  fixed.P(startingDotX, startingDotY),
 	}
 	fontSize := d.Face.Metrics().Height
-	//check width
-	// width2 := 0
+	f.FontSize = fontSize.Ceil()
+
 	dx := startingDotX
 	dy := startingDotY
 	maxDesc := 0
 
+	//d.DrawString("the quick brown fox jumps over the lazy dog")
+	//d.DrawString("Съешь ещё этих мягких французских булок да выпей чаю")
+
+	prevDot := d.Dot
 	for _, l := range letters {
 		b, a, _ := d.Face.GlyphBounds(l)
-
-		// fmt.Printf("%q %b\n", l, l)
-
-		// fmt.Printf("prev = %q now = %q kern = %d \n", prev, l, face.Kern(prev, l))
-		// fmt.Printf("char - %q, sX = %d, width = %d \n", l, d.Dot.X.Ceil(), a.Ceil())
 
 		//В случае, если ширина символа выходит за границу полотна
 		if (siz - dx) <= a.Ceil() {
 			dx = 0
 			dy += fontSize.Ceil()
-
 			d.Dot = fixed.P(0, dy)
 			maxDesc = 0
 		}
-		// Редкий случай, когда символ занимает нижнее пространство другого символа, напр. ij
-		if dx > (dx + b.Min.X.Ceil()) {
 
-			d.Dot = fixed.P(dx-b.Min.X.Ceil()*2, dy)
-		}
-
-		// special case when 'g' overlaps 'f' in Times New Roman
-		if l == 'g' {
-			d.Dot = fixed.P(dx+b.Min.X.Ceil()*2, dy)
-		}
-
-		// if l == 'i' || l == 'j' {
-		// 	fmt.Println(d.Dot.X.Ceil(), dx, b.Min.X.Ceil())
-		// }
-
-		dx += a.Ceil() + 5
-
-		// d.Dot = fixed.P(dx, dy)
-
+		dx += a.Ceil() + 2
+		d.Dot = d.Dot.Add(fixed.P(2, 0))
+		prevDot = d.Dot
 		d.DrawString(string(l))
 
 		w, h := (b.Max.X - b.Min.X).Ceil(), (b.Max.Y - b.Min.Y).Ceil()
-		sy := d.Dot.Y.Ceil() - -b.Min.Y.Ceil()
-		sx := d.Dot.X.Ceil() - a.Ceil() + b.Min.X.Ceil()
+		//sy := d.Dot.Y.Ceil() - -b.Min.Y.Ceil()
+		//sx := d.Dot.X.Ceil() - a.Ceil() + b.Min.X.Ceil()
+		w += 1
+		sx := prevDot.X.Ceil() + b.Min.X.Ceil() - 2
+		sy := prevDot.Y.Ceil() + b.Max.Y.Ceil() - 1
 
 		ch := CharInfo{
 			SrcX:         sx,
@@ -210,12 +197,15 @@ func (f *Font) generateAndUploadBitmap() {
 			LeftBearing:  b.Min.X.Ceil(),
 			RigthBearing: a.Ceil() - b.Max.X.Ceil(),
 		}
+		fmt.Printf("char = %q, top = %d  bot = %d , h = %d sy = %d \n  ",
+			l, ch.Ascend, ch.Descend, ch.Heigth, sy)
+		//printBorder(dst, ch.SrcX, ch.SrcY, ch.Width, ch.Heigth, prevDot, a, sy)
+
 		if l == ' ' {
 			ch.Width = a.Ceil()
 		}
 		ch.calcTexCoords(siz, siz)
-		// draw.Draw(dst, image.Rect(sx, sy, sx+w, sy+h), Border, image.ZP, draw.Src)
-		// width += dx
+
 		if -b.Min.Y.Ceil() > startingDotY {
 			startingDotY = -b.Min.Y.Ceil()
 		}
@@ -230,16 +220,13 @@ func (f *Font) generateAndUploadBitmap() {
 		if b.Max.Y.Ceil() > maxDesc {
 			maxDesc = b.Max.Y.Ceil()
 		}
-		// prev = l
 	}
 	dy += maxDesc
 
 	dst2 := dst.SubImage(image.Rect(0, 0, siz, siz))
 	dst3 := image.NewRGBA(dst2.Bounds())
-	// dst3 := image.NewGray(dst2.Bounds())
+
 	draw.Draw(dst3, dst2.Bounds(), dst2, image.ZP, draw.Src)
-	// ng := image.NewRGBA(dst2.Bounds())
-	// dst2 = ng
 
 	pngFile, _ := os.OpenFile("e.png", os.O_CREATE|os.O_RDWR, 0664)
 
@@ -250,10 +237,30 @@ func (f *Font) generateAndUploadBitmap() {
 	}
 	t2 := gogl.UploadRGBATextureFromMemory(dst3)
 	encoder.Encode(pngFile, dst3)
-	// if opengl {
 	f.TextureId = t2.GetId()
 	f.Texture = t2
-	// }
 }
 
-var opengl = true
+func printBorder(m *image.RGBA, x, y, w, h int, desc fixed.Point26_6, a fixed.Int26_6, sy int) {
+	for i := y; i >= y-h; i-- {
+		m.Set(x, i, colornames.Red)
+	}
+	for i := x; i <= x+w; i++ {
+		m.Set(i, y-h, colornames.Red)
+	}
+	for i := y; i >= y-h; i-- {
+		m.Set(x+w, i, colornames.Red)
+	}
+	for i := x + w; x <= i; i-- {
+		m.Set(i, y, colornames.Red)
+	}
+
+	for i := desc.X.Ceil(); i <= desc.X.Ceil()+a.Ceil(); i++ {
+		m.Set(i, desc.Y.Ceil(), colornames.Blue)
+	}
+
+	for i := desc.X.Ceil(); i <= desc.X.Ceil()+a.Ceil(); i++ {
+		m.Set(i, sy, colornames.Violet)
+	}
+
+}

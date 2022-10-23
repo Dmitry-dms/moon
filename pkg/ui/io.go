@@ -16,7 +16,7 @@ type Io struct {
 	MousePos    utils.Vec2
 	DisplaySize *utils.Vec2
 
-	keyPressed [570]bool
+	keyPressed [610]bool
 
 	// scrollX, scrollY float64
 	WantCaptureMouse bool
@@ -63,6 +63,9 @@ func (io *Io) SetDisplaySize(w, h float32) {
 }
 
 func (io *Io) KeyCallback(key GuiKey, pressed bool) {
+	if key == GuiKey_None {
+		return
+	}
 	if pressed {
 		io.keyPressed[key] = true
 	} else {
@@ -124,7 +127,7 @@ func NewIo() *Io {
 	i := Io{
 		MousePos:                utils.Vec2{0, 0},
 		DisplaySize:             &utils.Vec2{0, 0},
-		keyPressed:              [570]bool{},
+		keyPressed:              [610]bool{},
 		WantCaptureMouse:        false,
 		MouseDown:               [MOUSE_BTN_COUNT]bool{},
 		MouseReleased:           [5]bool{},

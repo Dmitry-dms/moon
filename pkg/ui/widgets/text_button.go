@@ -2,6 +2,7 @@ package widgets
 
 import (
 	"github.com/Dmitry-dms/moon/pkg/ui/styles"
+	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 )
 
 type TextButton struct {
@@ -22,14 +23,14 @@ const (
 )
 
 func NewTextButton(id string, x, y, w, h float32,
-	text string, align TextAlign, pad PaddingType, style *styles.Style) *TextButton {
+	text string, tPos []utils.Vec2, align TextAlign, pad PaddingType, style *styles.Style) *TextButton {
 	tb := TextButton{
 		Id:    id,
 		align: align,
 		style: style,
 		pad:   pad,
 	}
-	txt := NewText("", text, x, y, w, h, style)
+	txt := NewText("", text, x, y, w, h, tPos, style)
 	//var btnW, btnH float32
 	//switch pad {
 	//case LeftPadding | RightPadding:

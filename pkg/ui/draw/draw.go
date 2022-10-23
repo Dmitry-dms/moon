@@ -1,8 +1,6 @@
 package draw
 
 import (
-	// "fmt"
-	"log"
 	"math"
 
 	"github.com/Dmitry-dms/moon/pkg/fonts"
@@ -101,6 +99,7 @@ func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font,
 		Font:    font,
 		Scale:   txt.Scale,
 		Padding: txt.Padding,
+		Widget:  txt,
 	}
 	cmd := Command{
 		Text:     &tcmd,
@@ -110,7 +109,8 @@ func (c *CmdBuffer) CreateText(x, y float32, txt *widgets.Text, font fonts.Font,
 
 	c.CreateRect(x, y, txt.Width(), txt.Height(), 0, StraightCorners, 0, txt.BackgroundColor(), clip)
 	c.AddCommand(cmd, clip)
-	c.SeparateBuffer(font.TextureId, clip)
+	//c.CreateBorderBox(x, y, txt.Width(), txt.Height(), 2, [4]float32{255, 0, 0, 1})
+	//c.SeparateBuffer(font.TextureId, clip)
 }
 
 func (c *CmdBuffer) CreateWindow(wnd Window_command, clip ClipRectCompose) {
@@ -199,7 +199,7 @@ func (c *CmdBuffer) AddCommand(cmd Command, clip ClipRectCompose) {
 		}
 	case Text:
 		t := cmd.Text
-		c.Text(t.Text, t.Font, t.X, c.displaySize.Y-(t.Y+float32(t.Padding)), t.Scale, t.Clr)
+		c.Text(t.Widget, t.Font, t.X, c.displaySize.Y-(t.Y+float32(t.Padding)), t.Scale, t.Clr)
 		c.SeparateBuffer(t.Font.TextureId, clip) // don't forget to slice buffer
 	}
 
@@ -247,50 +247,64 @@ func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 	r.render(vert, ind, 6)
 }
 
-func (b *CmdBuffer) Text(text string, font fonts.Font, x, y float32, scale float32, clr [4]float32) {
+func (b *CmdBuffer) Text(text *widgets.Text, font fonts.Font, x, y float32, scale float32, clr [4]float32) {
 
 	texId := font.TextureId
-	inf := font.GetXHeight()
+	//inf := font.GetXHeight()
+	//
+	//faceHeight := float32(font.Face.Metrics().Height.Ceil())
+	//var dx, baseline float32
+	//dx = x
+	//prevR := rune(-1)
+	//
+	//baseline = y - scale*inf //drawing from left bottom -> rigth top
+	//
+	//var maxDescend float32
+	//for _, r := range text.Message {
+	//	info := font.GetCharacter(r)
+	//	if info.Width == 0 {
+	//		log.Printf("Unknown char = %q", r)
+	//		continue
+	//	}
+	//	if prevR >= 0 {
+	//		kern := font.Face.Kern(prevR, r).Ceil()
+	//		dx += float32(kern)
+	//	}
+	//	if r != ' ' {
+	//		dx += float32(info.LeftBearing)
+	//	}
+	//	if r == '\n' {
+	//		dx = x
+	//		baseline -= faceHeight
+	//		prevR = rune(-1)
+	//		continue
+	//	}
+	//	xPos := dx
+	//	yPos := baseline
+	//
+	//	if info.Descend != 0 {
+	//		d := float32(info.Descend) * scale
+	//		yPos -= d
+	//		if d > maxDescend {
+	//			maxDescend = d
+	//		}
+	//	}
+	//	//fmt.Printf("char = %q,%q, left = %d  right = %d \n ",
+	//	//	prevR, r, info.LeftBearing, info.RigthBearing)
+	//	b.addCharacter(xPos, yPos, scale, texId, info, clr)
+	//
+	//	dx += float32(info.Width) * scale
+	//	if r != ' ' {
+	//		dx += float32(info.RigthBearing)
+	//	}
+	//	prevR = r
+	//}
 
-	faceHeight := font.Face.Metrics().Height
-
-	var dx, dy float32
-	dx = x
-	prevR := rune(-1)
-
-	dy = y - scale*inf
-
-	var maxDescend float32
-	for _, r := range text {
+	for i, r := range text.Message {
 		info := font.GetCharacter(r)
-		if info.Width == 0 {
-			log.Printf("Unknown char = %q", r)
-			continue
-		}
-		if prevR >= 0 {
-			kern := font.Face.Kern(prevR, r).Ceil()
-			dx += float32(kern)
-			// fmt.Printf("%q %q %d \n", prevR, r, kern)
-		}
-		if r == '\n' {
-			dx = x
-			dy -= float32(faceHeight.Ceil())
-			prevR = rune(-1)
-			continue
-		}
-		xPos := float32(dx)
-		yPos := float32(dy)
-
-		if info.Descend != 0 {
-			d := float32(info.Descend) * scale
-			yPos -= d
-			if d > maxDescend {
-				maxDescend = d
-			}
-		}
+		xPos := x + text.Pos[i].X
+		yPos := y - text.Pos[i].Y
 		b.addCharacter(xPos, yPos, scale, texId, info, clr)
-		dx += float32(info.Width) * scale
-		prevR = r
 	}
 }
 

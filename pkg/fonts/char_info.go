@@ -22,10 +22,10 @@ func (c *CharInfo) calcTexCoords(fontWidth, fontHeight int) {
 	x0 := float32(c.SrcX) / float32(fontWidth)
 	x1 := (float32(c.SrcX) + float32(c.Width)) / float32(fontWidth)
 	y0 := float32(c.SrcY) / float32(fontHeight)
-	y1 := (float32(c.SrcY) + float32(c.Heigth)) / float32(fontHeight)
+	y1 := (float32(c.SrcY) - float32(c.Heigth)) / float32(fontHeight)
 
-	c.TexCoords[0] = math.Vec2{X: x0, Y: y1}
-	c.TexCoords[1] = math.Vec2{X: x1, Y: y0}
+	c.TexCoords[0] = math.Vec2{X: x0, Y: y0}
+	c.TexCoords[1] = math.Vec2{X: x1, Y: y1}
 }
 
 func (f *Font) GetCharacter(chr rune) CharInfo {

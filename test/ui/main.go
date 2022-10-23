@@ -76,10 +76,11 @@ func main() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 70)
-	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 14)
-	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 16)
-	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 16)
+	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 14)
+	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 18)
+	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 14)
+	//ui.UiCtx.UploadFont("assets/fonts/sans.ttf", 18)
+	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 14)
 
 	beginTime := float32(glfw.GetTime())
 	var endTime float32
@@ -154,18 +155,23 @@ var ish bool = false
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
-
+	uiCtx.Selection("sel-1", &selection, sle)
 	//if uiCtx.ButtonT("Нажать", "Press") {
 	//	//	ish = !ish
 	//	//
 	//}
-	uiCtx.ContextMenu("texiyt-ttp-1", func() {
-		uiCtx.Text("#t3fdj", "Опция 1", 14)
-		uiCtx.Text("#t3аваfdj", "Опция 2", 14)
-		uiCtx.Text("#t3ававаfdj", "Опция 3", 14)
-	})
+	//uiCtx.ContextMenu("ASsfdffb", func() {
+	//	uiCtx.Text("#t3fdj", "Опция 1", 14)
+	//	uiCtx.Text("#t3аваfdj", "Опция 2", 14)
+	//	uiCtx.Text("#t3ававаfdj", "Опция 3", 14)
+	//})
 	////if ish {
-	////	uiCtx.Text("#er", "Wdff213 ello world!", 14)
+	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
+	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛАМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
+	uiCtx.Text("#eывr", "the quick brown fox jumps over the lazy dog", 14)
+	//uiCtx.Text("#eывr", "AVWAV", 14)
+	uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких французских булок, да выпей чаю", 14)
+	uiCtx.Text("#eы324fdвr", "1+4=5 (323_32) [A-Za-z]*^_2", 14)
 	//uiCtx.Text("#fgfgd", "hello world! dfdgdfgfd 434554654 gf ", 14)
 	////}
 	//
@@ -178,8 +184,8 @@ func firstWindow() {
 		})
 	})
 	//
-	//uiCtx.VSpace("#vs1fdgdf")
-	//
+	uiCtx.VSpace("#vs1fdgdf")
+
 	uiCtx.Row("row 13214", func() {
 		uiCtx.Image("#im4kjdg464", tex)
 		uiCtx.Column("col fdfd", func() {
@@ -195,17 +201,17 @@ func firstWindow() {
 
 		uiCtx.Image("#im4kj", tex)
 	})
-	//if uiCtx.ActiveWidget == "#im4kj" {
-	//	uiCtx.Tooltip("ttp-1", func() {
-	//		uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
-	//		uiCtx.Text("text-ttp-2", "Hello World", 16)
-	//		uiCtx.Text("text-ttp-3", "Hello World", 16)
-	//	})
-	//}
+	if uiCtx.ActiveWidget == "#im4kj" {
+		uiCtx.Tooltip("ttp-1", func() {
+			uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
+			uiCtx.Text("text-ttp-2", "Hello World", 16)
+			uiCtx.Text("text-ttp-3", "Hello World", 16)
+		})
+	}
 	uiCtx.SubWidgetSpace("widhspdf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
 		uiCtx.Image("#im4kjdg464tht", tex2)
 		uiCtx.Image("#im76erewr", tex)
-		uiCtx.Text("#t3df", "world!", 24)
+		uiCtx.Text("#t3d79f", "world!", 24)
 	})
 	uiCtx.VSpace("#hhvs1")
 	uiCtx.Image("#imgj4", tex2)
@@ -222,7 +228,7 @@ func firstWindow() {
 			uiCtx.Text("textrt-ttp-3", "Привет, мир!?", 16)
 		})
 		uiCtx.TabItem("Config 2", func() {
-			uiCtx.SubWidgetSpace("widhspdf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
+			uiCtx.SubWidgetSpace("widhswedf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
 				uiCtx.Image("#im4kjdg464tht", tex2)
 				uiCtx.Image("#im76erewr", tex)
 				uiCtx.Text("#t3df", "world!", 24)
@@ -236,10 +242,14 @@ func firstWindow() {
 			uiCtx.Image("#iваmgj4", tex)
 		})
 	})
-	//uiCtx.Image("#im4kjdg464tht", tex)
+	uiCtx.Image("#im4kjdg464tht", tex)
+	uiCtx.VSpace("#dfff234")
+
 	uiCtx.EndWindow()
 }
 
+var selection int = 0
+var sle = []string{"Hello", "Как выбирать?", "Белый", "Что-то очень длинное"}
 var slCounter float32 = 0
 
 func secondWindow() {

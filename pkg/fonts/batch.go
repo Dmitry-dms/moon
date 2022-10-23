@@ -148,7 +148,6 @@ func (t *TextBatch) AddText(text string, x, y int, scale float32, rgb color.RGBA
 		prevR = r
 	}
 	// fmt.Println("-------------------------------")
-	first = false
 }
 
 func (t *TextBatch) addCharacter(x, y float32, scale float32, info CharInfo, rgb color.RGBA) {

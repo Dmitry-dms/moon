@@ -174,13 +174,11 @@ func (c *UiContext) BeginWindow(id string) {
 	wnd.mainWidgetSpace.ClipRect = [4]float32{wnd.mainWidgetSpace.X, wnd.mainWidgetSpace.Y,
 		wnd.mainWidgetSpace.W - wnd.mainWidgetSpace.verticalScrollbar.w, wnd.mainWidgetSpace.H}
 
+	wnd.buffer.CreateWindow(cmdw, draw.NewClip(draw.EmptyClip, [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}))
 	wnd.widgetSpaceLogic(wnd.mainWidgetSpace, func() draw.ClipRectCompose {
 		cl := [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}
 		return draw.NewClip(draw.EmptyClip, cl)
 	})
-
-	wnd.buffer.CreateWindow(cmdw, draw.NewClip(draw.EmptyClip, [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}))
-
 	c.windowStack.Push(wnd)
 }
 
@@ -239,7 +237,7 @@ func (c *UiContext) ButtonT(id string, msg string) bool {
 	var hovered, clicked bool
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
-	tBtn, hovered, clicked = c.textButton(id, wnd, msg, x, y)
+	tBtn, hovered, clicked = c.textButton(id, wnd, msg, x, y, widgets.Center)
 	if hovered {
 		tBtn.Button.SetColor(c.CurrentStyle.BtnHoveredColor)
 	} else if tBtn.Active() {
@@ -283,39 +281,35 @@ func (c *UiContext) Slider(id string, i *float32, min, max float32) {
 		clip)
 }
 
-func (c *UiContext) Text(id string, msg string, size int) {
+func (c *UiContext) textHelper(id string, x, y float32, msg string) (txt *widgets.Text, hovered bool) {
 	wnd := c.windowStack.Peek()
-	var txt *widgets.Text
-	var hovered bool
-	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
-
 	txt = c.getWidget(id, func() widgets.Widget {
-		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
-		return widgets.NewText(id, msg, x, y, w, h, c.CurrentStyle)
+		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+		return widgets.NewText(id, msg, x, y, w, h, p, c.CurrentStyle)
 	}).(*widgets.Text)
-
 	if msg != txt.Message {
 		txt.Message = msg
-		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+		txt.Pos = p
 		txt.SetWH(w, h)
 	}
+	hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox()))
+	return
+}
 
-	// logic
-	{
-		hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox()))
-		if hovered {
-			c.setActiveWidget(txt.WidgetId())
-			txt.SetBackGroundColor(black)
-			txt.CurrentColor = [4]float32{167, 200, 100, 1}
-		} else {
-			txt.CurrentColor = whiteColor
-			txt.SetBackGroundColor(transparent)
-		}
-		//if c.io.MouseClicked[0] && hovered {
-		//	fmt.Println(msg)
-		//}
+func (c *UiContext) Text(id string, msg string, size int) {
+	wnd := c.windowStack.Peek()
+	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
+	txt, hovered := c.textHelper(id, x, y, msg)
 
+	if hovered {
+		txt.SetBackGroundColor(softGreen)
+		txt.CurrentColor = [4]float32{167, 200, 100, 1}
+	} else {
+		txt.CurrentColor = whiteColor
+		txt.SetBackGroundColor(transparent)
 	}
+
 	//txt.CurrentColor = [4]float32{255, 255, 255, 1}
 
 	clip := wnd.endWidget(x, y, isRow, txt)
@@ -416,8 +410,8 @@ func (c *UiContext) TreeNode(id string, msg string, widgFunc func()) bool {
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	tBtn = c.getWidget(id, func() widgets.Widget {
-		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
-		return widgets.NewTextButton(id, x, y, w, h, msg, widgets.Left, widgets.AllPadding, c.CurrentStyle)
+		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+		return widgets.NewTextButton(id, x, y, w, h, msg, p, widgets.Left, widgets.AllPadding, c.CurrentStyle)
 	}).(*widgets.TextButton)
 
 	// logic
@@ -451,14 +445,15 @@ func (c *UiContext) TreeNode(id string, msg string, widgFunc func()) bool {
 	return tBtn.Active()
 }
 
-func (c *UiContext) textButton(id string, wnd *Window, msg string, x, y float32) (tBtn *widgets.TextButton, hovered, clicked bool) {
+func (c *UiContext) textButton(id string, wnd *Window, msg string, x, y float32, align widgets.TextAlign) (tBtn *widgets.TextButton, hovered, clicked bool) {
 	tBtn = c.getWidget(id, func() widgets.Widget {
-		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
-		return widgets.NewTextButton(id, x, y, w, h, msg, widgets.Center, widgets.AllPadding, c.CurrentStyle)
+		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+		return widgets.NewTextButton(id, x, y, w, h, msg, p, align, widgets.AllPadding, c.CurrentStyle)
 	}).(*widgets.TextButton)
 	if msg != tBtn.Message {
 		tBtn.Message = msg
-		w, h := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+		tBtn.Text.Pos = p
 		tBtn.SetWH(w, h)
 	}
 	hovered = c.hoverBehavior(wnd, utils.NewRectS(tBtn.BoundingBox()))
@@ -532,6 +527,44 @@ func (c *UiContext) setActiveWidget(id string) {
 	c.ActiveWidget = id
 }
 
+func (c *UiContext) Selection(id string, index *int, data []string) {
+	wnd := c.windowStack.Peek()
+	var s *widgets.Selection
+
+	// Need to use this because text may not fit into button, so it should be clipped
+	c.SubWidgetSpace(id+"---", 0, 0, Resizable|NotScrollable, func() {
+		x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
+		s = c.getWidget(id, func() widgets.Widget {
+			return widgets.NewSelection(id, x, y, 200, 50)
+		}).(*widgets.Selection)
+
+		wnd.endWidget(x, y, isRow, s)
+		wnd.buffer.CreateRect(x, y, s.Width(), s.Height(), 0, draw.StraightCorners, 0, whiteColor, wnd.DefaultClip())
+		wnd.buffer.SeparateBuffer(0, wnd.DefaultClip())
+		txt, _ := c.textHelper(data[*index]+"--"+id, x, y, data[*index])
+		wnd.buffer.CreateText(x+c.CurrentStyle.Padding, y+(s.Height()-txt.Height())/2, txt, *c.font, wnd.DefaultClip())
+
+		hovered := c.hoverBehavior(wnd, utils.NewRectS(s.BoundingBox()))
+		if hovered && c.io.MouseClicked[0] {
+			c.setActiveWidget(id)
+		}
+	})
+
+	c.ContextMenu(id, func() {
+		for i, datum := range data {
+			x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
+			tbt, _, clicked := c.textButton(datum+"_btnT_"+id, wnd, datum, x, y, widgets.Left)
+			if clicked {
+				*index = i
+				c.FocusedWidgetSpace = nil
+			}
+			tbt.SetWidth(s.Width())
+			wnd.endWidget(x, y, false, tbt)
+			wnd.buffer.CreateButtonT(x, y, tbt, *c.font, wnd.DefaultClip())
+		}
+	})
+}
+
 func (c *UiContext) ContextMenu(ownerWidgetId string, widgFunc func()) {
 	wnd := c.windowStack.Peek()
 	var bb [4]float32
@@ -541,16 +574,16 @@ func (c *UiContext) ContextMenu(ownerWidgetId string, widgFunc func()) {
 	}
 	bb = widg.BoundingBox()
 	id := ownerWidgetId + "-ws-context"
-	ws := c.getWidgetSpace(id, 0, 0, wnd, Resizable)
-	if c.ActiveWidget == widg.WidgetId() {
+	ws := c.getWidgetSpace(id, 0, 0, wnd, Resizable|FitWidth)
+	if c.LastActiveWidget == widg.WidgetId() {
 		c.FocusedWidgetSpace = ws
 	}
 	if c.FocusedWidgetSpace == ws {
 		f := func() {
 			ws.ClipRect = [4]float32{ws.X, ws.Y, ws.W, ws.H}
-			clip := draw.NewClip(ws.ClipRect, draw.EmptyClip)
+			clip := draw.NewClip(draw.EmptyClip, ws.ClipRect)
 			wnd.buffer.CreateRect(bb[0], bb[1]+widg.Height(), ws.W, ws.H, 0, draw.StraightCorners, 0, black, clip)
-			c.subWidgetSpaceHelper(id, bb[0], bb[1]+widg.Height(), 0, 0, Resizable, widgFunc)
+			c.subWidgetSpaceHelper(id, bb[0], bb[1]+widg.Height(), widg.Width(), 0, Resizable|FitWidth, widgFunc)
 		}
 		wnd.addDelayedWidget(f)
 	}
@@ -587,6 +620,9 @@ func (c *UiContext) Column(id string, widgFunc func()) {
 	hl.UpdateHeight(hl.CurrentColH)
 }
 
+func (wnd *Window) debugDrawS(x [4]float32) {
+	wnd.buffer.CreateBorderBox(x[0], x[1], x[2], x[3], 2, red)
+}
 func (wnd *Window) debugDraw(x, y, w, h float32) {
 	wnd.buffer.CreateBorderBox(x, y, w, h, 2, red)
 }
@@ -621,14 +657,19 @@ func (c *UiContext) subWidgetSpaceHelper(id string, x, y, width, height float32,
 		if ws.isVertScrollShown {
 			ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W - ws.verticalScrollbar.w, ws.H - (wnd.mainWidgetSpace.Y - y)}
 		} else {
-			ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W, ws.H - (wnd.mainWidgetSpace.Y - y)}
+			//ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W, ws.H - (wnd.mainWidgetSpace.Y - y)}
+			ws.ClipRect = [4]float32{x, wnd.mainWidgetSpace.Y, ws.W, ws.H}
 		}
+		//wnd.debugDrawS(ws.ClipRect)
 	} else {
 		if ws.flags&ShowScrollbar != 0 {
 			ws.ClipRect = [4]float32{x, y, ws.W - ws.verticalScrollbar.w, ws.H}
 		} else {
 			ws.ClipRect = [4]float32{x, y, ws.W, ws.H}
 		}
+	}
+	if flags&FitWidth != 0 {
+		ws.ClipRect[2] = width
 	}
 
 	wnd.widgetSpaceLogic(ws, func() draw.ClipRectCompose {
@@ -709,7 +750,7 @@ func (c *UiContext) TabBar(id string, widgFunc func()) {
 			wnd.buffer.CreateRect(row.X, row.Y, row.Width(), row.Height(), 10, draw.AllRounded, 0, transparent, wnd.DefaultClip())
 			for i, item := range tab.Bars {
 				x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
-				tbtn, hovered, clicked := c.textButton(fmt.Sprint(id, "-", i), wnd, item.Name, x, y)
+				tbtn, hovered, clicked := c.textButton(fmt.Sprint(id, "-", i), wnd, item.Name, x, y, widgets.Center)
 				if clicked {
 					tab.CurrentTab = i
 				}

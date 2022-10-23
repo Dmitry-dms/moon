@@ -291,11 +291,3 @@ func (b *GLRender) Draw(displaySize [2]float32, buffer draw.CmdBuffer) {
 	// }
 	// gl.PolygonMode(gl.FRONT_AND_BACK, uint32(lastPolygonMode[0]))
 }
-
-func checkSliceForNull(s [4]float32) bool {
-	return (s[0] == 0) && (s[1] == 0) && (s[2] == 0) && (s[3] == 0)
-}
-
-func (r *GLRender) Scissor(x, y, w, h int32) {
-	gl.Scissor(x, y, w, h)
-}

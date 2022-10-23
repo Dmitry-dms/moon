@@ -24,9 +24,10 @@ type UiContext struct {
 	io       *Io
 
 	//Widgets
-	Windows       []*Window
-	sortedWindows []*Window
-	ActiveWidget  string
+	Windows          []*Window
+	sortedWindows    []*Window
+	ActiveWidget     string
+	LastActiveWidget string
 
 	ActiveWindow *Window
 
@@ -83,7 +84,7 @@ func NewContext(frontRenderer UiRenderer) *UiContext {
 }
 
 func (c *UiContext) UploadFont(path string, size int) {
-	c.font = fonts.NewFont(path, int32(size))
+	c.font = fonts.NewFont(path, size)
 }
 
 func (c *UiContext) Initialize(frontRenderer UiRenderer) {
@@ -293,6 +294,7 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	c.io.ScrollX = 0
 	c.io.ScrollY = 0
 
+	c.LastActiveWidget = c.ActiveWidget
 	c.ActiveWidget = ""
 
 	if c.ActiveWindow != nil {
@@ -374,6 +376,5 @@ func (c *UiContext) PopStyleVar() {
 
 type UiRenderer interface {
 	NewFrame()
-	Scissor(x, y, w, h int32)
 	Draw(displaySize [2]float32, buffer draw.CmdBuffer)
 }

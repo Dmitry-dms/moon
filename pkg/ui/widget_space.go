@@ -15,6 +15,7 @@ const (
 	NotScrollable
 	Scrollable
 	IgnoreClipping
+	FitWidth
 
 	Default = Resizable | ShowScrollbar | Scrollable
 )

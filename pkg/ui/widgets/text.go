@@ -1,20 +1,25 @@
 package widgets
 
-import "github.com/Dmitry-dms/moon/pkg/ui/styles"
+import (
+	"github.com/Dmitry-dms/moon/pkg/ui/styles"
+	"github.com/Dmitry-dms/moon/pkg/ui/utils"
+)
 
 type Text struct {
 	base         baseWidget
 	Message      string
 	CurrentColor [4]float32
+	Pos          []utils.Vec2
 
 	Size    int
 	Padding int
 	Scale   float32
 }
 
-func NewText(id, text string, x, y, w, h float32, style *styles.Style) *Text {
+func NewText(id, text string, x, y, w, h float32, pos []utils.Vec2, style *styles.Style) *Text {
 	t := Text{
 		Message: text,
+		Pos:     pos,
 		base: baseWidget{
 			id:              id,
 			boundingBox:     [4]float32{x, y, w, h + float32(style.TextPadding)},
