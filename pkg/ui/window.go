@@ -348,9 +348,8 @@ func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
 		clicked = c.io.MouseClicked[0] && hovered
 	}
 	clip := wnd.endWidget(x, y, isRow, img)
-
-	wnd.buffer.CreateRect(x, y, img.Width(), img.Height(), 0, draw.StraightCorners, tex.TextureId, clr, clip)
-
+	wnd.buffer.CreateTexturedRect(x, y, img.Width(), img.Height(), tex.TextureId, tex.TexCoords, clr, clip)
+	//wnd.buffer.CreateRect(x, y, img.Width(), img.Height(), 0, draw.StraightCorners, tex.TextureId, clr, clip)
 	return clicked
 }
 

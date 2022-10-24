@@ -1,22 +1,13 @@
 package fonts
 
 import (
-	"encoding/json"
-	"github.com/Dmitry-dms/moon/pkg/math"
-	"github.com/Dmitry-dms/moon/pkg/sprite_packer"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"image"
-	"image/png"
-	"os"
-	"sort"
-
 	// "image/png"
 	"io/ioutil"
 	// "os"
 
 	"log"
-
-	"github.com/Dmitry-dms/moon/pkg/gogl"
 
 	"golang.org/x/image/font"
 	"golang.org/x/text/encoding/charmap"
@@ -34,20 +25,19 @@ type Font struct {
 	CharMap map[int]*CharInfo
 
 	TextureId uint32
-	Texture   *gogl.Texture
 
 	Face font.Face
 }
 
-func NewFont(filepath string, fontSize int) *Font {
+func NewFont(filepath string, fontSize int) (*Font, *image.RGBA) {
 	f := Font{
 		Filepath: filepath,
 		FontSize: fontSize,
 		CharMap:  make(map[int]*CharInfo, 50),
 	}
 
-	f.generateAndUploadBitmap()
-	return &f
+	data := f.generateBitmap()
+	return &f, data
 }
 
 var siz = 2048
@@ -108,7 +98,7 @@ func (font *Font) CalculateTextBounds(text string, scale float32) (width, height
 	return
 }
 
-func (f *Font) generateAndUploadBitmap() {
+func (f *Font) generateBitmap() *image.RGBA {
 	cp := charmap.Windows1251
 	var letters []rune
 	for i := 32; i < 256; i++ {
@@ -227,52 +217,14 @@ func (f *Font) generateAndUploadBitmap() {
 	}
 
 	dy += maxDesc
-	sort.Slice(sortSlice, func(i, j int) bool {
-		return sortSlice[i].Heigth > sortSlice[j].Heigth
-	})
 
-	pngFile, _ := os.OpenFile("fonts.png", os.O_CREATE|os.O_RDWR, 0664)
+	return dst
 
-	defer pngFile.Close()
+	//fil, err := os.OpenFile("atlas.json", os.O_CREATE|os.O_RDWR, 0664)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//enc := json.NewEncoder(fil)
+	//enc.Encode(sheet.Group)
 
-	encoder := png.Encoder{
-		CompressionLevel: png.BestCompression,
-	}
-
-	sheet := sprite_packer.NewSpriteSheet(128)
-
-	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
-		spriteInfo := make([]*sprite_packer.SpriteInfo, len(sortSlice))
-		for i, info := range sortSlice {
-			if info.Rune == ' ' || info.Rune == '\u00a0' {
-				continue
-			}
-			ret := dst.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
-			pixels := sheet.GetData(ret)
-			spriteInfo[i] = sheet.AddToSheet(string(info.Rune), pixels)
-		}
-		return spriteInfo
-	})
-
-	rr, _ := sheet.GetGroup(f.Filepath)
-
-	for _, info := range rr {
-		if info != nil {
-			ll := []rune(info.Id)
-			char := f.GetCharacter(ll[0])
-			char.TexCoords = [2]math.Vec2{{info.TextCoords[0], info.TextCoords[1]},
-				{info.TextCoords[2], info.TextCoords[3]}}
-		}
-	}
-
-	im := sheet.Image
-	//t2 := gogl.UploadRGBATextureFromMemory(sheet.Image)
-	//f.TextureId = t2.GetId()
-	//f.Texture = t2
-
-	fil, _ := os.OpenFile("atlas.json", os.O_CREATE|os.O_RDWR, 0664)
-	enc := json.NewEncoder(fil)
-	enc.Encode(sheet.Group)
-
-	encoder.Encode(pngFile, im)
 }

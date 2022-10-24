@@ -47,6 +47,7 @@ type Rect_command struct {
 	TexId      uint32
 	radius     int
 	shape      RoundedRectShape
+	coords     [4]float32
 	// ScaleFactor float32
 	// Texture     *gogl.Texture
 }

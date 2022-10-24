@@ -40,7 +40,7 @@ func (s *SpriteSheet) GetGroup(id string) ([]*SpriteInfo, bool) {
 	}
 	return g, true
 }
-func (s *SpriteSheet) AddSprite(groupId, spriteId string, data *image.RGBA) *SpriteInfo {
+func (s *SpriteSheet) AddSprite(groupId, spriteId string, data image.Image) *SpriteInfo {
 	d := s.GetData(data)
 	info := s.AddToSheet(spriteId, d)
 	_, ok := s.GetGroup(groupId)
@@ -61,7 +61,7 @@ func (s *SpriteSheet) increaseImage() int {
 	s.wasResized = true
 	return newW
 }
-func printBorder(m *image.RGBA, x, y, w, h int) {
+func printBorder(m *image.RGBA, x, y, w int) {
 
 	//for i := y; i >= y-h; i-- {
 	//	m.Set(x, i, colornames.Red)
@@ -93,9 +93,7 @@ func (s *SpriteSheet) findEmptySpace(srcX, srcY, width int) int {
 			if s.Image.RGBAAt(srcX+j*rayStep, -i).R != 0 {
 				break
 			} else {
-				//if char == 'J' {
 				//	s.Image.Set(srcX+j*rayStep, -i, colornames.Blue)
-				//}
 				inner++
 			}
 		}
@@ -172,7 +170,7 @@ func (s *SpriteSheet) AddToSheet(id string, pixels [][]color.Color) *SpriteInfo 
 	return &srcInfo
 }
 
-func (s *SpriteSheet) GetData(data *image.RGBA) [][]color.Color {
+func (s *SpriteSheet) GetData(data image.Image) [][]color.Color {
 	b := data.Bounds()
 	pixels := make([][]color.Color, b.Dy())
 	for i := range pixels {
@@ -183,7 +181,7 @@ func (s *SpriteSheet) GetData(data *image.RGBA) [][]color.Color {
 	for i := b.Min.Y; i < b.Max.Y; i++ {
 		jk := 0
 		for j := b.Min.X; j < b.Max.X; j++ {
-			pixels[ik][jk] = data.RGBAAt(j, i)
+			pixels[ik][jk] = data.At(j, i)
 			jk++
 		}
 		ik++

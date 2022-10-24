@@ -17,6 +17,7 @@ type Texture struct {
 	TextureId uint32 `json:"texture_id"`
 	Width     int32  `json:"texture_width"`
 	Height    int32  `json:"texture_height"`
+	TexCoords [4]float32
 }
 
 type TextureExported struct {

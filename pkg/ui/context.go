@@ -4,6 +4,7 @@ import (
 	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/ui/cache"
 	"github.com/Dmitry-dms/moon/pkg/ui/draw"
+	"image"
 
 	"github.com/Dmitry-dms/moon/pkg/ui/styles"
 	// "github.com/Dmitry-dms/moon/pkg/ui/render"
@@ -83,8 +84,10 @@ func NewContext(frontRenderer UiRenderer) *UiContext {
 	return &c
 }
 
-func (c *UiContext) UploadFont(path string, size int) {
-	c.font = fonts.NewFont(path, size)
+func (c *UiContext) UploadFont(path string, size int) (*fonts.Font, *image.RGBA) {
+	f, data := fonts.NewFont(path, size)
+	c.font = f
+	return f, data
 }
 
 func (c *UiContext) Initialize(frontRenderer UiRenderer) {

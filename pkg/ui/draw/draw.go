@@ -121,6 +121,22 @@ func (c *CmdBuffer) CreateWindow(wnd Window_command, clip ClipRectCompose) {
 	c.SeparateBuffer(0, clip)
 }
 
+func (c *CmdBuffer) CreateTexturedRect(x, y, w, h float32, texId uint32, coords, clr [4]float32, clip ClipRectCompose) {
+	cmd := Command{
+		Type: RectType,
+		Rect: &Rect_command{
+			X:      x,
+			Y:      y,
+			W:      w,
+			H:      h,
+			Clr:    clr,
+			TexId:  texId,
+			coords: coords,
+		},
+	}
+	c.AddCommand(cmd, clip)
+}
+
 func (c *CmdBuffer) CreateRect(x, y, w, h float32, radius int, shape RoundedRectShape, texId uint32, clr [4]float32, clip ClipRectCompose) {
 	cmd := Command{
 		Type: RectType,
@@ -187,7 +203,7 @@ func (c *CmdBuffer) AddCommand(cmd Command, clip ClipRectCompose) {
 			if r.TexId == 0 {
 				c.RectangleR(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.Clr)
 			} else {
-				c.RectangleT(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.TexId, 0, 1, r.Clr)
+				c.RectangleT(r.X, c.displaySize.Y-r.Y, r.W, r.H, r.TexId, r.coords, r.Clr)
 				c.SeparateBuffer(r.TexId, clip) // don't forget to slice buffer
 			}
 		} else {
@@ -250,6 +266,7 @@ func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 func (b *CmdBuffer) Text(text *widgets.Text, font fonts.Font, x, y float32, scale float32, clr [4]float32) {
 
 	texId := font.TextureId
+
 	//inf := font.GetXHeight()
 	//
 	//faceHeight := float32(font.Face.Metrics().Height.Ceil())
@@ -346,19 +363,22 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	b.render(vert, ind, 6)
 }
 
-func (r *CmdBuffer) RectangleT(x, y, w, h float32, texId uint32, uv0, uv1 float32, clr [4]float32) {
+func (r *CmdBuffer) RectangleT(x, y, w, h float32, texId uint32, coords [4]float32, clr [4]float32) {
 
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)
+
+	ux0, uy0 := coords[2], coords[3]
+	ux1, uy1 := coords[0], coords[1]
 
 	ind0 := r.lastIndc
 	ind1 := ind0 + 1
 	ind2 := ind1 + 1
 	offset := 0
 
-	fillVertices(vert, &offset, x, y, uv1, uv1, float32(texId), clr)
-	fillVertices(vert, &offset, x, y-h, uv1, uv0, float32(texId), clr)
-	fillVertices(vert, &offset, x+w, y-h, uv0, uv0, float32(texId), clr)
+	fillVertices(vert, &offset, x, y, ux1, uy0, float32(texId), clr)
+	fillVertices(vert, &offset, x, y-h, ux1, uy1, float32(texId), clr)
+	fillVertices(vert, &offset, x+w, y-h, ux0, uy1, float32(texId), clr)
 
 	ind[0] = int32(ind0)
 	ind[1] = int32(ind1)
@@ -366,7 +386,8 @@ func (r *CmdBuffer) RectangleT(x, y, w, h float32, texId uint32, uv0, uv1 float3
 
 	last := ind2 + 1
 
-	fillVertices(vert, &offset, x+w, y, uv0, uv1, float32(texId), clr)
+	fillVertices(vert, &offset, x+w, y, ux0, uy0, float32(texId), clr)
+
 	ind[3] = int32(ind0)
 	ind[4] = int32(ind2)
 	ind[5] = int32(last)

@@ -2,9 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/Dmitry-dms/moon/pkg/fonts"
+	"github.com/Dmitry-dms/moon/pkg/math"
+	"github.com/Dmitry-dms/moon/pkg/sprite_packer"
 	"image"
+	"image/png"
 	"os"
 	"runtime"
+	"sort"
 
 	"github.com/Dmitry-dms/moon/pkg/gogl"
 	"github.com/Dmitry-dms/moon/pkg/ui"
@@ -77,10 +82,36 @@ func main() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 14)
-	ui.UiCtx.UploadFont("C:/Windows/Fonts/arial.ttf", 18)
+	fontName := "C:/Windows/Fonts/arial.ttf"
+	f, data := ui.UiCtx.UploadFont(fontName, 18)
+	t2 := gogl.UploadRGBATextureFromMemory(data)
+	f.TextureId = t2.GetId()
+
+	sheet := sprite_packer.NewSpriteSheet(128)
+
+	ConvertFontToAtlas(f, sheet, data)
+
 	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 14)
 	//ui.UiCtx.UploadFont("assets/fonts/sans.ttf", 18)
 	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 14)
+
+	//sheet.BeginGroup("sprites", func() []*sprite_packer.SpriteInfo {
+	//	spr := []*sprite_packer.SpriteInfo{}
+	//
+	//})
+	mario := openImage("assets/images/mario.png")
+	goomba := openImage("assets/images/goomba.png")
+	ms := sheet.AddSprite("sprites", "mario", mario)
+	gs := sheet.AddSprite("sprites", "goomba", goomba)
+	t2 = gogl.UploadRGBATextureFromMemory(sheet.Image)
+	f.TextureId = t2.GetId()
+	//CreateImage("debug.png", sheet.Image)
+	tex = &gogl.Texture{}
+	tex2 = &gogl.Texture{}
+	tex.TextureId = t2.TextureId
+	tex.TexCoords = ms.TextCoords
+	tex2.TextureId = t2.TextureId
+	tex2.TexCoords = gs.TextCoords
 
 	beginTime := float32(glfw.GetTime())
 	var endTime float32
@@ -89,8 +120,8 @@ func main() {
 
 	var time float32 = 0
 
-	tex, _ = tex.Init("assets/images/mario.png")
-	tex2, _ = tex2.Init("assets/images/goomba.png")
+	//tex, _ = tex.Init("assets/images/mario.png")
+	//tex2, _ = tex2.Init("assets/images/goomba.png")
 
 	// fb, err := NewFramebuffer(200, 200)
 	// if err != nil {
@@ -130,6 +161,67 @@ func main() {
 
 		time += dt
 		steps++
+	}
+}
+
+func openImage(filepath string) image.Image {
+	infile, err := os.Open(filepath)
+	if err != nil {
+		return nil
+	}
+	defer infile.Close()
+
+	img, _, err := image.Decode(infile)
+	if err != nil {
+		return nil
+	}
+	return img
+}
+
+func CreateImage(filename string, img image.Image) {
+	pngFile, _ := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0664)
+
+	defer pngFile.Close()
+
+	encoder := png.Encoder{
+		CompressionLevel: png.BestCompression,
+	}
+	encoder.Encode(pngFile, img)
+}
+
+func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImage *image.RGBA) {
+	chars := make([]*fonts.CharInfo, len(f.CharMap))
+	counter := 0
+	for _, info := range f.CharMap {
+		chars[counter] = info
+		counter++
+	}
+	sort.Slice(chars, func(i, j int) bool {
+		return chars[i].Heigth > chars[j].Heigth
+	})
+
+	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
+		spriteInfo := make([]*sprite_packer.SpriteInfo, len(chars))
+		for i, info := range chars {
+			if info.Rune == ' ' || info.Rune == '\u00a0' {
+				continue
+			}
+			ret := srcImage.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
+			pixels := sheet.GetData(ret)
+			spriteInfo[i] = sheet.AddToSheet(string(info.Rune), pixels)
+		}
+		return spriteInfo
+	})
+
+	rr, _ := sheet.GetGroup(f.Filepath)
+
+	for _, info := range rr {
+		if info != nil {
+			ll := []rune(info.Id)
+			char := f.GetCharacter(ll[0])
+			char.TexCoords = [2]math.Vec2{{info.TextCoords[0], info.TextCoords[1]},
+				{info.TextCoords[2], info.TextCoords[3]}}
+		}
 	}
 }
 
@@ -200,7 +292,7 @@ func firstWindow() {
 	//		uiCtx.Slider("slider-1", &slCounter, 0, 255)
 	//	})
 	//
-	//	uiCtx.Image("#im4kj", tex)
+	uiCtx.Image("#im4kj", tex)
 	//})
 	//if uiCtx.ActiveWidget == "#im4kj" {
 	//	uiCtx.Tooltip("ttp-1", func() {
