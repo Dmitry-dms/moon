@@ -171,7 +171,7 @@ func firstWindow() {
 	uiCtx.Text("#eывr", "the quick brown fox jumps over the lazy dog", 14)
 	//uiCtx.Text("#eывr", "A", 14)
 	//uiCtx.Text("#eывr", "AVWAV", 14)
-	//uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких французских булок, да выпей чаю", 14)
+	uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких французских булок, да выпей чаю", 14)
 	//uiCtx.Text("#eы324fdвr", "1+4=5 (323_32) [A-Za-z]*^_2", 14)
 	////uiCtx.Text("#fgfgd", "hello world! dfdgdfgfd 434554654 gf ", 14)
 	//////}

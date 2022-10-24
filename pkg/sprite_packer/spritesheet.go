@@ -9,9 +9,10 @@ import (
 )
 
 type SpriteSheet struct {
-	Width, Height int
+	Width         int `json:"atlas_width"`
+	Height        int `json:"atlas_height"`
 	Filename      string
-	Group         map[string][]*SpriteInfo
+	Group         map[string][]*SpriteInfo `json:"groups"`
 	Image         *image.RGBA
 	srcX, srcY    int
 	currentHeight int
@@ -191,9 +192,12 @@ func (s *SpriteSheet) GetData(data *image.RGBA) [][]color.Color {
 }
 
 type SpriteInfo struct {
-	Id                        string
-	SrcX, SrcY, Width, Height int
-	TextCoords                [4]float32 //uv0 uv0 uv1 uv1
+	Id         string     `json:"sprite_id"`
+	SrcX       int        `json:"sprite_src_x"`
+	SrcY       int        `json:"sprite_src_y"`
+	Width      int        `json:"sprite_w"`
+	Height     int        `json:"sprite_h"`
+	TextCoords [4]float32 `json:"sprite_tex_coords"` //uv0 uv0 uv1 uv1
 }
 
 func (c *SpriteInfo) calcTexCoords(atlasWidth, atlasHeight int) {

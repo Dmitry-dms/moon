@@ -1,12 +1,11 @@
 package fonts
 
 import (
+	"encoding/json"
 	"github.com/Dmitry-dms/moon/pkg/math"
 	"github.com/Dmitry-dms/moon/pkg/sprite_packer"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
-	"golang.org/x/image/colornames"
 	"image"
-	"image/draw"
 	"image/png"
 	"os"
 	"sort"
@@ -226,15 +225,11 @@ func (f *Font) generateAndUploadBitmap() {
 			maxDesc = b.Max.Y.Ceil()
 		}
 	}
+
 	dy += maxDesc
 	sort.Slice(sortSlice, func(i, j int) bool {
 		return sortSlice[i].Heigth > sortSlice[j].Heigth
 	})
-
-	dst2 := dst.SubImage(image.Rect(0, 0, siz, siz))
-	dst3 := image.NewRGBA(dst2.Bounds())
-
-	draw.Draw(dst3, dst2.Bounds(), dst2, image.ZP, draw.Src)
 
 	pngFile, _ := os.OpenFile("fonts.png", os.O_CREATE|os.O_RDWR, 0664)
 
@@ -243,31 +238,23 @@ func (f *Font) generateAndUploadBitmap() {
 	encoder := png.Encoder{
 		CompressionLevel: png.BestCompression,
 	}
-	//encoder.Encode(pngFile, dst3)
-	//t2 := gogl.UploadRGBATextureFromMemory(dst3)
-	//f.TextureId = t2.GetId()
-	//f.Texture = t2
-	//initWidth := 400
 
 	sheet := sprite_packer.NewSpriteSheet(128)
 
-	sheet.BeginGroup("font-18", func() []*sprite_packer.SpriteInfo {
+	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
 		spriteInfo := make([]*sprite_packer.SpriteInfo, len(sortSlice))
 		for i, info := range sortSlice {
 			if info.Rune == ' ' || info.Rune == '\u00a0' {
 				continue
 			}
-			ret := dst3.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
+			ret := dst.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
 			pixels := sheet.GetData(ret)
 			spriteInfo[i] = sheet.AddToSheet(string(info.Rune), pixels)
 		}
 		return spriteInfo
 	})
 
-	rr, err := sheet.GetGroup("font-18")
-	if err != nil {
-		panic(err)
-	}
+	rr, _ := sheet.GetGroup(f.Filepath)
 
 	for _, info := range rr {
 		if info != nil {
@@ -279,169 +266,13 @@ func (f *Font) generateAndUploadBitmap() {
 	}
 
 	im := sheet.Image
-	t2 := gogl.UploadRGBATextureFromMemory(sheet.Image)
-	f.TextureId = t2.GetId()
-	f.Texture = t2
-	//func(im *image.RGBA) {
-	//	m := im
-	//	x := 0
-	//	y := 0
-	//	w := im.Bounds().Dx()
-	//	h := im.Bounds().Dy()
-	//	for i := 0; i <= h; i++ {
-	//		m.Set(x, i, colornames.Red)
-	//	}
-	//	for i := 0; i <= w; i++ {
-	//		m.Set(i, y, colornames.Red)
-	//	}
-	//	//for i := y; i >= y-h; i-- {
-	//	//	m.Set(x+w, i, colornames.Red)
-	//	//}
-	//	//for i := x + w; x <= i; i-- {
-	//	//	m.Set(i, y, colornames.Red)
-	//	//}
-	//}(im)
+	//t2 := gogl.UploadRGBATextureFromMemory(sheet.Image)
+	//f.TextureId = t2.GetId()
+	//f.Texture = t2
 
-	//ret2 := dst3.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
-	//nh := image.NewRGBA(image.Rect(0, 0, ret.Bounds().Dx(), ret.Bounds().Dy()))
-
-	//sheet.AddToSheet(pixels2)
-	//pixels := sheet.GetData(ret)
-
-	//for y := 0; y < len(pixels); y++ {
-	//	for x := 0; x < len(pixels[0]); x++ {
-	//		q := pixels[y]
-	//		if q == nil {
-	//			continue
-	//		}
-	//		p := pixels[y][x]
-	//		if p == nil {
-	//			continue
-	//		}
-	//		original, ok := color.RGBAModel.Convert(p).(color.RGBA)
-	//		if ok {
-	//			nh.Set(x, y, original)
-	//		}
-	//	}
-	//}
-	//srcX := 0
-	//srcY := 0
-	//nsl := []*CharInfo{}
-	//nsl = append(nsl, sortSlice[0])
-	//nsl = append(nsl, sortSlice[0], sortSlice[1], sortSlice[2], sortSlice[3], sortSlice[4])
-	//for _, info := range sortSlice[0:20] {
-	//
-	//	//info := sortSlice[10]
-	//	re := dst3.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
-	//	b := re.Bounds()
-	//	var pixels [][]color.Color
-	//	//put pixels into two three two dimensional array
-	//	for i := b.Min.Y; i < b.Max.Y; i++ {
-	//		var y []color.Color
-	//		for j := b.Min.X; j < b.Max.X; j++ {
-	//			y = append(y, re.RGBAAt(j, i))
-	//		}
-	//		pixels = append(pixels, y)
-	//	}
-	//	if srcX+len(pixels) >= initWidth {
-	//		srcX = 0
-	//		srcY -= fontSize.Ceil()
-	//	}
-	//	ypos := srcY
-	//	xpos := srcX
-	//	h := checkForFreeHeight(im, xpos, -ypos, info.Width, info.Heigth)
-	//	ypos += h - 1
-	//	w := checkForFreeWidth(im, xpos, -ypos, info.Width, info.Heigth)
-	//	xpos -= w - 1
-	//	//fmt.Println(h)
-	//	fmt.Printf("char = %q, h = %d  w = %d\n", info.Rune, h, w)
-	//	//if h != 0 {
-	//
-	//	//}
-	//	//if srcY < 0 {
-	//	//	srcY = 0
-	//	//}
-	//	//fmt.Println(srcY)
-	//	for y := 0; y < len(pixels); y++ {
-	//		for x := 0; x < len(pixels[0]); x++ {
-	//			q := pixels[y]
-	//			if q == nil {
-	//				continue
-	//			}
-	//			p := pixels[y][x]
-	//			if p == nil {
-	//				continue
-	//			}
-	//			original, ok := color.RGBAModel.Convert(p).(color.RGBA)
-	//			if ok {
-	//				im.Set(x+xpos, y-ypos, original)
-	//			}
-	//		}
-	//	}
-	//	//s := im.Bounds().Size()
-	//
-	//	//}
-	//
-	//	srcX += info.Width
-	//	//srcX += 2
-	//}
+	fil, _ := os.OpenFile("atlas.json", os.O_CREATE|os.O_RDWR, 0664)
+	enc := json.NewEncoder(fil)
+	enc.Encode(sheet.Group)
 
 	encoder.Encode(pngFile, im)
-}
-func checkForFreeHeight(img *image.RGBA, x, y, w, h int) (height int) {
-all:
-	for i := y - 1; i > 0; i-- {
-		for j := x; j < x+w; j++ {
-			r, g, b, _ := img.At(j, i).RGBA()
-			//img.Set(j, i, colornames.Red)
-			//fmt.Println(r, g, b, a)
-			if r == 0 && g == 0 && b == 0 {
-
-			} else {
-				break all
-			}
-		}
-		height += 1
-	}
-	return
-}
-func checkForFreeWidth(img *image.RGBA, x, y, w, h int) (width int) {
-all:
-	for i := x; i > 0; i-- {
-		for j := y; j < y+h; j++ {
-			r, g, b, _ := img.At(i, j).RGBA()
-			//img.Set(i, j, colornames.Red)
-			if r == 0 && g == 0 && b == 0 {
-
-			} else {
-				break all
-			}
-		}
-		width += 1
-	}
-	return
-}
-
-func printBorder(m *image.RGBA, x, y, w, h int, desc fixed.Point26_6, a fixed.Int26_6, sy int) {
-	for i := y; i >= y-h; i-- {
-		m.Set(x, i, colornames.Red)
-	}
-	for i := x; i <= x+w; i++ {
-		m.Set(i, y-h, colornames.Red)
-	}
-	for i := y; i >= y-h; i-- {
-		m.Set(x+w, i, colornames.Red)
-	}
-	for i := x + w; x <= i; i-- {
-		m.Set(i, y, colornames.Red)
-	}
-
-	for i := desc.X.Ceil(); i <= desc.X.Ceil()+a.Ceil(); i++ {
-		m.Set(i, desc.Y.Ceil(), colornames.Blue)
-	}
-
-	for i := desc.X.Ceil(); i <= desc.X.Ceil()+a.Ceil(); i++ {
-		m.Set(i, sy, colornames.Violet)
-	}
-
 }
