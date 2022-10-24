@@ -155,7 +155,7 @@ var ish bool = false
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
-	uiCtx.Selection("sel-1", &selection, sle)
+	//uiCtx.Selection("sel-1", &selection, sle)
 	//if uiCtx.ButtonT("Нажать", "Press") {
 	//	//	ish = !ish
 	//	//
@@ -169,81 +169,82 @@ func firstWindow() {
 	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
 	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛАМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
 	uiCtx.Text("#eывr", "the quick brown fox jumps over the lazy dog", 14)
+	//uiCtx.Text("#eывr", "A", 14)
 	//uiCtx.Text("#eывr", "AVWAV", 14)
-	uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких французских булок, да выпей чаю", 14)
-	uiCtx.Text("#eы324fdвr", "1+4=5 (323_32) [A-Za-z]*^_2", 14)
-	//uiCtx.Text("#fgfgd", "hello world! dfdgdfgfd 434554654 gf ", 14)
-	////}
+	//uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких французских булок, да выпей чаю", 14)
+	//uiCtx.Text("#eы324fdвr", "1+4=5 (323_32) [A-Za-z]*^_2", 14)
+	////uiCtx.Text("#fgfgd", "hello world! dfdgdfgfd 434554654 gf ", 14)
+	//////}
+	////
+	//uiCtx.TreeNode("tree1", "Configuration", func() {
+	//	uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
+	//	uiCtx.Text("#t3j", "hello world!", 14)
+	//	uiCtx.TreeNode("tree1yuy2", "Настройки", func() {
+	//		uiCtx.Text("texiyt-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
+	//		uiCtx.Text("#tiy3j", "hello world!", 14)
+	//	})
+	//})
+	////
+	//uiCtx.VSpace("#vs1fdgdf")
 	//
-	uiCtx.TreeNode("tree1", "Configuration", func() {
-		uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
-		uiCtx.Text("#t3j", "hello world!", 14)
-		uiCtx.TreeNode("tree1yuy2", "Настройки", func() {
-			uiCtx.Text("texiyt-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
-			uiCtx.Text("#tiy3j", "hello world!", 14)
-		})
-	})
+	//uiCtx.Row("row 13214", func() {
+	//	uiCtx.Image("#im4kjdg464", tex)
+	//	uiCtx.Column("col fdfd", func() {
+	//		uiCtx.Image("#im76", tex2)
+	//		uiCtx.Image("#im4", tex)
+	//	})
 	//
-	uiCtx.VSpace("#vs1fdgdf")
-
-	uiCtx.Row("row 13214", func() {
-		uiCtx.Image("#im4kjdg464", tex)
-		uiCtx.Column("col fdfd", func() {
-			uiCtx.Image("#im76", tex2)
-			uiCtx.Image("#im4", tex)
-		})
-
-		uiCtx.Column("col fdfdвава", func() {
-			uiCtx.Button("ASsfdffb")
-			uiCtx.Button("ASsfdffbbb")
-			uiCtx.Slider("slider-1", &slCounter, 0, 255)
-		})
-
-		uiCtx.Image("#im4kj", tex)
-	})
-	if uiCtx.ActiveWidget == "#im4kj" {
-		uiCtx.Tooltip("ttp-1", func() {
-			uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
-			uiCtx.Text("text-ttp-2", "Hello World", 16)
-			uiCtx.Text("text-ttp-3", "Hello World", 16)
-		})
-	}
-	uiCtx.SubWidgetSpace("widhspdf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
-		uiCtx.Image("#im4kjdg464tht", tex2)
-		uiCtx.Image("#im76erewr", tex)
-		uiCtx.Text("#t3d79f", "world!", 24)
-	})
-	uiCtx.VSpace("#hhvs1")
-	uiCtx.Image("#imgj4", tex2)
-	uiCtx.VSpace("#dfff234")
-	uiCtx.ButtonT("sad3r3", "Hello!?")
-	uiCtx.Text("#t3dgdgdf", "world!", 24)
-	uiCtx.TabBar("bar1", func() {
-		uiCtx.TabItem("Config", func() {
-			uiCtx.Button("fdffdf")
-			//uiCtx.PushStyleVar4f(ui.ButtonHoveredColor, [4]float32{100, 140, 76, 1})
-			uiCtx.Button("fgfdffdf")
-			//uiCtx.PopStyleVar()
-			uiCtx.Text("textre-ttp-2", "Hello World", 16)
-			uiCtx.Text("textrt-ttp-3", "Привет, мир!?", 16)
-		})
-		uiCtx.TabItem("Config 2", func() {
-			uiCtx.SubWidgetSpace("widhswedf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
-				uiCtx.Image("#im4kjdg464tht", tex2)
-				uiCtx.Image("#im76erewr", tex)
-				uiCtx.Text("#t3df", "world!", 24)
-			})
-		})
-		uiCtx.TabItem("Config 3", func() {
-			uiCtx.Button("fdf4343545fdf")
-			uiCtx.Text("te45xtаа", "Очень важная опция - ?", 16)
-			uiCtx.VSpace("#hhvs1")
-			uiCtx.Text("text23rtа", "2+2=4", 16)
-			uiCtx.Image("#iваmgj4", tex)
-		})
-	})
-	uiCtx.Image("#im4kjdg464tht", tex)
-	uiCtx.VSpace("#dfff234")
+	//	uiCtx.Column("col fdfdвава", func() {
+	//		uiCtx.Button("ASsfdffb")
+	//		uiCtx.Button("ASsfdffbbb")
+	//		uiCtx.Slider("slider-1", &slCounter, 0, 255)
+	//	})
+	//
+	//	uiCtx.Image("#im4kj", tex)
+	//})
+	//if uiCtx.ActiveWidget == "#im4kj" {
+	//	uiCtx.Tooltip("ttp-1", func() {
+	//		uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
+	//		uiCtx.Text("text-ttp-2", "Hello World", 16)
+	//		uiCtx.Text("text-ttp-3", "Hello World", 16)
+	//	})
+	//}
+	//uiCtx.SubWidgetSpace("widhspdf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
+	//	uiCtx.Image("#im4kjdg464tht", tex2)
+	//	uiCtx.Image("#im76erewr", tex)
+	//	uiCtx.Text("#t3d79f", "world!", 24)
+	//})
+	//uiCtx.VSpace("#hhvs1")
+	//uiCtx.Image("#imgj4", tex2)
+	//uiCtx.VSpace("#dfff234")
+	//uiCtx.ButtonT("sad3r3", "Hello!?")
+	//uiCtx.Text("#t3dgdgdf", "world!", 24)
+	//uiCtx.TabBar("bar1", func() {
+	//	uiCtx.TabItem("Config", func() {
+	//		uiCtx.Button("fdffdf")
+	//		//uiCtx.PushStyleVar4f(ui.ButtonHoveredColor, [4]float32{100, 140, 76, 1})
+	//		uiCtx.Button("fgfdffdf")
+	//		//uiCtx.PopStyleVar()
+	//		uiCtx.Text("textre-ttp-2", "Hello World", 16)
+	//		uiCtx.Text("textrt-ttp-3", "Привет, мир!?", 16)
+	//	})
+	//	uiCtx.TabItem("Config 2", func() {
+	//		uiCtx.SubWidgetSpace("widhswedf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
+	//			uiCtx.Image("#im4kjdg464tht", tex2)
+	//			uiCtx.Image("#im76erewr", tex)
+	//			uiCtx.Text("#t3df", "world!", 24)
+	//		})
+	//	})
+	//	uiCtx.TabItem("Config 3", func() {
+	//		uiCtx.Button("fdf4343545fdf")
+	//		uiCtx.Text("te45xtаа", "Очень важная опция - ?", 16)
+	//		uiCtx.VSpace("#hhvs1")
+	//		uiCtx.Text("text23rtа", "2+2=4", 16)
+	//		uiCtx.Image("#iваmgj4", tex)
+	//	})
+	//})
+	//uiCtx.Image("#im4kjdg464tht", tex)
+	//uiCtx.VSpace("#dfff234")
 
 	uiCtx.EndWindow()
 }

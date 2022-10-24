@@ -16,6 +16,7 @@ type CharInfo struct {
 	TexCoords                 [2]math.Vec2
 	Ascend, Descend           int
 	LeftBearing, RigthBearing int
+	Rune                      rune
 }
 
 func (c *CharInfo) calcTexCoords(fontWidth, fontHeight int) {
@@ -28,11 +29,11 @@ func (c *CharInfo) calcTexCoords(fontWidth, fontHeight int) {
 	c.TexCoords[1] = math.Vec2{X: x1, Y: y1}
 }
 
-func (f *Font) GetCharacter(chr rune) CharInfo {
+func (f *Font) GetCharacter(chr rune) *CharInfo {
 	c, ok := f.CharMap[int(chr)]
 	if !ok {
-		return *f.CharMap[CharNotFound]
+		return f.CharMap[CharNotFound]
 	}
 	// fmt.Println("char width = ", c.width)
-	return *c
+	return c
 }

@@ -304,7 +304,7 @@ func (b *CmdBuffer) Text(text *widgets.Text, font fonts.Font, x, y float32, scal
 		info := font.GetCharacter(r)
 		xPos := x + text.Pos[i].X
 		yPos := y - text.Pos[i].Y
-		b.addCharacter(xPos, yPos, scale, texId, info, clr)
+		b.addCharacter(xPos, yPos, scale, texId, *info, clr)
 	}
 }
 

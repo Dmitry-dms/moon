@@ -143,7 +143,7 @@ func (t *TextBatch) AddText(text string, x, y int, scale float32, rgb color.RGBA
 			yPos -= float32(info.Descend) * scale
 		}
 
-		t.addCharacter(xPos, yPos, scale, info, rgb)
+		t.addCharacter(xPos, yPos, scale, *info, rgb)
 		dx += info.Width * int(scale)
 		prevR = r
 	}
