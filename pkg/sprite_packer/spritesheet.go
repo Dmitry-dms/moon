@@ -1,20 +1,23 @@
 package sprite_packer
 
 import (
+	"encoding/json"
 	"golang.org/x/image/colornames"
 	"image"
 	"image/color"
 	"image/draw"
 	"math"
+	"os"
 )
 
 type SpriteSheet struct {
-	Width             int `json:"atlas_width"`
-	Height            int `json:"atlas_height"`
-	Filename          string
+	Width             int                      `json:"atlas_width"`
+	Height            int                      `json:"atlas_height"`
+	Filename          string                   `json:"filename"`
 	Group             map[string][]*SpriteInfo `json:"groups"`
-	Image             *image.RGBA
-	srcX, srcY        int
+	image             *image.RGBA
+	SrcX              int `json:"src_x"`
+	SrcY              int `json:"src_y"`
 	currentHeight     int
 	wasResized        bool
 	prevWidth         int
@@ -23,17 +26,22 @@ type SpriteSheet struct {
 	currentSeparators []separator
 }
 
-func NewSpriteSheet(initWidth int) *SpriteSheet {
+func NewSpriteSheet(initWidth int, filename string) *SpriteSheet {
 	s := SpriteSheet{
 		Width:    initWidth,
 		Height:   initWidth,
-		Filename: "",
+		Filename: filename,
 		Group:    make(map[string][]*SpriteInfo, 5),
 	}
 	im := image.NewRGBA(image.Rect(0, 0, initWidth, initWidth))
-	s.Image = im
+	s.image = im
 	return &s
 }
+
+func (s *SpriteSheet) Image() *image.RGBA {
+	return s.image
+}
+
 func (s *SpriteSheet) GetGroup(id string) ([]*SpriteInfo, bool) {
 	g, ok := s.Group[id]
 	if !ok {
@@ -59,8 +67,8 @@ func (s *SpriteSheet) increaseImage() int {
 	s.prevHeight = s.Height
 	newW := s.Width * 2
 	im := image.NewRGBA(image.Rect(0, 0, newW, newW))
-	draw.Draw(im, s.Image.Rect, s.Image, image.Point{}, draw.Src)
-	s.Image = im
+	draw.Draw(im, s.image.Rect, s.image, image.Point{}, draw.Src)
+	s.image = im
 	s.wasResized = true
 	return newW
 }
@@ -85,7 +93,6 @@ func (s *SpriteSheet) findEmptySpace(srcX, srcY, width int) int {
 	if srcY == 0 {
 		return 0
 	}
-
 	rayStep := int(math.Ceil(float64(width / 10)))
 	if rayStep == 0 {
 		rayStep = 1
@@ -94,14 +101,10 @@ func (s *SpriteSheet) findEmptySpace(srcX, srcY, width int) int {
 	for j := srcX; j < srcX+width; j += rayStep {
 		inner := 0
 		for i := srcY; i < 0; i++ {
-			if s.Image.RGBAAt(j, -i).R != 0 {
-				//if s.Image.RGBAAt(j, -i) == colornames.Violet {
+			if s.image.RGBAAt(j, -i).R != 0 {
 				inner--
 				break
 			} else {
-				//if c == des {
-				//s.Image.Set(j, -i, colornames.Blue)
-				//}
 				inner++
 			}
 		}
@@ -109,11 +112,6 @@ func (s *SpriteSheet) findEmptySpace(srcX, srcY, width int) int {
 			tmpH = inner
 		}
 	}
-	//if c == des {
-	//	fmt.Println(tmpH, -srcY)
-	//	fmt.Printf("%q, h = %d, y = %d \n", c, tmpH, -srcY)
-	//}
-
 	return tmpH
 }
 
@@ -146,7 +144,7 @@ type separator struct {
 func (s *SpriteSheet) cleanSeparators() {
 	for _, i2 := range s.currentSeparators {
 		for i := i2.x + i2.w; i2.x <= i; i-- {
-			s.Image.Set(i, i2.y, color.Transparent)
+			s.image.Set(i, i2.y, color.Transparent)
 		}
 	}
 }
@@ -154,29 +152,29 @@ func (s *SpriteSheet) cleanSeparators() {
 func (s *SpriteSheet) AddToSheet(id string, pixels [][]color.Color) *SpriteInfo {
 	height := len(pixels)
 	width := len(pixels[0])
-	//fmt.Printf("%q x = %d, y = %d \n", char, s.srcX, s.srcY)
-	//fmt.Println(width+s.srcX, s.Width)
-	if width+s.srcX > s.Width {
-		s.srcY -= s.currentHeight
-		if -s.srcY+height > s.prevHeight {
-			s.srcX = 0
+	//fmt.Printf("%q x = %d, y = %d \n", char, s.SrcX, s.SrcY)
+	//fmt.Println(width+s.SrcX, s.Width)
+	if width+s.SrcX > s.Width {
+		s.SrcY -= s.currentHeight
+		if -s.SrcY+height > s.prevHeight {
+			s.SrcX = 0
 		} else {
-			s.srcX = s.prevWidth
+			s.SrcX = s.prevWidth
 		}
 	}
-	if -s.srcY+height > s.Height {
+	if -s.SrcY+height > s.Height {
 		h := s.increaseImage()
-		s.srcX = s.prevWidth
-		s.srcY = 0
+		s.SrcX = s.prevWidth
+		s.SrcY = 0
 		s.Width = h
 		s.Height = h
 	}
-	g1 := s.findEmptySpace(s.srcX, s.srcY, width)
+	g1 := s.findEmptySpace(s.SrcX, s.SrcY, width)
 
 	if height > s.currentHeight {
 		s.currentHeight = height + 1
 	}
-	ypos := s.srcY
+	ypos := s.SrcY
 
 	if g1 > 0 {
 		ypos += g1
@@ -184,24 +182,24 @@ func (s *SpriteSheet) AddToSheet(id string, pixels [][]color.Color) *SpriteInfo 
 	for y := 0; y < len(pixels); y++ {
 		for x := 0; x < len(pixels[0]); x++ {
 			p := pixels[y][x]
-			s.Image.Set(x+s.srcX, y-ypos, p)
+			s.image.Set(x+s.SrcX, y-ypos, p)
 		}
 	}
-	printBorder(s.Image, s.srcX, -ypos+height, width-1)
+	printBorder(s.image, s.SrcX, -ypos+height, width-1)
 	s.currentSeparators = append(s.currentSeparators, separator{
-		x: s.srcX,
+		x: s.SrcX,
 		y: -ypos + height,
 		w: width,
 	})
 	srcInfo := SpriteInfo{
 		Id:     id,
-		SrcX:   s.srcX,
+		SrcX:   s.SrcX,
 		SrcY:   -ypos + height,
 		Width:  width,
 		Height: height,
 	}
 	srcInfo.calcTexCoords(s.Width, s.Height)
-	s.srcX += width + 1
+	s.SrcX += width + 1
 	return &srcInfo
 }
 
@@ -222,6 +220,28 @@ func (s *SpriteSheet) GetData(data image.Image) [][]color.Color {
 		ik++
 	}
 	return pixels
+}
+
+func (s *SpriteSheet) SaveSpriteSheetInfo(filename string) error {
+	fil, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0664)
+	if err != nil {
+		return err
+	}
+	enc := json.NewEncoder(fil)
+	return enc.Encode(s)
+}
+func GetSpriteSheetFromFile(filename string) (*SpriteSheet, error) {
+	fil, err := os.OpenFile(filename, os.O_RDONLY, 0664)
+	if err != nil {
+		return nil, err
+	}
+	var ss SpriteSheet
+	dec := json.NewDecoder(fil)
+	err = dec.Decode(&ss)
+	if err != nil {
+		return nil, err
+	}
+	return &ss, nil
 }
 
 type SpriteInfo struct {

@@ -145,10 +145,10 @@ func firstWindow() {
 	//uiCtx.VSpace("#vs1fdgdf")
 
 	//uiCtx.Row("row 13214", func() {
-	//	uiCtx.Image("#im4kjdg464", tex)
+	//	uiCtx.image("#im4kjdg464", tex)
 	//	uiCtx.Column("col fdfd", func() {
-	//		uiCtx.Image("#im76", tex2)
-	//		uiCtx.Image("#im4", tex)
+	//		uiCtx.image("#im76", tex2)
+	//		uiCtx.image("#im4", tex)
 	//	})
 	//
 	//	uiCtx.Column("col fdfdвава", func() {
@@ -157,15 +157,15 @@ func firstWindow() {
 	//		uiCtx.Slider("slider-1", &slCounter, 0, 255)
 	//	})
 	//
-	//	uiCtx.Image("#im4kj", tex)
+	//	uiCtx.image("#im4kj", tex)
 	//})
 	//uiCtx.SubWidgetSpace("widhsp-1", ui.Default, func() {
-	//	uiCtx.Image("#im4kjdg464tht", tex2)
-	//	uiCtx.Image("#im76erewr", tex)
+	//	uiCtx.image("#im4kjdg464tht", tex2)
+	//	uiCtx.image("#im76erewr", tex)
 	//	uiCtx.Text("#t3df", "world!", 24)
 	//})
 	////uiCtx.VSpace("#vs1")
-	//uiCtx.Image("#imgj4", tex2)
+	//uiCtx.image("#imgj4", tex2)
 	//
 	//if uiCtx.ActiveWidget == "#imgj4" {
 	//	uiCtx.Tooltip("ttp-1", func() {

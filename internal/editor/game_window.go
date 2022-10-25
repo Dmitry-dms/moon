@@ -1,7 +1,6 @@
 package editor
 
 import (
-
 	"github.com/inkyblackness/imgui-go/v4"
 )
 
@@ -13,8 +12,8 @@ func Imgui(aspRatio float32, frameBufferTexId uint32) {
 	winPos := getCenteredPositionViewport(winSize)
 
 	imgui.SetCursorPos(winPos)
-	// imgui.Image(imgui.TextureID(frameBufferTexId), winSize)
-	imgui.ImageV(imgui.TextureID(frameBufferTexId), winSize, imgui.Vec2{0,1}, imgui.Vec2{1,0}, imgui.Vec4{1,1,1,1}, imgui.Vec4{})
+	// imgui.image(imgui.TextureID(frameBufferTexId), winSize)
+	imgui.ImageV(imgui.TextureID(frameBufferTexId), winSize, imgui.Vec2{0, 1}, imgui.Vec2{1, 0}, imgui.Vec4{1, 1, 1, 1}, imgui.Vec4{})
 	imgui.End()
 }
 
@@ -37,8 +36,8 @@ func getCenteredPositionViewport(aspectSize imgui.Vec2) imgui.Vec2 {
 	winSize.X -= imgui.ScrollX()
 	winSize.Y -= imgui.ScrollY()
 
-	viewportX := (winSize.X / 2) - (aspectSize.X / 2);
-	viewportY := (winSize.Y / 2) - (aspectSize.Y / 2);
+	viewportX := (winSize.X / 2) - (aspectSize.X / 2)
+	viewportY := (winSize.Y / 2) - (aspectSize.Y / 2)
 
-	return imgui.Vec2{viewportX + imgui.CursorPosX(), viewportY+imgui.CursorPosY()}
+	return imgui.Vec2{viewportX + imgui.CursorPosX(), viewportY + imgui.CursorPosY()}
 }

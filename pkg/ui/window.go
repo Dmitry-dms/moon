@@ -301,6 +301,7 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	wnd := c.windowStack.Peek()
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 	txt, hovered := c.textHelper(id, x, y, msg)
+	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
 
 	if hovered {
 		txt.SetBackGroundColor(softGreen)
@@ -361,7 +362,7 @@ func (wnd *Window) endWidget(xPos, yPos float32, isRow bool, w widgets.Widget) d
 		wnd.currentWidgetSpace.AddVirtualWH(w.Width(), w.Height())
 	}
 
-	//wnd.debugDraw(xPos, yPos, w.Width(), w.Height())
+	wnd.debugDraw(xPos, yPos, w.Width(), w.Height())
 
 	var clip draw.ClipRectCompose
 	if wnd.currentWidgetSpace.flags&IgnoreClipping != 0 {
@@ -510,7 +511,7 @@ func (wnd *Window) addCursor(width, height float32) {
 	if !ok {
 		wnd.currentWidgetSpace.cursorY += height
 	} else {
-		if row.RequiereColumn {
+		if row.RequireColumn {
 			row.CursorY += height
 			row.UpdateColWidth(width)
 			row.AddColHeight(height)
@@ -549,7 +550,7 @@ func (c *UiContext) Selection(id string, index *int, data []string) {
 		}
 	})
 
-	c.ContextMenu(id, func() {
+	c.ContextMenu(id, IgnoreClipping, func() {
 		for i, datum := range data {
 			x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
 			tbt, _, clicked := c.textButton(datum+"_btnT_"+id, wnd, datum, x, y, widgets.Left)
@@ -558,13 +559,13 @@ func (c *UiContext) Selection(id string, index *int, data []string) {
 				c.FocusedWidgetSpace = nil
 			}
 			tbt.SetWidth(s.Width())
-			wnd.endWidget(x, y, false, tbt)
-			wnd.buffer.CreateButtonT(x, y, tbt, *c.font, wnd.DefaultClip())
+			clip := wnd.endWidget(x, y, false, tbt)
+			wnd.buffer.CreateButtonT(x, y, tbt, *c.font, clip)
 		}
 	})
 }
 
-func (c *UiContext) ContextMenu(ownerWidgetId string, widgFunc func()) {
+func (c *UiContext) ContextMenu(ownerWidgetId string, flag WidgetSpaceFlag, widgFunc func()) {
 	wnd := c.windowStack.Peek()
 	var bb [4]float32
 	widg, ok := c.GetWidget(ownerWidgetId)
@@ -573,7 +574,7 @@ func (c *UiContext) ContextMenu(ownerWidgetId string, widgFunc func()) {
 	}
 	bb = widg.BoundingBox()
 	id := ownerWidgetId + "-ws-context"
-	ws := c.getWidgetSpace(id, 0, 0, wnd, Resizable|FitWidth)
+	ws := c.getWidgetSpace(id, 0, 0, wnd, Resizable|FitWidth|flag)
 	if c.LastActiveWidget == widg.WidgetId() {
 		c.FocusedWidgetSpace = ws
 	}
@@ -582,7 +583,7 @@ func (c *UiContext) ContextMenu(ownerWidgetId string, widgFunc func()) {
 			ws.ClipRect = [4]float32{ws.X, ws.Y, ws.W, ws.H}
 			clip := draw.NewClip(draw.EmptyClip, ws.ClipRect)
 			wnd.buffer.CreateRect(bb[0], bb[1]+widg.Height(), ws.W, ws.H, 0, draw.StraightCorners, 0, black, clip)
-			c.subWidgetSpaceHelper(id, bb[0], bb[1]+widg.Height(), widg.Width(), 0, Resizable|FitWidth, widgFunc)
+			c.subWidgetSpaceHelper(id, bb[0], bb[1]+widg.Height(), widg.Width(), 0, Resizable|FitWidth|flag, widgFunc)
 		}
 		wnd.addDelayedWidget(f)
 	}
@@ -606,12 +607,12 @@ func (c *UiContext) Column(id string, widgFunc func()) {
 	if !ok {
 		return
 	}
-	hl.RequiereColumn = true
+	hl.RequireColumn = true
 	hl.CurrentColH, hl.CurrentColW = 0, 0
 
 	widgFunc()
 
-	hl.RequiereColumn = false
+	hl.RequireColumn = false
 	hl.CursorY = hl.InitY
 
 	hl.W += hl.CurrentColW
@@ -808,14 +809,13 @@ func (c *UiContext) Row(id string, widgFunc func()) {
 	wnd := c.windowStack.Peek()
 	var row *widgets.HybridLayout
 	x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
-	// FIXME: Is it really necessary?
+	// Need to return cursor back, because internal row cursor shouldn't know anything about outer
 	y += wnd.currentWidgetSpace.scrlY
 
 	row = c.getWidget(id, func() widgets.Widget {
-		return widgets.NewHLayout(id, x, y, c.CurrentStyle)
+		return widgets.NewHLayout(id, x, y, widgets.VerticalAlign, c.CurrentStyle)
 	}).(*widgets.HybridLayout)
 	row.UpdatePosition([4]float32{x, y, row.Width(), row.Height()})
-
 	wnd.currentWidgetSpace.rowStack.Push(row)
 
 	widgFunc()
@@ -824,7 +824,7 @@ func (c *UiContext) Row(id string, widgFunc func()) {
 	wnd.addCursor(0, hl.H)
 	//wnd.endWidget(x, y, false, row)
 
-	wnd.currentWidgetSpace.AddVirtualHeight(hl.H)
+	wnd.currentWidgetSpace.AddVirtualWH(hl.W, hl.H)
 	hl.LastWidth = hl.W
 	hl.LastHeight = hl.H
 	hl.H = 0

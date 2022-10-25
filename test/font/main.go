@@ -10,12 +10,17 @@ import (
 )
 
 func main() {
-	sheet := sprite_packer.NewSpriteSheet(128)
-	f, d := fonts.NewFont("C:/Windows/Fonts/arial.ttf", 18)
-	CreateImage("fonts-standalone.png", d)
-	ConvertFontToAtlas(f, sheet, d)
-	CreateImage("fonts-in-atlas.png", sheet.Image)
+	//sheet := sprite_packer.NewSpriteSheet(128, "test")
+	//f, d := fonts.NewFont("C:/Windows/Fonts/arial.ttf", 18)
+	//CreateImage("fonts-standalone.png", d)
+	//ConvertFontToAtlas(f, sheet, d)
+	//CreateImage("fonts-in-atlas.png", sheet.Image())
+	_, err := sprite_packer.GetSpriteSheetFromFile("atlas.json")
+	if err != nil {
+		panic(err)
+	}
 }
+
 func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImage *image.RGBA) {
 
 	sort.Slice(f.CharSlice, func(i, j int) bool {

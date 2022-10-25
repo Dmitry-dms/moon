@@ -24,24 +24,21 @@ import (
 )
 
 type Font struct {
-	Filepath string
-	FontSize int
-
+	Filepath  string
+	FontSize  int
 	CharMap   map[int]*CharInfo
 	CharSlice []*CharInfo
-
 	TextureId uint32
-
-	Face font.Face
+	Face      font.Face
 }
 
-func NewFont(filepath string, fontSize int) (*Font, *image.RGBA) {
+func NewFont(filepath string, fontSize int, dpi float32, from, to int) (*Font, *image.RGBA) {
 	f := Font{
 		Filepath: filepath,
 		FontSize: fontSize,
 		CharMap:  make(map[int]*CharInfo, 50),
 	}
-	data := f.generateBitmap()
+	data := f.generateBitmap(dpi, from, to)
 	return &f, data
 }
 
@@ -52,15 +49,17 @@ func (f *Font) GetXHeight() float32 {
 	return float32(c.Heigth)
 }
 
+// CalculateTextBounds is only optimized when you draw text top to down.
 func (f *Font) CalculateTextBounds(text string, scale float32) (width, height float32, pos []utils.Vec2) {
 	prevR := rune(-1)
-	inf := f.GetXHeight()
-	faceHeight := f.FontSize
-	height = scale * inf
+
+	fontSize := f.GetXHeight() + 2
+
+	height = scale * float32(fontSize)
 	pos = make([]utils.Vec2, len(text))
 
 	var maxDescend, baseline float32
-	baseline = scale * inf
+	baseline = scale * float32(fontSize)
 	for i, r := range text {
 		info := f.GetCharacter(r)
 		if info.Width == 0 {
@@ -76,8 +75,8 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 		}
 		if r == '\n' {
 			width = 0
-			height += float32(faceHeight)
-			baseline -= float32(faceHeight)
+			height += float32(fontSize)
+			baseline -= float32(fontSize)
 			prevR = rune(-1)
 			continue
 		}
@@ -103,16 +102,16 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 	return
 }
 
-func (f *Font) generateBitmap() *image.RGBA {
+func (f *Font) generateBitmap(dpi float32, from, to int) *image.RGBA {
 	cp := charmap.Windows1251
 	var letters []rune
-	for i := 32; i < 256; i++ {
+	for i := from; i < to; i++ {
 		r := cp.DecodeByte(byte(i))
 		letters = append(letters, r)
 	}
 	f.CharSlice = make([]*CharInfo, len(letters))
 	var (
-		DPI          = 157.0
+		DPI          = dpi
 		startingDotX = 0
 		startingDotY = 0
 	)
@@ -129,7 +128,7 @@ func (f *Font) generateBitmap() *image.RGBA {
 		}
 		face, err = opentype.NewFace(parsed, &opentype.FaceOptions{
 			Size:    float64(f.FontSize),
-			DPI:     DPI,
+			DPI:     float64(DPI),
 			Hinting: font.HintingNone,
 		})
 
@@ -185,14 +184,12 @@ func (f *Font) generateBitmap() *image.RGBA {
 		if c == ' ' {
 			ch.Width = f.FontSize / 3
 		}
-		// Если символ не будет найден, вместо него отдаем пустой квадрат
 		if c == '\u007f' {
 			f.CharMap[CharNotFound] = &ch
 		} else {
 			f.CharMap[int(c)] = &ch
 		}
 	}
-
 	return dst
 }
 func printBorder(m *image.RGBA, x, y, w, h int, clr color.Color) {

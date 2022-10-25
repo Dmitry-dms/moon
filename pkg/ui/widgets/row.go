@@ -10,7 +10,7 @@ type HybridLayout struct {
 	InitY                 float32
 	LastWidth, LastHeight float32
 
-	RequiereColumn           bool
+	RequireColumn            bool
 	CurrentColH, CurrentColW float32
 	// CurrentCol     *Column
 
@@ -19,6 +19,8 @@ type HybridLayout struct {
 	ItemSpacing int
 	style       *styles.Style
 	Id          string
+
+	Align RowAlign
 }
 
 type Column struct {
@@ -26,21 +28,30 @@ type Column struct {
 	W, H float32
 }
 
-func (c *HybridLayout) UpdateColWidth(w float32) {
-	if c.CurrentColW < w {
-		c.CurrentColW = w
+type RowAlign uint
+
+const (
+	VerticalAlign RowAlign = 1 << iota
+
+	NoAlign
+)
+
+func (r *HybridLayout) UpdateColWidth(w float32) {
+	if r.CurrentColW < w {
+		r.CurrentColW = w
 	}
 }
-func (c *HybridLayout) AddColHeight(h float32) {
-	c.CurrentColH += h
+func (r *HybridLayout) AddColHeight(h float32) {
+	r.CurrentColH += h
 }
 
-func NewHLayout(id string, x, y float32, style *styles.Style) *HybridLayout {
+func NewHLayout(id string, x, y float32, a RowAlign, style *styles.Style) *HybridLayout {
 	r := HybridLayout{
 		X:     x,
 		Y:     y,
 		style: style,
 		Id:    id,
+		Align: a,
 	}
 	return &r
 }

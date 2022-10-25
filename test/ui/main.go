@@ -81,13 +81,13 @@ func main() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	sheet := sprite_packer.NewSpriteSheet(128)
+	sheet := sprite_packer.NewSpriteSheet(128, "mgui")
 
 	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 14)
 	fontName := "C:/Windows/Fonts/arial.ttf"
 	fontName2 := "C:/Windows/Fonts/times.ttf"
-	f2, data2 := ui.UiCtx.UploadFont(fontName2, 24)
-	f, data := ui.UiCtx.UploadFont(fontName, 18)
+	f2, data2 := ui.UiCtx.UploadFont(fontName2, 24, 157.0, 32, 256)
+	f, data := ui.UiCtx.UploadFont(fontName, 18, 157.0, 32, 256)
 
 	ConvertFontToAtlas(f2, sheet, data2)
 	ConvertFontToAtlas(f, sheet, data)
@@ -100,9 +100,9 @@ func main() {
 	goomba := openImage("assets/images/goomba.png")
 	ms := sheet.AddSprite("sprites", "mario", mario)
 	gs := sheet.AddSprite("sprites", "goomba", goomba)
-	t2 := gogl.UploadRGBATextureFromMemory(sheet.Image)
+	t2 := gogl.UploadRGBATextureFromMemory(sheet.Image())
 	f.TextureId = t2.GetId()
-	CreateImage("debug.png", sheet.Image)
+	CreateImage("debug.png", sheet.Image())
 	tex = &gogl.Texture{}
 	tex2 = &gogl.Texture{}
 	tex.TextureId = t2.TextureId
@@ -117,6 +117,10 @@ func main() {
 
 	var time float32 = 0
 
+	err = sheet.SaveSpriteSheetInfo("atlas.json")
+	if err != nil {
+		panic(err)
+	}
 	//tex, _ = tex.Init("assets/images/mario.png")
 	//tex2, _ = tex2.Init("assets/images/goomba.png")
 
@@ -244,7 +248,7 @@ var ish bool = false
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
-	//uiCtx.Selection("sel-1", &selection, sle)
+	uiCtx.Selection("sel-1", &selection, sle)
 	//if uiCtx.ButtonT("Нажать", "Press") {
 	//	//	ish = !ish
 	//	//
@@ -257,10 +261,15 @@ func firstWindow() {
 	////if ish {
 	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
 	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛАМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
-	uiCtx.Text("#eывr", "the quick brown fox jumps over the lazy dog", 14)
+	uiCtx.Row("roe23", func() {
+		uiCtx.Text("#eывr", "the quick brown fox", 14)
+		uiCtx.Image("#im4kjdg464tht", tex)
+	})
+	uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких", 14)
+
 	//uiCtx.Text("#eывr", "A", 14)
 	//uiCtx.Text("#eывr", "AVWAV", 14)
-	uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких французских булок, да выпей чаю", 14)
+
 	//uiCtx.Text("#eы324fdвr", "1+4=5 (323_32) [A-Za-z]*^_2", 14)
 	////uiCtx.Text("#fgfgd", "hello world! dfdgdfgfd 434554654 gf ", 14)
 	//////}
@@ -273,9 +282,9 @@ func firstWindow() {
 	//		uiCtx.Text("#tiy3j", "hello world!", 14)
 	//	})
 	//})
-	////
+	//////
 	//uiCtx.VSpace("#vs1fdgdf")
-	//
+	////
 	//uiCtx.Row("row 13214", func() {
 	//	uiCtx.Image("#im4kjdg464", tex)
 	//	uiCtx.Column("col fdfd", func() {
@@ -289,7 +298,7 @@ func firstWindow() {
 	//		uiCtx.Slider("slider-1", &slCounter, 0, 255)
 	//	})
 	//
-	uiCtx.Image("#im4kj", tex)
+	//	uiCtx.Image("#im4kj", tex)
 	//})
 	//if uiCtx.ActiveWidget == "#im4kj" {
 	//	uiCtx.Tooltip("ttp-1", func() {

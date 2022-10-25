@@ -69,11 +69,9 @@ func (e *EditorScene) Init() {
 
 	fmt.Println("init editor scene")
 
-	
 	e.activeGameWorld.Init()
 
 }
-
 
 // при запуске сцены, запускаем объекты
 func (e *EditorScene) Start() {
@@ -102,7 +100,7 @@ func (e *EditorScene) Update(dt float32) {
 }
 
 func (e *EditorScene) Render() {
-	
+
 	e.activeGameWorld.Render(e.camera)
 }
 func (e *EditorScene) Imgui() {
@@ -112,7 +110,7 @@ func (e *EditorScene) Imgui() {
 			float32(time.Second.Milliseconds())/imgui.CurrentIO().Framerate(), imgui.CurrentIO().Framerate()))
 		imgui.End()
 	}
-	imgui.Begin("Image picker")
+	imgui.Begin("image picker")
 	pos := imgui.WindowPos() //текущая позиция окна
 	size := imgui.WindowSize()
 	itemSpacing := imgui.CurrentStyle().ItemSpacing()

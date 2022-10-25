@@ -168,6 +168,15 @@ func (ws *WidgetSpace) getCurrentTabBar() (*widgets.TabBar, bool) {
 	}
 }
 
+func (ws *WidgetSpace) resolveRowAlign(h float32) (yOffset float32) {
+	row, ok := ws.getCurrentRow()
+	if ok {
+		if row.Align&widgets.VerticalAlign != 0 {
+			yOffset = (row.Height() - h) / 2
+		}
+	}
+	return
+}
 func (ws *WidgetSpace) getCursorPosition() (x float32, y float32, isRow bool) {
 	row, ok := ws.getCurrentRow()
 	if ok {

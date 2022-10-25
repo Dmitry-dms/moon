@@ -55,7 +55,7 @@ func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt fl
 
 	//imgui.Begin("id string")
 	// imgui.Button("btn")
-	// imgui.Image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
+	// imgui.image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
 	// imgui.Text("text string")
 	imgui.ShowDemoWindow(&open)
 	//imgui.BeginPopup("name string")
@@ -63,7 +63,7 @@ func (g *ImgUi) Update(displaySize [2]float32, framebufferSize [2]float32, dt fl
 	//imgui.Button("btn")
 	//imgui.EndTooltip()
 
-	// imgui.Image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
+	// imgui.image(imgui.TextureID(tex.TextureId), imgui.Vec2{100, 100})
 	// imgui.Text("text string 2")
 	// imgui.Button("btn")
 	// imgui.Button("btn")

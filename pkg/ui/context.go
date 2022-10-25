@@ -84,8 +84,8 @@ func NewContext(frontRenderer UiRenderer) *UiContext {
 	return &c
 }
 
-func (c *UiContext) UploadFont(path string, size int) (*fonts.Font, *image.RGBA) {
-	f, data := fonts.NewFont(path, size)
+func (c *UiContext) UploadFont(path string, size int, dpi float32, from int, to int) (*fonts.Font, *image.RGBA) {
+	f, data := fonts.NewFont(path, size, dpi, from, to)
 	c.font = f
 	return f, data
 }
