@@ -264,59 +264,7 @@ func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 }
 
 func (b *CmdBuffer) Text(text *widgets.Text, font fonts.Font, x, y float32, scale float32, clr [4]float32) {
-
 	texId := font.TextureId
-
-	//inf := font.GetXHeight()
-	//
-	//faceHeight := float32(font.Face.Metrics().Height.Ceil())
-	//var dx, baseline float32
-	//dx = x
-	//prevR := rune(-1)
-	//
-	//baseline = y - scale*inf //drawing from left bottom -> rigth top
-	//
-	//var maxDescend float32
-	//for _, r := range text.Message {
-	//	info := font.GetCharacter(r)
-	//	if info.Width == 0 {
-	//		log.Printf("Unknown char = %q", r)
-	//		continue
-	//	}
-	//	if prevR >= 0 {
-	//		kern := font.Face.Kern(prevR, r).Ceil()
-	//		dx += float32(kern)
-	//	}
-	//	if r != ' ' {
-	//		dx += float32(info.LeftBearing)
-	//	}
-	//	if r == '\n' {
-	//		dx = x
-	//		baseline -= faceHeight
-	//		prevR = rune(-1)
-	//		continue
-	//	}
-	//	xPos := dx
-	//	yPos := baseline
-	//
-	//	if info.Descend != 0 {
-	//		d := float32(info.Descend) * scale
-	//		yPos -= d
-	//		if d > maxDescend {
-	//			maxDescend = d
-	//		}
-	//	}
-	//	//fmt.Printf("char = %q,%q, left = %d  right = %d \n ",
-	//	//	prevR, r, info.LeftBearing, info.RigthBearing)
-	//	b.addCharacter(xPos, yPos, scale, texId, info, clr)
-	//
-	//	dx += float32(info.Width) * scale
-	//	if r != ' ' {
-	//		dx += float32(info.RigthBearing)
-	//	}
-	//	prevR = r
-	//}
-
 	for i, r := range text.Message {
 		info := font.GetCharacter(r)
 		xPos := x + text.Pos[i].X

@@ -9,17 +9,18 @@ import (
 )
 
 type SpriteSheet struct {
-	Width         int `json:"atlas_width"`
-	Height        int `json:"atlas_height"`
-	Filename      string
-	Group         map[string][]*SpriteInfo `json:"groups"`
-	Image         *image.RGBA
-	srcX, srcY    int
-	currentHeight int
-	wasResized    bool
-	prevWidth     int
-	prevHeight    int
-	currentGroup  string
+	Width             int `json:"atlas_width"`
+	Height            int `json:"atlas_height"`
+	Filename          string
+	Group             map[string][]*SpriteInfo `json:"groups"`
+	Image             *image.RGBA
+	srcX, srcY        int
+	currentHeight     int
+	wasResized        bool
+	prevWidth         int
+	prevHeight        int
+	currentGroup      string
+	currentSeparators []separator
 }
 
 func NewSpriteSheet(initWidth int) *SpriteSheet {
@@ -36,19 +37,21 @@ func NewSpriteSheet(initWidth int) *SpriteSheet {
 func (s *SpriteSheet) GetGroup(id string) ([]*SpriteInfo, bool) {
 	g, ok := s.Group[id]
 	if !ok {
-		return nil, false
+		s.Group[id] = []*SpriteInfo{}
+		return s.Group[id], false
 	}
 	return g, true
 }
+
 func (s *SpriteSheet) AddSprite(groupId, spriteId string, data image.Image) *SpriteInfo {
-	d := s.GetData(data)
-	info := s.AddToSheet(spriteId, d)
-	_, ok := s.GetGroup(groupId)
-	if !ok {
-		s.Group[groupId] = make([]*SpriteInfo, 0)
-	}
-	s.Group[groupId] = append(s.Group[groupId], info)
-	return info
+	var spr *SpriteInfo
+	s.BeginGroup(groupId, func() []*SpriteInfo {
+		d := s.GetData(data)
+		info := s.AddToSheet(spriteId, d)
+		spr = info
+		return []*SpriteInfo{info}
+	})
+	return spr
 }
 
 func (s *SpriteSheet) increaseImage() int {
@@ -73,7 +76,7 @@ func printBorder(m *image.RGBA, x, y, w int) {
 	//	m.Set(x+w, i, colornames.Red)
 	//}
 	for i := x + w; x <= i; i-- {
-		m.Set(i, y+1, colornames.Violet)
+		m.Set(i, y, colornames.Violet)
 	}
 
 }
@@ -82,18 +85,23 @@ func (s *SpriteSheet) findEmptySpace(srcX, srcY, width int) int {
 	if srcY == 0 {
 		return 0
 	}
-	rayStep := int(math.Floor(float64(width / 5)))
+
+	rayStep := int(math.Ceil(float64(width / 10)))
 	if rayStep == 0 {
-		return 0
+		rayStep = 1
 	}
 	tmpH := 100000
-	for j := 0; j < width*2/rayStep; j++ {
+	for j := srcX; j < srcX+width; j += rayStep {
 		inner := 0
 		for i := srcY; i < 0; i++ {
-			if s.Image.RGBAAt(srcX+j*rayStep, -i).R != 0 {
+			if s.Image.RGBAAt(j, -i).R != 0 {
+				//if s.Image.RGBAAt(j, -i) == colornames.Violet {
+				inner--
 				break
 			} else {
-				//	s.Image.Set(srcX+j*rayStep, -i, colornames.Blue)
+				//if c == des {
+				//s.Image.Set(j, -i, colornames.Blue)
+				//}
 				inner++
 			}
 		}
@@ -101,13 +109,22 @@ func (s *SpriteSheet) findEmptySpace(srcX, srcY, width int) int {
 			tmpH = inner
 		}
 	}
+	//if c == des {
+	//	fmt.Println(tmpH, -srcY)
+	//	fmt.Printf("%q, h = %d, y = %d \n", c, tmpH, -srcY)
+	//}
+
 	return tmpH
 }
 
 func (s *SpriteSheet) BeginGroup(id string, f func() []*SpriteInfo) {
 	s.currentGroup = id
-	s.Group[id] = []*SpriteInfo{}
-	s.Group[id] = f()
+	s.currentSeparators = []separator{}
+
+	gr, _ := s.GetGroup(id)
+	updgr := append(gr, f()...)
+	s.Group[id] = updgr
+	s.cleanSeparators()
 	s.currentGroup = ""
 	if s.wasResized {
 		for _, infos := range s.Group {
@@ -119,12 +136,25 @@ func (s *SpriteSheet) BeginGroup(id string, f func() []*SpriteInfo) {
 		}
 		s.wasResized = false
 	}
+	s.currentSeparators = []separator{}
+}
+
+type separator struct {
+	x, y, w int
+}
+
+func (s *SpriteSheet) cleanSeparators() {
+	for _, i2 := range s.currentSeparators {
+		for i := i2.x + i2.w; i2.x <= i; i-- {
+			s.Image.Set(i, i2.y, color.Transparent)
+		}
+	}
 }
 
 func (s *SpriteSheet) AddToSheet(id string, pixels [][]color.Color) *SpriteInfo {
 	height := len(pixels)
 	width := len(pixels[0])
-	//fmt.Printf("%s x = %d, y = %d \n", id, s.srcX, s.srcY)
+	//fmt.Printf("%q x = %d, y = %d \n", char, s.srcX, s.srcY)
 	//fmt.Println(width+s.srcX, s.Width)
 	if width+s.srcX > s.Width {
 		s.srcY -= s.currentHeight
@@ -144,12 +174,12 @@ func (s *SpriteSheet) AddToSheet(id string, pixels [][]color.Color) *SpriteInfo 
 	g1 := s.findEmptySpace(s.srcX, s.srcY, width)
 
 	if height > s.currentHeight {
-		s.currentHeight = height
+		s.currentHeight = height + 1
 	}
 	ypos := s.srcY
 
-	if g1 != 0 {
-		ypos += g1 - 2
+	if g1 > 0 {
+		ypos += g1
 	}
 	for y := 0; y < len(pixels); y++ {
 		for x := 0; x < len(pixels[0]); x++ {
@@ -157,7 +187,12 @@ func (s *SpriteSheet) AddToSheet(id string, pixels [][]color.Color) *SpriteInfo 
 			s.Image.Set(x+s.srcX, y-ypos, p)
 		}
 	}
-	//printBorder(s.Image, s.srcX, -ypos+height, width, height)
+	printBorder(s.Image, s.srcX, -ypos+height, width-1)
+	s.currentSeparators = append(s.currentSeparators, separator{
+		x: s.srcX,
+		y: -ypos + height,
+		w: width,
+	})
 	srcInfo := SpriteInfo{
 		Id:     id,
 		SrcX:   s.srcX,
@@ -166,7 +201,7 @@ func (s *SpriteSheet) AddToSheet(id string, pixels [][]color.Color) *SpriteInfo 
 		Height: height,
 	}
 	srcInfo.calcTexCoords(s.Width, s.Height)
-	s.srcX += width + 2
+	s.srcX += width + 1
 	return &srcInfo
 }
 

@@ -1,8 +1,13 @@
 package fonts
 
 import (
+	"fmt"
+	"github.com/Dmitry-dms/moon/pkg/math"
 	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"image"
+	"image/color"
+	"image/draw"
+
 	// "image/png"
 	"io/ioutil"
 	// "os"
@@ -22,7 +27,8 @@ type Font struct {
 	Filepath string
 	FontSize int
 
-	CharMap map[int]*CharInfo
+	CharMap   map[int]*CharInfo
+	CharSlice []*CharInfo
 
 	TextureId uint32
 
@@ -35,35 +41,34 @@ func NewFont(filepath string, fontSize int) (*Font, *image.RGBA) {
 		FontSize: fontSize,
 		CharMap:  make(map[int]*CharInfo, 50),
 	}
-
 	data := f.generateBitmap()
 	return &f, data
 }
 
-var siz = 2048
+var AtlasWidth = 1024
 
 func (f *Font) GetXHeight() float32 {
 	c := f.GetCharacter('X')
 	return float32(c.Heigth)
 }
 
-func (font *Font) CalculateTextBounds(text string, scale float32) (width, height float32, pos []utils.Vec2) {
+func (f *Font) CalculateTextBounds(text string, scale float32) (width, height float32, pos []utils.Vec2) {
 	prevR := rune(-1)
-	inf := font.GetXHeight()
-	faceHeight := font.FontSize
+	inf := f.GetXHeight()
+	faceHeight := f.FontSize
 	height = scale * inf
 	pos = make([]utils.Vec2, len(text))
 
 	var maxDescend, baseline float32
 	baseline = scale * inf
 	for i, r := range text {
-		info := font.GetCharacter(r)
+		info := f.GetCharacter(r)
 		if info.Width == 0 {
 			log.Printf("Unknown char = %q", r)
 			continue
 		}
 		if prevR >= 0 {
-			kern := font.Face.Kern(prevR, r).Ceil()
+			kern := f.Face.Kern(prevR, r).Ceil()
 			width += float32(kern)
 		}
 		if r != ' ' {
@@ -105,13 +110,11 @@ func (f *Font) generateBitmap() *image.RGBA {
 		r := cp.DecodeByte(byte(i))
 		letters = append(letters, r)
 	}
-
+	f.CharSlice = make([]*CharInfo, len(letters))
 	var (
 		DPI          = 157.0
-		width        = siz
-		height       = siz
 		startingDotX = 0
-		startingDotY = int(f.FontSize) * 2
+		startingDotY = 0
 	)
 	var face font.Face
 	{
@@ -137,7 +140,7 @@ func (f *Font) generateBitmap() *image.RGBA {
 	f.Face = face
 	defer face.Close()
 
-	dst := image.NewRGBA(image.Rect(0, 0, width, height))
+	dst := image.NewRGBA(image.Rect(0, 0, AtlasWidth, AtlasWidth))
 	d := font.Drawer{
 		Dst:  dst,
 		Src:  image.White,
@@ -146,85 +149,65 @@ func (f *Font) generateBitmap() *image.RGBA {
 	}
 	fontSize := d.Face.Metrics().Height
 	f.FontSize = fontSize.Ceil()
+	d.Dot = fixed.P(startingDotX, d.Face.Metrics().Ascent.Floor())
 
 	dx := startingDotX
-	dy := startingDotY
-	maxDesc := 0
-
-	//d.DrawString("the quick brown fox jumps over the lazy dog")
-	//d.DrawString("Съешь ещё этих мягких французских булок да выпей чаю")
-	sortSlice := make([]*CharInfo, len(letters))
-
-	prevDot := d.Dot
-	for i, l := range letters {
-		b, a, _ := d.Face.GlyphBounds(l)
-
-		//В случае, если ширина символа выходит за границу полотна
-		if (siz - dx) <= a.Ceil() {
+	for i, c := range letters {
+		b, a, _ := d.Face.GlyphBounds(c)
+		if d.Dot.X.Ceil()+a.Ceil() >= AtlasWidth {
 			dx = 0
-			dy += fontSize.Ceil()
-			d.Dot = fixed.P(0, dy)
-			maxDesc = 0
+			d.Dot.X = 0
+			d.Dot.Y += d.Face.Metrics().Height
 		}
-
-		dx += a.Ceil() + 2
-		d.Dot = d.Dot.Add(fixed.P(2, 0))
-		prevDot = d.Dot
-		d.DrawString(string(l))
-
-		w, h := (b.Max.X - b.Min.X).Ceil(), (b.Max.Y - b.Min.Y).Ceil()
-		//sy := d.Dot.Y.Ceil() - -b.Min.Y.Ceil()
-		//sx := d.Dot.X.Ceil() - a.Ceil() + b.Min.X.Ceil()
-		w += 1
-		sx := prevDot.X.Ceil() + b.Min.X.Ceil() - 2
-		sy := prevDot.Y.Ceil() + b.Max.Y.Ceil() - 1
-
+		dr, mask, maskp, _, ok := d.Face.Glyph(d.Dot, c)
+		if !ok {
+			fmt.Println("error")
+			continue
+		}
 		ch := CharInfo{
-			Rune:         l,
-			SrcX:         sx,
-			SrcY:         sy,
-			Width:        w,
-			Heigth:       h,
-			Ascend:       -b.Min.Y.Ceil(),
-			Descend:      b.Max.Y.Ceil(),
-			LeftBearing:  b.Min.X.Ceil(),
-			RigthBearing: a.Ceil() - b.Max.X.Ceil(),
+			Rune:         c,
+			SrcX:         dr.Min.X,
+			SrcY:         dr.Max.Y,
+			Width:        dr.Dx(),
+			Heigth:       dr.Dy(),
+			Ascend:       -b.Min.Y.Floor(),
+			Descend:      b.Max.Y.Floor(),
+			LeftBearing:  b.Min.X.Floor(),
+			RigthBearing: a.Floor() - b.Max.X.Floor(),
+			TexCoords:    [2]math.Vec2{},
 		}
-		sortSlice[i] = &ch
-		//fmt.Printf("char = %q, top = %d  bot = %d , h = %d sy = %d \n  ",
-		//	l, ch.Ascend, ch.Descend, ch.Heigth, sy)
-		//printBorder(dst, ch.SrcX, ch.SrcY, ch.Width, ch.Heigth, prevDot, a, sy)
-
-		if l == ' ' {
-			ch.Width = a.Ceil()
+		ch.calcTexCoords(AtlasWidth, AtlasWidth)
+		f.CharSlice[i] = &ch
+		//printBorder(dst, dr.Min.X, dr.Max.Y, dr.Dx(), dr.Dy(), colornames.Red)
+		draw.DrawMask(d.Dst, dr, d.Src, image.Point{}, mask, maskp, draw.Over)
+		d.Dot.X += fixed.I(a.Ceil() + 2)
+		dx += a.Ceil()
+		if c == ' ' {
+			ch.Width = f.FontSize / 3
 		}
-		ch.calcTexCoords(siz, siz)
-
-		if -b.Min.Y.Ceil() > startingDotY {
-			startingDotY = -b.Min.Y.Ceil()
-		}
-
 		// Если символ не будет найден, вместо него отдаем пустой квадрат
-		if l == '\u007f' {
+		if c == '\u007f' {
 			f.CharMap[CharNotFound] = &ch
 		} else {
-			f.CharMap[int(l)] = &ch
-		}
-
-		if b.Max.Y.Ceil() > maxDesc {
-			maxDesc = b.Max.Y.Ceil()
+			f.CharMap[int(c)] = &ch
 		}
 	}
 
-	dy += maxDesc
-
 	return dst
+}
+func printBorder(m *image.RGBA, x, y, w, h int, clr color.Color) {
 
-	//fil, err := os.OpenFile("atlas.json", os.O_CREATE|os.O_RDWR, 0664)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//enc := json.NewEncoder(fil)
-	//enc.Encode(sheet.Group)
+	for i := y; i >= y-h; i-- {
+		m.Set(x, i, clr)
+	}
+	for i := x; i <= x+w; i++ {
+		m.Set(i, y-h, clr)
+	}
+	for i := y; i >= y-h; i-- {
+		m.Set(x+w, i, clr)
+	}
+	for i := x + w; x <= i; i-- {
+		m.Set(i, y, clr)
+	}
 
 }

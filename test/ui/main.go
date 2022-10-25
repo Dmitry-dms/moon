@@ -81,31 +81,28 @@ func main() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 14)
-	fontName := "C:/Windows/Fonts/arial.ttf"
-	f, data := ui.UiCtx.UploadFont(fontName, 18)
-	t2 := gogl.UploadRGBATextureFromMemory(data)
-	f.TextureId = t2.GetId()
-
 	sheet := sprite_packer.NewSpriteSheet(128)
 
+	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 14)
+	fontName := "C:/Windows/Fonts/arial.ttf"
+	fontName2 := "C:/Windows/Fonts/times.ttf"
+	f2, data2 := ui.UiCtx.UploadFont(fontName2, 24)
+	f, data := ui.UiCtx.UploadFont(fontName, 18)
+
+	ConvertFontToAtlas(f2, sheet, data2)
 	ConvertFontToAtlas(f, sheet, data)
 
 	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 14)
 	//ui.UiCtx.UploadFont("assets/fonts/sans.ttf", 18)
 	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 14)
 
-	//sheet.BeginGroup("sprites", func() []*sprite_packer.SpriteInfo {
-	//	spr := []*sprite_packer.SpriteInfo{}
-	//
-	//})
 	mario := openImage("assets/images/mario.png")
 	goomba := openImage("assets/images/goomba.png")
 	ms := sheet.AddSprite("sprites", "mario", mario)
 	gs := sheet.AddSprite("sprites", "goomba", goomba)
-	t2 = gogl.UploadRGBATextureFromMemory(sheet.Image)
+	t2 := gogl.UploadRGBATextureFromMemory(sheet.Image)
 	f.TextureId = t2.GetId()
-	//CreateImage("debug.png", sheet.Image)
+	CreateImage("debug.png", sheet.Image)
 	tex = &gogl.Texture{}
 	tex2 = &gogl.Texture{}
 	tex.TextureId = t2.TextureId
@@ -197,7 +194,7 @@ func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImag
 		counter++
 	}
 	sort.Slice(chars, func(i, j int) bool {
-		return chars[i].Heigth > chars[j].Heigth
+		return chars[i].Width > chars[j].Width
 	})
 
 	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
