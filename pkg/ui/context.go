@@ -301,21 +301,6 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	c.ActiveWidget = ""
 
 	if c.ActiveWindow != nil {
-		//founded := false
-		////Для правильного скроллинга
-		//for _, w := range c.ActiveWindow.widgSpaces {
-		//	if utils.PointInRect(c.io.MousePos, utils.NewRectS(w.ClipRect)) {
-		//		c.ActiveWidgetSpaceId = w.id
-		//		if w.flags&Scrollable != 0 {
-		//			c.WantScrollFocusWidgetSpaceId = w.id
-		//		}
-		//		founded = true
-		//		break
-		//	}
-		//}
-		//if !founded {
-		//	c.ActiveWidgetSpaceId = c.ActiveWindow.mainWidgetSpace.id
-		//}
 	} else {
 		c.ActiveWidgetSpaceId = ""
 	}
@@ -331,6 +316,10 @@ func (c *UiContext) EndFrame(size [2]float32) {
 
 	c.io.MouseClickedPos[0] = utils.Vec2{}
 	c.ActiveWindow.widgSpaces = []*WidgetSpace{}
+
+	c.io.PressedKey = GuiKey_None
+	c.io.modPressed = [8]bool{}
+	c.io.KeyPressedThisFrame = false
 }
 
 type StyleVar4f uint

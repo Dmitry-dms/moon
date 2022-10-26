@@ -295,6 +295,10 @@ func (c *CmdBuffer) Text(text *widgets.Text, font fonts.Font, x, y float32, scal
 	texId := font.TextureId
 	for i, r := range text.Message {
 		info := font.GetCharacter(r)
+
+		if info.Rune == rune(127) { // Enter
+			continue
+		}
 		xPos := x + text.Pos[i].X
 		yPos := y - text.Pos[i].Y
 		c.addCharacter(xPos, yPos, scale, texId, *info, clr)
@@ -538,7 +542,6 @@ func (c *CmdBuffer) CreateLineArc(x, y, radius, steps float32, sector CircleSect
 }
 
 func (c *CmdBuffer) CreateBezierQuad(startX, startY, supportX, supportY, endX, endY, steps float32, clr [4]float32, clip ClipRectCompose) {
-
 	cmd := Command{
 		Type: BezierQuad,
 		Bezier: &BezierQuad_command{

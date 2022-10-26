@@ -281,20 +281,67 @@ func (c *UiContext) Slider(id string, i *float32, min, max float32) {
 		clip)
 }
 
-func (c *UiContext) textHelper(id string, x, y float32, msg string) (txt *widgets.Text, hovered bool) {
+func (c *UiContext) tHelper(id string, x, y float32, msg string, key GuiKey, input bool) (txt *widgets.Text, hovered bool) {
 	wnd := c.windowStack.Peek()
 	txt = c.getWidget(id, func() widgets.Widget {
 		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
 		return widgets.NewText(id, msg, x, y, w, h, p, c.CurrentStyle)
 	}).(*widgets.Text)
-	if msg != txt.Message {
-		txt.Message = msg
-		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
+	if msg != txt.Message && msg != "" {
+		if input {
+			if key == GuiKey_Backspace {
+				txt.Message = txt.Message[:len(txt.Message)-1]
+			} else {
+				txt.Message += msg
+			}
+
+		} else {
+			txt.Message = msg
+		}
+		w, h, p := c.font.CalculateTextBounds(txt.Message, c.CurrentStyle.FontScale)
 		txt.Pos = p
 		txt.SetWH(w, h)
 	}
 	hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox()))
 	return
+}
+func (c *UiContext) inputTextHelper(id string, x, y float32, msg string, key GuiKey, input bool) (txt *widgets.Text, hovered bool) {
+	return c.tHelper(id, x, y, msg, key, true)
+}
+func (c *UiContext) textHelper(id string, x, y float32, msg string) (txt *widgets.Text, hovered bool) {
+	return c.tHelper(id, x, y, msg, GuiKey_None, false)
+}
+
+func (c *UiContext) getTextInput() (string, GuiKey) {
+	k := ""
+	key := GuiKey_None
+	if c.io.KeyPressedThisFrame {
+		key = c.io.PressedKey
+		k = c.io.keyToString(key)
+	}
+	return k, key
+}
+
+func (c *UiContext) InputText(id string, size int) {
+	wnd := c.windowStack.Peek()
+	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
+	msg, key := c.getTextInput()
+	txt, hovered := c.inputTextHelper(id, x, y, msg, key, true)
+	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
+
+	if hovered {
+		txt.SetBackGroundColor(softGreen)
+		txt.CurrentColor = [4]float32{167, 200, 100, 1}
+	} else {
+		txt.CurrentColor = whiteColor
+		txt.SetBackGroundColor(transparent)
+	}
+
+	//txt.CurrentColor = [4]float32{255, 255, 255, 1}
+
+	clip := wnd.endWidget(x, y, isRow, txt)
+
+	wnd.buffer.CreateText(x, y, txt, *c.font, clip)
 }
 
 func (c *UiContext) Text(id string, msg string, size int) {

@@ -27,7 +27,7 @@ type glfwHandler struct {
 
 func NewData() *glfwHandler {
 	d := glfwHandler{}
-	f := func(c CursorType){
+	f := func(c CursorType) {
 		defC := glfw.CreateStandardCursor(Cursor(c))
 		d.GlfwWindow.SetCursor(defC)
 	}
@@ -262,6 +262,19 @@ func GlfwMouseKey(btn glfw.MouseButton) MouseKey {
 		return MouseBtnMiddle
 	default:
 		return MouseBtnUnknown
+	}
+}
+
+func GlfwModKey(mod glfw.ModifierKey) ModKey {
+	switch mod {
+	case glfw.ModAlt:
+		return ModAlt
+	case glfw.ModControl:
+		return ModCtrl
+	case glfw.ModShift:
+		return ModShift
+	default:
+		return UnknownMod
 	}
 }
 

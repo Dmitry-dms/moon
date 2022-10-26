@@ -143,16 +143,21 @@ func main() {
 		gl.ClearColor(1, 1, 1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
 
+		//if uiCtx.Io().KeyPressedThisFrame {
+		//fmt.Println(uiCtx.Io().PressedKey)
+		//}
+
 		uiCtx.NewFrame([2]float32{float32(Width), float32(Height)})
 
 		firstWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 			//fmt.Println(uiCtx.ActiveWidget)
-			fmt.Println(uiCtx.ActiveWidgetSpaceId, uiCtx.WantScrollFocusWidgetSpaceId)
+			//fmt.Println(uiCtx.ActiveWidgetSpaceId, uiCtx.WantScrollFocusWidgetSpaceId)
 			//fmt.Println(uiCtx.ActiveWidget)
 			//fmt.Println(uiCtx.ActiveWindow)
 		}
+
 		//secondWindow()
 
 		// fb.Bind()
@@ -257,9 +262,9 @@ var ish bool = false
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
-	uiCtx.Selection("sel-1", &selection, sle, arrowDown)
+	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
 
-	uiCtx.LineArc()
+	uiCtx.InputText("inputr23", 14)
 	//uiCtx.Bezier()
 	//uiCtx.Line(200)
 	//uiCtx.Line(400)
@@ -276,11 +281,11 @@ func firstWindow() {
 	////if ish {
 	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
 	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛАМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
-	uiCtx.Row("roe23", func() {
-		uiCtx.Text("#eывr", "the quick brown fox", 14)
-		uiCtx.Image("#im4kjdg464tht", 100, 100, tex)
-	})
-	uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких", 14)
+	//uiCtx.Row("roe23", func() {
+	//	uiCtx.Text("#eывr", "the quick brown fox", 14)
+	//	uiCtx.Image("#im4kjdg464tht", 100, 100, tex)
+	//})
+	//uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких", 14)
 
 	//uiCtx.Text("#eывr", "A", 14)
 	//uiCtx.Text("#eывr", "AVWAV", 14)
@@ -409,9 +414,9 @@ func onKey(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, 
 
 	switch action {
 	case glfw.Press:
-		uiCtx.Io().KeyCallback(ui.GlfwKeyToGuiKey(key), true)
+		uiCtx.Io().KeyCallback(ui.GlfwKeyToGuiKey(key), ui.GlfwModKey(mods), true)
 	case glfw.Release:
-		uiCtx.Io().KeyCallback(ui.GlfwKeyToGuiKey(key), false)
+		uiCtx.Io().KeyCallback(ui.GlfwKeyToGuiKey(key), ui.GlfwModKey(mods), false)
 	}
 	if key == glfw.KeyEscape && action == glfw.Press {
 		window.SetShouldClose(true)

@@ -58,8 +58,10 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 	height = scale * float32(fontSize)
 	pos = make([]utils.Vec2, len(text))
 
-	var maxDescend, baseline float32
+	var maxDescend, baseline, maxWidth float32
+	linesCounter := 1
 	baseline = scale * float32(fontSize)
+	var dx float32 = 0
 	for i, r := range text {
 		info := f.GetCharacter(r)
 		if info.Width == 0 {
@@ -68,19 +70,24 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 		}
 		if prevR >= 0 {
 			kern := f.Face.Kern(prevR, r).Ceil()
-			width += float32(kern)
+
+			dx += float32(kern)
 		}
 		if r != ' ' {
-			width += float32(info.LeftBearing)
+
+			dx += float32(info.LeftBearing)
 		}
 		if r == '\n' {
-			width = 0
+			linesCounter++
+			//maxWidth = width
+
+			dx = 0
 			height += float32(fontSize)
-			baseline -= float32(fontSize)
+			baseline += float32(fontSize)
 			prevR = rune(-1)
 			continue
 		}
-		xPos := width
+		xPos := dx
 		yPos := baseline
 		if info.Descend != 0 {
 			d := float32(info.Descend) * scale
@@ -92,13 +99,24 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 
 		pos[i] = utils.Vec2{X: xPos, Y: yPos}
 
-		width += float32(info.Width) * scale
+		dx += float32(info.Width) * scale
 		if r != ' ' {
-			width += float32(info.RigthBearing)
+
+			dx += float32(info.RigthBearing)
 		}
 		prevR = r
+		width = dx
+
+		if linesCounter > 1 {
+			if width > maxWidth {
+				maxWidth = width
+			}
+		} else {
+			maxWidth = width
+		}
 	}
 	height += maxDescend
+	width = maxWidth
 	return
 }
 

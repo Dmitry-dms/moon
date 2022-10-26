@@ -112,11 +112,19 @@ const (
 	GuiKey_KeypadAdd
 	GuiKey_KeypadEnter
 	GuiKey_KeypadEqual
+)
 
-	GuiKey_ModCtrl
-	GuiKey_ModShift
-	GuiKey_ModAlt
-	GuiKey_ModSuper
+type ModKey int
+
+const (
+	ModShift ModKey = iota
+	ModCtrl
+	ModAlt
+	ModSuper
+	ModCapsLock
+	ModNumLock
+	ModControl
+	UnknownMod
 )
 
 type MouseKey int
@@ -141,8 +149,8 @@ type CursorType int
 
 const (
 	ArrowCursor CursorType = iota
-	HResizeCursor 
-	VResizeCursor 
-	EditCursor 
+	HResizeCursor
+	VResizeCursor
+	EditCursor
 	UnknownCursor
 )

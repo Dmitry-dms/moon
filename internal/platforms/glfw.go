@@ -27,7 +27,7 @@ type GLFW struct {
 	width, height *int32
 	ImguiIO       *ImgUi
 	renderer      *renderers.OpenGL42
-	window *glfw.Window
+	window        *glfw.Window
 
 	time             float64
 	mouseJustPressed [3]bool
@@ -64,7 +64,6 @@ func NewGLFW(clientAPI GLFWClientAPI, width, height *int32) (*GLFW, error) {
 	glfw.WindowHint(glfw.Resizable, glfw.True)
 	//glfw.WindowHint(glfw.Maximized, glfw.True) // открывается сразу в windowed fullscreen
 
-
 	//Создание окна
 	window, err := glfw.CreateWindow(int(*width), int(*height), "GLFW+"+string(clientAPI)+" example", nil, nil)
 	if err != nil {
@@ -75,7 +74,7 @@ func NewGLFW(clientAPI GLFWClientAPI, width, height *int32) (*GLFW, error) {
 	window.MakeContextCurrent()
 	//включаем верт. синхронизацию
 	glfw.SwapInterval(1)
-	
+
 	//включаем окно
 	window.Show()
 	platform := &GLFW{
@@ -102,7 +101,7 @@ func (platform *GLFW) Dispose() {
 	// platform.ImguiIO.Dispose()
 	platform.window.Destroy()
 	glfw.Terminate()
-	
+
 }
 
 // ShouldStop returns true if the window is to be closed.
@@ -134,7 +133,6 @@ func (platform *GLFW) NewFrame(dt float32) {
 	displaySize := platform.DisplaySize()
 	io.SetDisplaySize(imgui.Vec2{X: displaySize[0], Y: displaySize[1]})
 	io.SetDeltaTime(dt)
-
 
 	// Setup inputs
 	if platform.window.GetAttrib(glfw.Focused) != 0 {
@@ -170,13 +168,14 @@ func (glfw *GLFW) installCallbacks() {
 
 	glfw.window.SetSizeCallback(glfw.sizeCllback)
 }
-const (
 
+const (
 	mouseButtonPrimary   = 0
 	mouseButtonSecondary = 1
 	mouseButtonTertiary  = 2
 	mouseButtonCount     = 3
 )
+
 var glfwButtonIndexByID = map[glfw.MouseButton]int{
 	glfw.MouseButton1: mouseButtonPrimary,
 	glfw.MouseButton2: mouseButtonSecondary,
@@ -196,7 +195,7 @@ func (platform *GLFW) mouseButtonChange(window *glfw.Window, rawButton glfw.Mous
 		platform.mouseJustPressed[buttonIndex] = true
 	}
 	// if !platform.ImguiIO.CurrentIO().WantCaptureMouse() {
-		listeners.MouseButtonCallback(window, rawButton, action, mods)
+	listeners.MouseButtonCallback(window, rawButton, action, mods)
 	// }
 }
 
@@ -219,20 +218,20 @@ func (platform *GLFW) mouseScrollChange(window *glfw.Window, x, y float64) {
 
 func (platform *GLFW) keyChange(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	// if action == glfw.Press {
-		// platform.ImguiIO.CurrentIO().KeyPress(int(key))
+	// platform.ImguiIO.CurrentIO().KeyPress(int(key))
 	// }
 	// if action == glfw.Release {
-		// platform.ImguiIO.CurrentIO().KeyRelease(int(key))
+	// platform.ImguiIO.CurrentIO().KeyRelease(int(key))
 	// }
 
 	// Modifiers are not reliable across systems
-	// platform.ImguiIO.CurrentIO().KeyCtrl(int(glfw.KeyLeftControl), int(glfw.KeyRightControl))
+	//platform.ImguiIO.CurrentIO().KeyCtrl(int(glfw.KeyLeftControl), int(glfw.KeyRightControl))
 	// platform.ImguiIO.CurrentIO().KeyShift(int(glfw.KeyLeftShift), int(glfw.KeyRightShift))
 	// platform.ImguiIO.CurrentIO().KeyAlt(int(glfw.KeyLeftAlt), int(glfw.KeyRightAlt))
 	// platform.ImguiIO.CurrentIO().KeySuper(int(glfw.KeyLeftSuper), int(glfw.KeyRightSuper))
 
 	// if !platform.ImguiIO.CurrentIO().WantCaptureKeyboard() {
-		listeners.KeyCallback(window, key, scancode, action, mods)
+	listeners.KeyCallback(window, key, scancode, action, mods)
 	// }
 }
 
