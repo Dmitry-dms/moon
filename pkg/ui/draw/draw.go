@@ -217,29 +217,57 @@ func (c *CmdBuffer) AddCommand(cmd Command, clip ClipRectCompose) {
 		t := cmd.Text
 		c.Text(t.Widget, t.Font, t.X, c.displaySize.Y-(t.Y+float32(t.Padding)), t.Scale, t.Clr)
 		c.SeparateBuffer(t.Font.TextureId, clip) // don't forget to slice buffer
+	case BezierQuad:
+		b := cmd.Bezier
+		c.DrawBezierQuad(b.StartX, b.StartY, b.SupportX, b.SupportY, b.EndX, b.EndY, b.Steps, b.Clr, clip)
+		c.sepBuf(clip, "LINE_STRIP")
+	case Line:
+		l := cmd.Line
+		c.DrawLine(l.StartX, c.displaySize.Y-l.StartY, l.EndX, c.displaySize.Y-l.EndY, l.Clr)
+		c.sepBuf(clip, "LINE")
+	case LineStrip:
+		l := cmd.Line
+		changed := make([]utils.Vec2, len(l.Points))
+		for i, p := range l.Points {
+			changed[i].Y = c.displaySize.Y - p.Y
+			changed[i].X = p.X
+		}
+		c.DrawLineStrip(l.Clr, changed)
+		c.sepBuf(clip, "LINE_STRIP")
 	}
-
+}
+func (c *CmdBuffer) sepBuf(clip ClipRectCompose, t string) {
+	inf := Info{
+		Elems:       c.VertCount - c.lastElems,
+		IndexOffset: c.ofs,
+		TexId:       0,
+		Type:        t,
+	}
+	inf.ClipRect = clip.MainClipRect
+	c.Inf = append(c.Inf, inf)
+	c.ofs += c.VertCount - c.lastElems
+	c.lastElems = c.VertCount
 }
 
-func (r *CmdBuffer) render(vert []float32, indeces []int32, vertCount int) {
-	r.Vertices = append(r.Vertices, vert...)
-	r.Indeces = append(r.Indeces, indeces...)
-	r.VertCount += vertCount
+func (c *CmdBuffer) render(vert []float32, indeces []int32, vertCount int) {
+	c.Vertices = append(c.Vertices, vert...)
+	c.Indeces = append(c.Indeces, indeces...)
+	c.VertCount += vertCount
 }
 
-func (r *CmdBuffer) CreateBorderBox(x, y, w, h, lineWidth float32, clr [4]float32) {
-	r.CreateRect(x, y, w, lineWidth, 0, StraightCorners, 0, clr, ClipRectCompose{})
-	r.CreateRect(x+w-lineWidth, y, lineWidth, h, 0, StraightCorners, 0, clr, ClipRectCompose{})
-	r.CreateRect(x, y, lineWidth, h, 0, StraightCorners, 0, clr, ClipRectCompose{})
-	r.CreateRect(x, y+h-lineWidth, w, lineWidth, 0, StraightCorners, 0, clr, ClipRectCompose{})
+func (c *CmdBuffer) CreateBorderBox(x, y, w, h, lineWidth float32, clr [4]float32) {
+	c.CreateRect(x, y, w, lineWidth, 0, StraightCorners, 0, clr, ClipRectCompose{})
+	c.CreateRect(x+w-lineWidth, y, lineWidth, h, 0, StraightCorners, 0, clr, ClipRectCompose{})
+	c.CreateRect(x, y, lineWidth, h, 0, StraightCorners, 0, clr, ClipRectCompose{})
+	c.CreateRect(x, y+h-lineWidth, w, lineWidth, 0, StraightCorners, 0, clr, ClipRectCompose{})
 }
 
-func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
+func (c *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)
 
-	ind0 := r.lastIndc
+	ind0 := c.lastIndc
 	ind1 := ind0 + 1
 	ind2 := ind1 + 1
 	offset := 0
@@ -259,21 +287,21 @@ func (r *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 	ind[4] = int32(ind2)
 	ind[5] = int32(last)
 
-	r.lastIndc = last + 1
-	r.render(vert, ind, 6)
+	c.lastIndc = last + 1
+	c.render(vert, ind, 6)
 }
 
-func (b *CmdBuffer) Text(text *widgets.Text, font fonts.Font, x, y float32, scale float32, clr [4]float32) {
+func (c *CmdBuffer) Text(text *widgets.Text, font fonts.Font, x, y float32, scale float32, clr [4]float32) {
 	texId := font.TextureId
 	for i, r := range text.Message {
 		info := font.GetCharacter(r)
 		xPos := x + text.Pos[i].X
 		yPos := y - text.Pos[i].Y
-		b.addCharacter(xPos, yPos, scale, texId, *info, clr)
+		c.addCharacter(xPos, yPos, scale, texId, *info, clr)
 	}
 }
 
-func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info fonts.CharInfo, clr [4]float32) {
+func (c *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info fonts.CharInfo, clr [4]float32) {
 
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)
@@ -286,7 +314,7 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	ux0, uy0 := info.TexCoords[0].X, info.TexCoords[0].Y
 	ux1, uy1 := info.TexCoords[1].X, info.TexCoords[1].Y
 
-	ind0 := b.lastIndc
+	ind0 := c.lastIndc
 	ind1 := ind0 + 1
 	ind2 := ind1 + 1
 	offset := 0
@@ -307,11 +335,11 @@ func (b *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	ind[4] = int32(ind2)
 	ind[5] = int32(last)
 
-	b.lastIndc = last + 1
-	b.render(vert, ind, 6)
+	c.lastIndc = last + 1
+	c.render(vert, ind, 6)
 }
 
-func (r *CmdBuffer) RectangleT(x, y, w, h float32, texId uint32, coords [4]float32, clr [4]float32) {
+func (c *CmdBuffer) RectangleT(x, y, w, h float32, texId uint32, coords [4]float32, clr [4]float32) {
 
 	vert := make([]float32, 9*4)
 	ind := make([]int32, 6)
@@ -319,7 +347,7 @@ func (r *CmdBuffer) RectangleT(x, y, w, h float32, texId uint32, coords [4]float
 	ux0, uy0 := coords[2], coords[3]
 	ux1, uy1 := coords[0], coords[1]
 
-	ind0 := r.lastIndc
+	ind0 := c.lastIndc
 	ind1 := ind0 + 1
 	ind2 := ind1 + 1
 	offset := 0
@@ -340,8 +368,8 @@ func (r *CmdBuffer) RectangleT(x, y, w, h float32, texId uint32, coords [4]float
 	ind[4] = int32(ind2)
 	ind[5] = int32(last)
 
-	r.lastIndc = last + 1
-	r.render(vert, ind, 6)
+	c.lastIndc = last + 1
+	c.render(vert, ind, 6)
 }
 
 func fillVertices(vert []float32, startOffset *int, x, y, uv0, uv1, texId float32, clr [4]float32) {
@@ -367,15 +395,16 @@ type RoundedRectShape int
 
 const (
 	TopLeftRect RoundedRectShape = 1 << iota
-	TopRigthRect
+	TopRightRect
 	BotLeftRect
 	BotRightRect
+	OnlyBorders
+	StraightCorners
 
-	TopRect = TopLeftRect | TopRigthRect
+	TopRect = TopLeftRect | TopRightRect
 	BotRect = BotLeftRect | BotRightRect
 
 	AllRounded = TopRect | BotRect
-	StraightCorners
 )
 
 const (
@@ -385,8 +414,8 @@ const (
 	TopRight
 )
 
-func (r *CmdBuffer) DrawArc(x, y, radius float32, steps int, sector CircleSector, clr [4]float32) {
-	ind0 := r.lastIndc
+func (c *CmdBuffer) DrawArc(x, y, radius float32, steps int, sector CircleSector, clr [4]float32) {
+	ind0 := c.lastIndc
 	ind1 := ind0 + 1
 	ind2 := ind1 + 1
 	offset := 0
@@ -491,14 +520,200 @@ func (r *CmdBuffer) DrawArc(x, y, radius float32, steps int, sector CircleSector
 	ind[indOffset+2] = int32(ind2)
 	// indOffset += 3
 
-	r.lastIndc = ind2 + 1
+	c.lastIndc = ind2 + 1
 
-	r.render(vert, ind, (numV+1)*3)
+	c.render(vert, ind, (numV+1)*3)
+}
+func (c *CmdBuffer) CreateLineArc(x, y, radius, steps float32, sector CircleSector, clr [4]float32, clip ClipRectCompose) {
+	switch sector {
+	case BotLeft:
+		c.CreateBezierQuad(x, y+radius, x-radius, y+radius, x-radius, y, steps, clr, clip)
+	case BotRight:
+		c.CreateBezierQuad(x+radius, y, x+radius, y+radius, x, y+radius, steps, clr, clip)
+	case TopLeft:
+		c.CreateBezierQuad(x, y-radius, x-radius, y-radius, x-radius, y, steps, clr, clip)
+	case TopRight:
+		c.CreateBezierQuad(x, y-radius, x+radius, y-radius, x+radius, y, steps, clr, clip)
+	}
+}
+
+func (c *CmdBuffer) CreateBezierQuad(startX, startY, supportX, supportY, endX, endY, steps float32, clr [4]float32, clip ClipRectCompose) {
+
+	cmd := Command{
+		Type: BezierQuad,
+		Bezier: &BezierQuad_command{
+			StartX:   startX,
+			StartY:   startY,
+			SupportX: supportX,
+			SupportY: supportY,
+			EndX:     endX,
+			EndY:     endY,
+			Clr:      clr,
+			Steps:    steps,
+		},
+	}
+	c.AddCommand(cmd, clip)
+}
+
+// TODO: Line drawing needs an optimization beacuse now, each line takes 1 draw call
+func (c *CmdBuffer) CreateLine(startX, startY, endX, endY float32, clr [4]float32, clip ClipRectCompose) {
+	cmd := Command{
+		Type: Line,
+		Line: &Line_command{
+			StartX: startX,
+			StartY: startY,
+			EndX:   endX,
+			EndY:   endY,
+			Clr:    clr,
+		},
+	}
+	c.AddCommand(cmd, clip)
+}
+func (c *CmdBuffer) CreateLineStrip(p []utils.Vec2, clr [4]float32, clip ClipRectCompose) {
+	cmd := Command{
+		Type: LineStrip,
+		Line: &Line_command{
+			Points: p,
+			Clr:    clr,
+		},
+	}
+	c.AddCommand(cmd, clip)
+}
+
+func (c *CmdBuffer) DrawLine(startX, startY, endX, endY float32, clr [4]float32) {
+	ind0 := c.lastIndc
+	offset := 0
+
+	ind := make([]int32, 2)      // 1 - point
+	vert := make([]float32, 9*2) //polygon
+
+	fillVertices(vert, &offset, startX, startY, 0, 0, 0, clr)
+	ind[0] = int32(ind0)
+	ind0++
+	fillVertices(vert, &offset, endX, endY, 0, 0, 0, clr)
+	ind[1] = int32(ind0)
+
+	c.lastIndc = ind0 + 1
+	c.render(vert, ind, 2)
+}
+func (c *CmdBuffer) DrawLineStrip(clr [4]float32, points []utils.Vec2) {
+	ind0 := c.lastIndc
+	offset := 0
+	pointsLen := len(points)
+	ind := make([]int32, pointsLen)      // 1 - point
+	vert := make([]float32, 9*pointsLen) //polygon
+	for i, point := range points {
+		fillVertices(vert, &offset, point.X, point.Y, 0, 0, 0, clr)
+		ind[i] = int32(ind0)
+		ind0++
+	}
+	c.lastIndc = ind0
+	c.render(vert, ind, pointsLen)
+}
+
+func (c *CmdBuffer) DrawBezierQuad(startX, startY, supportX, supportY, endX, endY, steps float32, clr [4]float32, clip ClipRectCompose) {
+	bezierQuad := func(t float32) (float32, float32) {
+		v1 := float32(math.Pow(float64(1-t), 2))
+		v2 := 2 * t * (1 - t)
+		v3 := float32(math.Pow(float64(t), 2))
+		return v1*startX + v2*supportX + v3*endX, v1*startY + v2*supportY + v3*endY
+	}
+	acc := float64(1 / steps)
+	points := make([]utils.Vec2, int(steps)+1)
+	ind := 0
+	for t := .0; t < 1.0; t += acc {
+		x, y := bezierQuad(float32(t))
+		points[ind] = utils.Vec2{x, y}
+		ind++
+	}
+	points[ind] = utils.Vec2{endX, endY}
+	c.CreateLineStrip(points, clr, clip)
 }
 
 var steps = 30
 
-func (r *CmdBuffer) RoundedRectangleR(x, y, w, h float32, radius int, shape RoundedRectShape, clr [4]float32) {
+func (c *CmdBuffer) RoundedBorderRectangle(x, y, w, h, lineWidth float32, radius int, clr [4]float32, clip ClipRectCompose) {
+	c.roundedLineRectangle(x, y, w, h, lineWidth, 10, radius, AllRounded, clr, clip)
+}
+func (c *CmdBuffer) roundedLineRectangle(x, y, w, h, lineWidth, steps float32, radius int, shape RoundedRectShape, clr [4]float32, clip ClipRectCompose) {
+
+	topLeft := utils.Vec2{x + float32(radius), y + float32(radius)} //origin of arc
+	topRight := utils.Vec2{x + w - float32(radius), y + float32(radius)}
+	botLeft := utils.Vec2{x + float32(radius), y + h - float32(radius)}
+	botRight := utils.Vec2{x + w - float32(radius), y + h - float32(radius)}
+
+	switch shape {
+	case TopLeftRect:
+		c.CreateLineArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr, clip)
+		c.CreateLineStrip([]utils.Vec2{
+			{topLeft.X, y},
+			{x + w, y},
+			{x + w, y + h},
+			{x, y + h},
+			{x, topLeft.Y},
+		}, clr, clip)
+	case TopRightRect:
+		c.CreateLineArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr, clip)
+		c.CreateLineStrip([]utils.Vec2{
+			{topRight.X + float32(radius), y + float32(radius)},
+			{topRight.X + float32(radius), topRight.Y + h - float32(radius)},
+			{x, y + h},
+			{x, y},
+			{topRight.X, y},
+		}, clr, clip)
+
+	case BotLeftRect:
+		c.CreateLineArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr, clip)
+		c.CreateLineStrip([]utils.Vec2{
+			{x, botLeft.Y},
+			{x, y},
+			{x + w, y},
+			{x + w, y + h},
+			{botLeft.X, botLeft.Y + float32(radius)},
+		}, clr, clip)
+	case BotRightRect:
+		c.CreateLineArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr, clip)
+		c.CreateLineStrip([]utils.Vec2{
+			{botRight.X, botRight.Y + float32(radius)},
+			{x, y + h},
+			{x, y},
+			{x + w, y},
+			{x + w, y + h - float32(radius)},
+		}, clr, clip)
+	case TopRect:
+		c.CreateLineArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr, clip)
+		c.CreateLine(topLeft.X, y, topRight.X, y, clr, clip)
+		c.CreateLineArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr, clip)
+		c.CreateLineStrip([]utils.Vec2{
+			{x + w, topRight.Y},
+			{x + w, y + h},
+			{x, y + h},
+			{x, y + float32(radius)},
+		}, clr, clip)
+	case BotRect:
+		c.CreateLineArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr, clip)
+		c.CreateLine(botRight.X, y+h, botLeft.X, y+h, clr, clip)
+		c.CreateLineArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr, clip)
+		c.CreateLineStrip([]utils.Vec2{
+			{x, botLeft.Y},
+			{x, y},
+			{x + w, y},
+			{x + w, botRight.Y},
+		}, clr, clip)
+	case AllRounded:
+		c.CreateLineArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr, clip)
+		c.CreateLine(topLeft.X, y, topRight.X, y, clr, clip)
+		c.CreateLineArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr, clip)
+		c.CreateLine(x+w, topRight.Y, x+w, botRight.Y, clr, clip)
+		c.CreateLineArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr, clip)
+		c.CreateLine(botRight.X, y+h, botLeft.X, y+h, clr, clip)
+		c.CreateLineArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr, clip)
+		c.CreateLine(x, botLeft.Y, x, topLeft.Y, clr, clip)
+	}
+
+}
+
+func (c *CmdBuffer) RoundedRectangleR(x, y, w, h float32, radius int, shape RoundedRectShape, clr [4]float32) {
 
 	topLeft := utils.Vec2{x + float32(radius), y - float32(radius)} //origin of arc
 	topRight := utils.Vec2{x + w - float32(radius), y - float32(radius)}
@@ -507,40 +722,40 @@ func (r *CmdBuffer) RoundedRectangleR(x, y, w, h float32, radius int, shape Roun
 
 	switch shape {
 	case TopLeftRect:
-		r.DrawArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr)
-		r.RectangleR(x, y-float32(radius), w, h-float32(radius), clr)               //main rect
-		r.RectangleR(x+float32(radius), y, w-float32(radius), float32(radius), clr) //top rect
-	case TopRigthRect:
-		r.DrawArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr)
-		r.RectangleR(x, y-float32(radius), w, h-float32(radius), clr) //main
-		r.RectangleR(x, y, w-float32(radius), float32(radius), clr)
+		c.DrawArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr)
+		c.RectangleR(x, y-float32(radius), w, h-float32(radius), clr)               //main rect
+		c.RectangleR(x+float32(radius), y, w-float32(radius), float32(radius), clr) //top rect
+	case TopRightRect:
+		c.DrawArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr)
+		c.RectangleR(x, y-float32(radius), w, h-float32(radius), clr) //main
+		c.RectangleR(x, y, w-float32(radius), float32(radius), clr)
 	case BotLeftRect:
-		r.DrawArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr)
-		r.RectangleR(x, y, w, h-float32(radius), clr) //main
-		r.RectangleR(botLeft.X, botLeft.Y, w-float32(radius), float32(radius), clr)
+		c.DrawArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr)
+		c.RectangleR(x, y, w, h-float32(radius), clr) //main
+		c.RectangleR(botLeft.X, botLeft.Y, w-float32(radius), float32(radius), clr)
 	case BotRightRect:
-		r.DrawArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr)
-		r.RectangleR(x, y, w, h-float32(radius), clr) //main
-		r.RectangleR(x, botLeft.Y, w-float32(radius), float32(radius), clr)
+		c.DrawArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr)
+		c.RectangleR(x, y, w, h-float32(radius), clr) //main
+		c.RectangleR(x, botLeft.Y, w-float32(radius), float32(radius), clr)
 	case TopRect:
-		r.DrawArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr)
-		r.DrawArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr)
-		r.RectangleR(x, y-float32(radius), w, h-float32(radius), clr)
-		r.RectangleR(x+float32(radius), y, w-float32(radius)*2, float32(radius), clr)
+		c.DrawArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr)
+		c.DrawArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr)
+		c.RectangleR(x, y-float32(radius), w, h-float32(radius), clr)
+		c.RectangleR(x+float32(radius), y, w-float32(radius)*2, float32(radius), clr)
 	case BotRect:
-		r.DrawArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr)
-		r.DrawArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr)
-		r.RectangleR(x, y, w, h-float32(radius), clr) //main
-		r.RectangleR(botLeft.X, botLeft.Y, w-float32(radius)*2, float32(radius), clr)
+		c.DrawArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr)
+		c.DrawArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr)
+		c.RectangleR(x, y, w, h-float32(radius), clr) //main
+		c.RectangleR(botLeft.X, botLeft.Y, w-float32(radius)*2, float32(radius), clr)
 	case AllRounded:
-		r.DrawArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr)
-		r.DrawArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr)
-		r.DrawArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr)
-		r.DrawArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr)
+		c.DrawArc(topLeft.X, topLeft.Y, float32(radius), steps, TopLeft, clr)
+		c.DrawArc(topRight.X, topRight.Y, float32(radius), steps, TopRight, clr)
+		c.DrawArc(botLeft.X, botLeft.Y, float32(radius), steps, BotLeft, clr)
+		c.DrawArc(botRight.X, botRight.Y, float32(radius), steps, BotRight, clr)
 
-		r.RectangleR(topLeft.X, topLeft.Y+float32(radius), w-float32(radius)*2, float32(radius), clr) //top
-		r.RectangleR(x, topLeft.Y, w, h-float32(radius)*2, clr)                                       //center
-		r.RectangleR(botLeft.X, botLeft.Y, w-float32(radius)*2, float32(radius), clr)                 //bottom
+		c.RectangleR(topLeft.X, topLeft.Y+float32(radius), w-float32(radius)*2, float32(radius), clr) //top
+		c.RectangleR(x, topLeft.Y, w, h-float32(radius)*2, clr)                                       //center
+		c.RectangleR(botLeft.X, botLeft.Y, w-float32(radius)*2, float32(radius), clr)                 //bottom
 	}
 
 }

@@ -3,6 +3,7 @@ package widgets
 type Selection struct {
 	baseWidget
 	CurrentItem int
+	Opened      bool
 }
 
 func NewSelection(id string, x, y, w, h float32) *Selection {

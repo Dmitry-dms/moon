@@ -5,6 +5,7 @@ import (
 
 	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/gogl"
+	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 	"github.com/Dmitry-dms/moon/pkg/ui/widgets"
 )
 
@@ -22,6 +23,8 @@ type Command struct {
 	WinStart *Window_start_command
 	Toolbar  *Toolbar_command
 	Text     *Text_command
+	Bezier   *BezierQuad_command
+	Line     *Line_command
 }
 
 type separate_buff struct {
@@ -86,16 +89,31 @@ type Rounded_rect struct {
 	Radius     int
 	Texture    *gogl.Texture
 }
+type Line_command struct {
+	StartX, StartY float32
+	EndX, EndY     float32
+	Clr            [4]float32
+	Points         []utils.Vec2
+}
+type BezierQuad_command struct {
+	StartX, StartY     float32
+	SupportX, SupportY float32
+	EndX, EndY         float32
+	Steps              float32
+	Clr                [4]float32
+}
 
 type CmdType int
 
 const (
 	RectType CmdType = iota
 	SeparateBuffer
+	BezierQuad
 	RectTypeT
 	Triangle
 	TriangleT
 	Line
+	LineStrip
 	Circle
 	RoundedRect
 	RoundedRectT

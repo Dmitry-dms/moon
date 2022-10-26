@@ -252,8 +252,18 @@ func (b *GLRender) Draw(displaySize [2]float32, buffer draw.CmdBuffer) {
 			b.shader.UploadTexture("Texture", int32(cmd.TexId))
 		}
 		gl.Scissor(x, y, w, h)
-		gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(cmd.Elems), gl.UNSIGNED_INT,
-			uintptr(cmd.IndexOffset*4), 0)
+		if cmd.Type == "LINE_STRIP" {
+			gl.LineWidth(3)
+			gl.DrawElementsBaseVertexWithOffset(gl.LINE_STRIP, int32(cmd.Elems), gl.UNSIGNED_INT,
+				uintptr(cmd.IndexOffset*4), 0)
+		} else if cmd.Type == "LINE" {
+			gl.LineWidth(3)
+			gl.DrawElementsBaseVertexWithOffset(gl.LINES, int32(cmd.Elems), gl.UNSIGNED_INT,
+				uintptr(cmd.IndexOffset*4), 0)
+		} else {
+			gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(cmd.Elems), gl.UNSIGNED_INT,
+				uintptr(cmd.IndexOffset*4), 0)
+		}
 
 	}
 

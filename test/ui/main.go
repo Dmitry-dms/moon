@@ -100,15 +100,23 @@ func main() {
 	goomba := openImage("assets/images/goomba.png")
 	ms := sheet.AddSprite("sprites", "mario", mario)
 	gs := sheet.AddSprite("sprites", "goomba", goomba)
+
+	arrow := openImage("assets/images/arrow-down-filled.png")
+	ard := sheet.AddSprite("sprites", "arrow-down", arrow)
+
 	t2 := gogl.UploadRGBATextureFromMemory(sheet.Image())
 	f.TextureId = t2.GetId()
 	CreateImage("debug.png", sheet.Image())
+
+	arrowDown = &gogl.Texture{}
 	tex = &gogl.Texture{}
 	tex2 = &gogl.Texture{}
 	tex.TextureId = t2.TextureId
 	tex.TexCoords = ms.TextCoords
 	tex2.TextureId = t2.TextureId
 	tex2.TexCoords = gs.TextCoords
+	arrowDown.TextureId = t2.TextureId
+	arrowDown.TexCoords = ard.TextCoords
 
 	beginTime := float32(glfw.GetTime())
 	var endTime float32
@@ -233,6 +241,7 @@ func setCursor(c ui.CursorType) {
 
 var tex *gogl.Texture
 var tex2 *gogl.Texture
+var arrowDown *gogl.Texture
 
 func getImageFromFilePath(filePath string) (image.Image, error) {
 	f, err := os.Open(filePath)
@@ -248,7 +257,13 @@ var ish bool = false
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
-	uiCtx.Selection("sel-1", &selection, sle)
+	uiCtx.Selection("sel-1", &selection, sle, arrowDown)
+
+	uiCtx.LineArc()
+	//uiCtx.Bezier()
+	//uiCtx.Line(200)
+	//uiCtx.Line(400)
+
 	//if uiCtx.ButtonT("Нажать", "Press") {
 	//	//	ish = !ish
 	//	//
@@ -263,7 +278,7 @@ func firstWindow() {
 	//uiCtx.Text("#er", "АБВГДЕЖЗИЙКЛАМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 14)
 	uiCtx.Row("roe23", func() {
 		uiCtx.Text("#eывr", "the quick brown fox", 14)
-		uiCtx.Image("#im4kjdg464tht", tex)
+		uiCtx.Image("#im4kjdg464tht", 100, 100, tex)
 	})
 	uiCtx.Text("#eыfdвr", "Съешь ещё этих мягких", 14)
 
@@ -354,8 +369,8 @@ var slCounter float32 = 0
 func secondWindow() {
 	uiCtx.BeginWindow("second wnd")
 	uiCtx.Row("row 1dfdf14", func() {
-		uiCtx.Image("#im4", tex)
-		uiCtx.Image("#im4", tex)
+		uiCtx.Image("#im4", 100, 100, tex)
+		uiCtx.Image("#im4", 100, 100, tex)
 	})
 
 	cl := fmt.Sprintf("%.0f", slCounter)
@@ -365,10 +380,10 @@ func secondWindow() {
 	uiCtx.Slider("slider-1", &slCounter, 0, 255)
 
 	uiCtx.Row("row 13214", func() {
-		uiCtx.Image("#im4kjdg464", tex)
+		uiCtx.Image("#im4kjdg464", 100, 100, tex)
 		uiCtx.Column("col fdfd", func() {
-			uiCtx.Image("#im76", tex2)
-			uiCtx.Image("#im4", tex)
+			uiCtx.Image("#im76", 100, 100, tex2)
+			uiCtx.Image("#im4", 100, 100, tex)
 		})
 
 		uiCtx.Column("col fdfdвава", func() {
@@ -376,7 +391,7 @@ func secondWindow() {
 			uiCtx.Button("ASsfdffbbb")
 		})
 
-		uiCtx.Image("#im4kj", tex)
+		uiCtx.Image("#im4kj", 100, 100, tex)
 	})
 
 	uiCtx.EndWindow()

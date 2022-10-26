@@ -302,7 +302,7 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 	txt, hovered := c.textHelper(id, x, y, msg)
 	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
-
+	wnd.buffer.RoundedBorderRectangle(x, y, txt.Width(), txt.Height(), 30, 15, red, wnd.DefaultClip())
 	if hovered {
 		txt.SetBackGroundColor(softGreen)
 		txt.CurrentColor = [4]float32{167, 200, 100, 1}
@@ -322,32 +322,35 @@ func (wnd *Window) DefaultClip() draw.ClipRectCompose {
 	return draw.NewClip(wnd.currentWidgetSpace.ClipRect, wnd.mainWidgetSpace.ClipRect)
 }
 
-func (c *UiContext) Image(id string, tex *gogl.Texture) bool {
+func (c *UiContext) imageHelper(id string, x, y, w, h float32) (img *widgets.Image, hovered, clicked bool) {
+	wnd := c.windowStack.Peek()
+
+	img = c.getWidget(id, func() widgets.Widget {
+		img = widgets.NewImage(id, x, y, w, h, whiteColor)
+		return img
+	}).(*widgets.Image)
+	{
+		hovered := c.hoverBehavior(wnd, utils.NewRectS(img.BoundingBox()))
+		if hovered {
+			c.setActiveWidget(img.WidgetId())
+		}
+		clicked = c.io.MouseClicked[0] && hovered
+	}
+	return
+}
+
+func (c *UiContext) Image(id string, w, h float32, tex *gogl.Texture) bool {
 	if tex == nil {
 		fmt.Println("error")
 		return false
 	}
 	wnd := c.windowStack.Peek()
-	var img *widgets.Image
-	var clicked bool
-	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
-	img = c.getWidget(id, func() widgets.Widget {
-		img = widgets.NewImage(id, x, y, 100, 100, whiteColor)
-		return img
-	}).(*widgets.Image)
+	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
+	img, _, clicked := c.imageHelper(id, x, y, w, h)
 
 	clr := img.Color()
 
-	// logic
-	{
-		hovered := c.hoverBehavior(wnd, utils.NewRectS(img.BoundingBox()))
-		if hovered {
-			c.setActiveWidget(img.WidgetId())
-			//c.Tooltip("This is important tooltip")
-		}
-		clicked = c.io.MouseClicked[0] && hovered
-	}
 	clip := wnd.endWidget(x, y, isRow, img)
 	wnd.buffer.CreateTexturedRect(x, y, img.Width(), img.Height(), tex.TextureId, tex.TexCoords, clr, clip)
 	//wnd.buffer.CreateRect(x, y, img.Width(), img.Height(), 0, draw.StraightCorners, tex.TextureId, clr, clip)
@@ -362,7 +365,7 @@ func (wnd *Window) endWidget(xPos, yPos float32, isRow bool, w widgets.Widget) d
 		wnd.currentWidgetSpace.AddVirtualWH(w.Width(), w.Height())
 	}
 
-	wnd.debugDraw(xPos, yPos, w.Width(), w.Height())
+	//wnd.debugDraw(xPos, yPos, w.Width(), w.Height())
 
 	var clip draw.ClipRectCompose
 	if wnd.currentWidgetSpace.flags&IgnoreClipping != 0 {
@@ -527,27 +530,39 @@ func (c *UiContext) setActiveWidget(id string) {
 	c.ActiveWidget = id
 }
 
-func (c *UiContext) Selection(id string, index *int, data []string) {
+func (c *UiContext) Selection(id string, index *int, data []string, tex *gogl.Texture) {
 	wnd := c.windowStack.Peek()
 	var s *widgets.Selection
 
-	// Need to use this because text may not fit into button, so it should be clipped
+	// Need to use WS because text may not fit into button, so it should be clipped
 	c.SubWidgetSpace(id+"---", 0, 0, Resizable|NotScrollable, func() {
-		x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
-		s = c.getWidget(id, func() widgets.Widget {
-			return widgets.NewSelection(id, x, y, 200, 50)
-		}).(*widgets.Selection)
+		c.Row(id+"row--", func() {
+			x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
+			s = c.getWidget(id, func() widgets.Widget {
+				return widgets.NewSelection(id, x, y, 300, 40)
+			}).(*widgets.Selection)
 
-		wnd.endWidget(x, y, isRow, s)
-		wnd.buffer.CreateRect(x, y, s.Width(), s.Height(), 0, draw.StraightCorners, 0, whiteColor, wnd.DefaultClip())
-		wnd.buffer.SeparateBuffer(0, wnd.DefaultClip())
-		txt, _ := c.textHelper(data[*index]+"--"+id, x, y, data[*index])
-		wnd.buffer.CreateText(x+c.CurrentStyle.Padding, y+(s.Height()-txt.Height())/2, txt, *c.font, wnd.DefaultClip())
+			wnd.buffer.CreateRect(x, y, s.Width(), s.Height(), 0, draw.StraightCorners, 0, whiteColor, wnd.DefaultClip())
+			wnd.buffer.SeparateBuffer(0, wnd.DefaultClip())
+			wnd.endWidget(x, y, isRow, s)
 
-		hovered := c.hoverBehavior(wnd, utils.NewRectS(s.BoundingBox()))
-		if hovered && c.io.MouseClicked[0] {
-			c.setActiveWidget(id)
-		}
+			x2, y2, isRow2 := wnd.currentWidgetSpace.getCursorPosition()
+			img, _, clicked := c.imageHelper(id+"arrow", x2, y2, s.Height(), s.Height())
+
+			wnd.endWidget(x2-s.Height(), y2, isRow2, img)
+
+			txt, _ := c.textHelper(data[*index]+"--"+id, x, y, data[*index])
+			wnd.buffer.CreateText(x+c.CurrentStyle.Padding, y+(s.Height()-txt.Height())/2, txt,
+				*c.font, draw.NewClip(draw.EmptyClip, [4]float32{x, y, s.Width(), s.Height()}))
+			wnd.buffer.CreateTexturedRect(x2-s.Height(), y2, img.Width(), img.Height(), tex.TextureId, tex.TexCoords, img.Color(), wnd.DefaultClip())
+			if clicked {
+				s.Opened = true
+				c.setActiveWidget(id)
+			}
+			if c.ActiveWidget != id {
+				s.Opened = false
+			}
+		})
 	})
 
 	c.ContextMenu(id, IgnoreClipping, func() {

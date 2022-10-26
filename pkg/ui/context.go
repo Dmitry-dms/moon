@@ -376,6 +376,22 @@ func (c *UiContext) PopStyleVar() {
 	c.CurrentStyle = c.prevStyle
 	c.styleChangeCounter = 0
 }
+func (c *UiContext) LineArc() {
+	//wnd := c.windowStack.Peek()
+	//x, y, _ := wnd.currentWidgetSpace.getCursorPosition()
+	//wnd.buffer.CreateBezierQuad(300, 500, 20, 150, 300, 300, [4]float32{255, 0, 0, 1}, wnd.DefaultClip())
+	//wnd.buffer.RoundedBorderRectangle(x, y, 200, 100, 30, 15, red, wnd.DefaultClip())
+}
+
+func (c *UiContext) Bezier() {
+	wnd := c.windowStack.Peek()
+	wnd.buffer.CreateBezierQuad(300, 500, 20, 150, 300, 300, 20, [4]float32{255, 0, 0, 1}, wnd.DefaultClip())
+}
+func (c *UiContext) Line(end float32) {
+	wnd := c.windowStack.Peek()
+	wnd.buffer.CreateLine(0, 0, end, end, [4]float32{255, 0, 0, 1}, wnd.DefaultClip())
+
+}
 
 type UiRenderer interface {
 	NewFrame()
