@@ -49,37 +49,42 @@ func (f *Font) GetXHeight() float32 {
 	return float32(c.Heigth)
 }
 
+type CombinedCharInfo struct {
+	Char  CharInfo
+	Pos   utils.Vec2
+	Width float32
+}
+
 // CalculateTextBounds is only optimized when you draw text top to down.
-func (f *Font) CalculateTextBounds(text string, scale float32) (width, height float32, pos []utils.Vec2) {
+// TODO: Create font interface and add it to mGUI
+func (f *Font) CalculateTextBounds(text string, scale float32) (width, height float32, chars []CombinedCharInfo) {
 	prevR := rune(-1)
 
 	fontSize := f.GetXHeight() + 2
-
 	height = scale * float32(fontSize)
-	pos = make([]utils.Vec2, len(text))
+	tmp := []rune(text)
+	chars = make([]CombinedCharInfo, len(tmp))
 
 	var maxDescend, baseline, maxWidth float32
 	linesCounter := 1
 	baseline = scale * float32(fontSize)
 	var dx float32 = 0
-	for i, r := range text {
+	for i, r := range tmp {
 		info := f.GetCharacter(r)
 		if info.Width == 0 {
 			log.Printf("Unknown char = %q", r)
+			fmt.Println("unknown char")
 			continue
 		}
 		if prevR >= 0 {
 			kern := f.Face.Kern(prevR, r).Ceil()
-
 			dx += float32(kern)
 		}
 		if r != ' ' {
-
 			dx += float32(info.LeftBearing)
 		}
 		if r == '\n' {
 			linesCounter++
-			//maxWidth = width
 
 			dx = 0
 			height += float32(fontSize)
@@ -96,17 +101,27 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 				maxDescend = d
 			}
 		}
+		if info.Rune == ' ' {
+			chars[i] = CombinedCharInfo{
+				Char:  *info,
+				Pos:   utils.Vec2{X: xPos, Y: yPos},
+				Width: float32(info.Width),
+			}
+		} else {
+			chars[i] = CombinedCharInfo{
+				Char:  *info,
+				Pos:   utils.Vec2{X: xPos, Y: yPos},
+				Width: float32(info.LeftBearing + info.Width + info.RigthBearing),
+			}
+		}
 
-		pos[i] = utils.Vec2{X: xPos, Y: yPos}
-
+		//pos[i] = utils.Vec2{X: xPos, Y: yPos}
 		dx += float32(info.Width) * scale
 		if r != ' ' {
-
 			dx += float32(info.RigthBearing)
 		}
 		prevR = r
 		width = dx
-
 		if linesCounter > 1 {
 			if width > maxWidth {
 				maxWidth = width

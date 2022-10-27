@@ -293,14 +293,14 @@ func (c *CmdBuffer) RectangleR(x, y, w, h float32, clr [4]float32) {
 
 func (c *CmdBuffer) Text(text *widgets.Text, font fonts.Font, x, y float32, scale float32, clr [4]float32) {
 	texId := font.TextureId
-	for i, r := range text.Message {
+	for i, r := range []rune(text.Message) {
 		info := font.GetCharacter(r)
 
-		if info.Rune == rune(127) { // Enter
+		if info.Rune == rune(127) { // '\n'
 			continue
 		}
-		xPos := x + text.Pos[i].X
-		yPos := y - text.Pos[i].Y
+		xPos := x + text.Chars[i].Pos.X
+		yPos := y - text.Chars[i].Pos.Y
 		c.addCharacter(xPos, yPos, scale, texId, *info, clr)
 	}
 }

@@ -307,6 +307,12 @@ func (io *Io) MousePosCallback(x, y float32) {
 	io.IsDragging = io.MouseDown[0] ||
 		io.MouseDown[1] ||
 		io.MouseDown[2]
+
+	if io.IsDragging {
+		io.dragDelta = io.MousePos.Sub(io.dragStarted)
+	} else {
+		io.dragDelta = utils.Vec2{}
+	}
 }
 
 func (io *Io) MouseBtnCallback(mouseBtn MouseKey, action Action) {

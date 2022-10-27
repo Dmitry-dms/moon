@@ -39,6 +39,9 @@ type UiContext struct {
 	ActiveWidgetSpace                *WidgetSpace
 	FocusedWidgetSpace               *WidgetSpace
 
+	SelectableText *widgets.Text
+	SelectedText   string
+
 	PriorWindow       *Window
 	HoveredWindow     *Window
 	LastHoveredWindow *Window
@@ -311,6 +314,15 @@ func (c *UiContext) EndFrame(size [2]float32) {
 			c.FocusedWidgetSpace = nil
 		}
 	}
+	if c.SelectableText != nil {
+		if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(c.SelectableText.BoundingBox())) {
+			c.SelectableText.LastSelectedWidth = 0
+			c.SelectableText.LastSelectedX = 0
+			c.SelectableText = nil
+			c.SelectedText = ""
+		}
+	}
+
 	c.WantScrollFocusWidgetSpaceLastId = c.WantScrollFocusWidgetSpaceId
 	c.WantScrollFocusWidgetSpaceId = ""
 
@@ -320,6 +332,7 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	c.io.PressedKey = GuiKey_None
 	c.io.modPressed = [8]bool{}
 	c.io.KeyPressedThisFrame = false
+
 }
 
 type StyleVar4f uint

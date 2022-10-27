@@ -1,25 +1,27 @@
 package widgets
 
 import (
+	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/ui/styles"
-	"github.com/Dmitry-dms/moon/pkg/ui/utils"
 )
 
 type Text struct {
-	base         baseWidget
-	Message      string
-	CurrentColor [4]float32
-	Pos          []utils.Vec2
-
-	Size    int
-	Padding int
-	Scale   float32
+	base              baseWidget
+	Message           string
+	CurrentColor      [4]float32
+	Chars             []fonts.CombinedCharInfo
+	Selectable        bool
+	Size              int
+	Padding           int
+	Scale             float32
+	LastSelectedWidth float32
+	LastSelectedX     float32
 }
 
-func NewText(id, text string, x, y, w, h float32, pos []utils.Vec2, style *styles.Style) *Text {
+func NewText(id, text string, x, y, w, h float32, chars []fonts.CombinedCharInfo, style *styles.Style, sel bool) *Text {
 	t := Text{
 		Message: text,
-		Pos:     pos,
+		Chars:   chars,
 		base: baseWidget{
 			id:              id,
 			boundingBox:     [4]float32{x, y, w, h + float32(style.TextPadding)},
@@ -29,12 +31,34 @@ func NewText(id, text string, x, y, w, h float32, pos []utils.Vec2, style *style
 		Size:         style.TextSize,
 		Padding:      style.TextPadding * int(style.FontScale),
 		Scale:        style.FontScale,
+		Selectable:   sel,
 	}
 	return &t
 }
 
 func (t *Text) UpdatePosition(pos [4]float32) {
 	t.base.boundingBox = pos
+}
+
+func (t *Text) FindSelectedString(x, dx float32) (float32, float32, string) {
+	msg := ""
+	var w, startPos float32 = 0, 0
+	startFounded := false
+	for _, pos := range t.Chars {
+		if x >= pos.Pos.X && x <= pos.Pos.X+float32(pos.Char.Width) && !startFounded {
+			w = pos.Width
+			msg += string(pos.Char.Rune)
+			startPos = pos.Pos.X
+			startFounded = true
+		} else {
+			if startFounded && w < dx {
+				msg += string(pos.Char.Rune)
+				w += pos.Width
+			}
+
+		}
+	}
+	return startPos, w, msg
 }
 
 func (t *Text) SetWH(width, height float32) {

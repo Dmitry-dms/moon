@@ -152,10 +152,12 @@ func main() {
 		firstWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
-			//fmt.Println(uiCtx.ActiveWidget)
-			//fmt.Println(uiCtx.ActiveWidgetSpaceId, uiCtx.WantScrollFocusWidgetSpaceId)
-			//fmt.Println(uiCtx.ActiveWidget)
-			//fmt.Println(uiCtx.ActiveWindow)
+			//if uiCtx.SelectableText != nil {
+			//	fmt.Println(uiCtx.SelectableText.WidgetId())
+			//} else {
+			//	fmt.Println("nil")
+			//}
+			fmt.Println(uiCtx.SelectedText)
 		}
 
 		//secondWindow()
@@ -178,93 +180,13 @@ func main() {
 	}
 }
 
-func openImage(filepath string) image.Image {
-	infile, err := os.Open(filepath)
-	if err != nil {
-		return nil
-	}
-	defer infile.Close()
-
-	img, _, err := image.Decode(infile)
-	if err != nil {
-		return nil
-	}
-	return img
-}
-
-func CreateImage(filename string, img image.Image) {
-	pngFile, _ := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0664)
-
-	defer pngFile.Close()
-
-	encoder := png.Encoder{
-		CompressionLevel: png.BestCompression,
-	}
-	encoder.Encode(pngFile, img)
-}
-
-func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImage *image.RGBA) {
-	chars := make([]*fonts.CharInfo, len(f.CharMap))
-	counter := 0
-	for _, info := range f.CharMap {
-		chars[counter] = info
-		counter++
-	}
-	sort.Slice(chars, func(i, j int) bool {
-		return chars[i].Width > chars[j].Width
-	})
-
-	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
-		spriteInfo := make([]*sprite_packer.SpriteInfo, len(chars))
-		for i, info := range chars {
-			if info.Rune == ' ' || info.Rune == '\u00a0' {
-				continue
-			}
-			ret := srcImage.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
-			pixels := sheet.GetData(ret)
-			spriteInfo[i] = sheet.AddToSheet(string(info.Rune), pixels)
-		}
-		return spriteInfo
-	})
-
-	rr, _ := sheet.GetGroup(f.Filepath)
-
-	for _, info := range rr {
-		if info != nil {
-			ll := []rune(info.Id)
-			char := f.GetCharacter(ll[0])
-			char.TexCoords = [2]math.Vec2{{info.TextCoords[0], info.TextCoords[1]},
-				{info.TextCoords[2], info.TextCoords[3]}}
-		}
-	}
-}
-
-func setCursor(c ui.CursorType) {
-	defC := glfw.CreateStandardCursor(ui.Cursor(c))
-	window.SetCursor(defC)
-}
-
-var tex *gogl.Texture
-var tex2 *gogl.Texture
-var arrowDown *gogl.Texture
-
-func getImageFromFilePath(filePath string) (image.Image, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	image, _, err := image.Decode(f)
-	return image, err
-}
-
 var ish bool = false
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
-
-	uiCtx.InputText("inputr23", 14)
+	uiCtx.Text("text-ttp-1", "Обычная картинка и это то-же", 14)
+	//uiCtx.InputText("inputr23", 14)
 	//uiCtx.Bezier()
 	//uiCtx.Line(200)
 	//uiCtx.Line(400)
@@ -426,4 +348,83 @@ func onKey(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, 
 func scrollCallback(w *glfw.Window, xoff float64, yoff float64) {
 	uiCtx.Io().ScrollX = xoff
 	uiCtx.Io().ScrollY = yoff
+}
+func openImage(filepath string) image.Image {
+	infile, err := os.Open(filepath)
+	if err != nil {
+		return nil
+	}
+	defer infile.Close()
+
+	img, _, err := image.Decode(infile)
+	if err != nil {
+		return nil
+	}
+	return img
+}
+
+func CreateImage(filename string, img image.Image) {
+	pngFile, _ := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0664)
+
+	defer pngFile.Close()
+
+	encoder := png.Encoder{
+		CompressionLevel: png.BestCompression,
+	}
+	encoder.Encode(pngFile, img)
+}
+
+func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImage *image.RGBA) {
+	chars := make([]*fonts.CharInfo, len(f.CharMap))
+	counter := 0
+	for _, info := range f.CharMap {
+		chars[counter] = info
+		counter++
+	}
+	sort.Slice(chars, func(i, j int) bool {
+		return chars[i].Width > chars[j].Width
+	})
+
+	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
+		spriteInfo := make([]*sprite_packer.SpriteInfo, len(chars))
+		for i, info := range chars {
+			if info.Rune == ' ' || info.Rune == '\u00a0' {
+				continue
+			}
+			ret := srcImage.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
+			pixels := sheet.GetData(ret)
+			spriteInfo[i] = sheet.AddToSheet(string(info.Rune), pixels)
+		}
+		return spriteInfo
+	})
+
+	rr, _ := sheet.GetGroup(f.Filepath)
+
+	for _, info := range rr {
+		if info != nil {
+			ll := []rune(info.Id)
+			char := f.GetCharacter(ll[0])
+			char.TexCoords = [2]math.Vec2{{info.TextCoords[0], info.TextCoords[1]},
+				{info.TextCoords[2], info.TextCoords[3]}}
+		}
+	}
+}
+
+func setCursor(c ui.CursorType) {
+	defC := glfw.CreateStandardCursor(ui.Cursor(c))
+	window.SetCursor(defC)
+}
+
+var tex *gogl.Texture
+var tex2 *gogl.Texture
+var arrowDown *gogl.Texture
+
+func getImageFromFilePath(filePath string) (image.Image, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	image, _, err := image.Decode(f)
+	return image, err
 }

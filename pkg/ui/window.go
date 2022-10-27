@@ -37,9 +37,10 @@ type Window struct {
 
 	widgSpaces []*WidgetSpace
 
-	capturedV, capturedH bool
-	capturedWin          bool
-	capturedInsideWin    bool
+	capturedV, capturedH  bool
+	capturedWin           bool
+	capturedInsideWin     bool
+	capturedTextSelection bool
 
 	delayedWidgets []func()
 }
@@ -132,7 +133,8 @@ func (c *UiContext) BeginWindow(id string) {
 
 		c.dragBehavior(wnd.outerRect, &wnd.capturedWin)
 		// Изменение положения окна
-		if c.ActiveWindow == wnd && wnd.capturedWin && !c.wantResizeV && !c.wantResizeH && !wnd.capturedInsideWin {
+		if c.ActiveWindow == wnd && wnd.capturedWin && !c.wantResizeV &&
+			!c.wantResizeH && !wnd.capturedInsideWin && c.SelectableText == nil {
 			newX += c.io.MouseDelta.X
 			newY += c.io.MouseDelta.Y
 		}
@@ -281,11 +283,11 @@ func (c *UiContext) Slider(id string, i *float32, min, max float32) {
 		clip)
 }
 
-func (c *UiContext) tHelper(id string, x, y float32, msg string, key GuiKey, input bool) (txt *widgets.Text, hovered bool) {
+func (c *UiContext) tHelper(id string, x, y float32, msg string, key GuiKey, input, selectable bool) (txt *widgets.Text, hovered bool) {
 	wnd := c.windowStack.Peek()
 	txt = c.getWidget(id, func() widgets.Widget {
 		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
-		return widgets.NewText(id, msg, x, y, w, h, p, c.CurrentStyle)
+		return widgets.NewText(id, msg, x, y, w, h, p, c.CurrentStyle, selectable)
 	}).(*widgets.Text)
 	if msg != txt.Message && msg != "" {
 		if input {
@@ -299,17 +301,33 @@ func (c *UiContext) tHelper(id string, x, y float32, msg string, key GuiKey, inp
 			txt.Message = msg
 		}
 		w, h, p := c.font.CalculateTextBounds(txt.Message, c.CurrentStyle.FontScale)
-		txt.Pos = p
+		txt.Chars = p
 		txt.SetWH(w, h)
 	}
 	hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox()))
+	if hovered && txt.Selectable {
+		c.SelectableText = txt
+	}
+	if c.SelectableText == txt {
+		c.dragBehavior(wnd.outerRect, &wnd.capturedTextSelection)
+		// TODO: When selectable text loses focus, there are a little blink shows up which have width = 1 char width
+		f, w, msg := txt.FindSelectedString(c.io.dragStarted.X-x, c.io.dragDelta.X)
+		if w != 0 {
+			txt.LastSelectedWidth = w
+			txt.LastSelectedX = f
+			c.SelectedText = msg
+		}
+		//txt.FindSelectedString(c.io.dragStarted.X-x, c.io.dragDelta.X)
+		wnd.buffer.CreateRect(x+txt.LastSelectedX, y, txt.LastSelectedWidth, txt.Height(), 0,
+			draw.StraightCorners, 0, softGreen, wnd.DefaultClip())
+	}
 	return
 }
 func (c *UiContext) inputTextHelper(id string, x, y float32, msg string, key GuiKey, input bool) (txt *widgets.Text, hovered bool) {
-	return c.tHelper(id, x, y, msg, key, true)
+	return c.tHelper(id, x, y, msg, key, true, true)
 }
 func (c *UiContext) textHelper(id string, x, y float32, msg string) (txt *widgets.Text, hovered bool) {
-	return c.tHelper(id, x, y, msg, GuiKey_None, false)
+	return c.tHelper(id, x, y, msg, GuiKey_None, false, true)
 }
 
 func (c *UiContext) getTextInput() (string, GuiKey) {
@@ -349,10 +367,10 @@ func (c *UiContext) Text(id string, msg string, size int) {
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 	txt, hovered := c.textHelper(id, x, y, msg)
 	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
-	wnd.buffer.RoundedBorderRectangle(x, y, txt.Width(), txt.Height(), 30, 15, red, wnd.DefaultClip())
+	//wnd.buffer.RoundedBorderRectangle(x, y, txt.Width(), txt.Height(), 30, 15, red, wnd.DefaultClip())
 	if hovered {
-		txt.SetBackGroundColor(softGreen)
-		txt.CurrentColor = [4]float32{167, 200, 100, 1}
+		//txt.SetBackGroundColor(softGreen)
+		//txt.CurrentColor = [4]float32{167, 200, 100, 1}
 	} else {
 		txt.CurrentColor = whiteColor
 		txt.SetBackGroundColor(transparent)
@@ -503,7 +521,7 @@ func (c *UiContext) textButton(id string, wnd *Window, msg string, x, y float32,
 	if msg != tBtn.Message {
 		tBtn.Message = msg
 		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
-		tBtn.Text.Pos = p
+		tBtn.Text.Chars = p
 		tBtn.SetWH(w, h)
 	}
 	hovered = c.hoverBehavior(wnd, utils.NewRectS(tBtn.BoundingBox()))
