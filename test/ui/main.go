@@ -181,11 +181,16 @@ func main() {
 }
 
 var ish bool = false
+var tW float32 = 100
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
-	uiCtx.Text("text-ttp-1", "Обычная картинка и это то-же", 14)
+	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
+	//uiCtx.Text("text-ttp-1", "Обычная картинка и это то-же", 14)
+	//uiCtx.TextFitted("text-ttp-1", tW, "Съешь ещё этих мягких французских булочек")
+	uiCtx.Slider("slds", &tW, -200, 600)
+	fmt.Println(tW)
 	//uiCtx.InputText("inputr23", 14)
 	//uiCtx.Bezier()
 	//uiCtx.Line(200)
@@ -391,7 +396,7 @@ func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImag
 			if info.Rune == ' ' || info.Rune == '\u00a0' {
 				continue
 			}
-			ret := srcImage.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
+			ret := srcImage.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Height)).(*image.RGBA)
 			pixels := sheet.GetData(ret)
 			spriteInfo[i] = sheet.AddToSheet(string(info.Rune), pixels)
 		}

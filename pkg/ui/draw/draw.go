@@ -313,7 +313,7 @@ func (c *CmdBuffer) addCharacter(x, y float32, scale float32, texId uint32, info
 	x0 := x
 	y0 := y
 	x1 := x + scale*float32(info.Width)
-	y1 := y + scale*float32(info.Heigth)
+	y1 := y + scale*float32(info.Height)
 
 	ux0, uy0 := info.TexCoords[0].X, info.TexCoords[0].Y
 	ux1, uy1 := info.TexCoords[1].X, info.TexCoords[1].Y

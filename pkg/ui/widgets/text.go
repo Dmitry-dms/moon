@@ -10,7 +10,7 @@ type Text struct {
 	Message           string
 	CurrentColor      [4]float32
 	Chars             []fonts.CombinedCharInfo
-	Selectable        bool
+	Flag              TextFlag
 	Size              int
 	Padding           int
 	Scale             float32
@@ -18,7 +18,16 @@ type Text struct {
 	LastSelectedX     float32
 }
 
-func NewText(id, text string, x, y, w, h float32, chars []fonts.CombinedCharInfo, style *styles.Style, sel bool) *Text {
+type TextFlag uint
+
+const (
+	Selectable TextFlag = 1 << iota
+	FitContent
+	Editable
+	Default
+)
+
+func NewText(id, text string, x, y, w, h float32, chars []fonts.CombinedCharInfo, style *styles.Style, flag TextFlag) *Text {
 	t := Text{
 		Message: text,
 		Chars:   chars,
@@ -31,7 +40,7 @@ func NewText(id, text string, x, y, w, h float32, chars []fonts.CombinedCharInfo
 		Size:         style.TextSize,
 		Padding:      style.TextPadding * int(style.FontScale),
 		Scale:        style.FontScale,
-		Selectable:   sel,
+		Flag:         flag,
 	}
 	return &t
 }

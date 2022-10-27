@@ -46,7 +46,7 @@ var AtlasWidth = 1024
 
 func (f *Font) GetXHeight() float32 {
 	c := f.GetCharacter('X')
-	return float32(c.Heigth)
+	return float32(c.Height)
 }
 
 type CombinedCharInfo struct {
@@ -72,7 +72,6 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 	for i, r := range tmp {
 		info := f.GetCharacter(r)
 		if info.Width == 0 {
-			log.Printf("Unknown char = %q", r)
 			fmt.Println("unknown char")
 			continue
 		}
@@ -85,7 +84,6 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 		}
 		if r == '\n' {
 			linesCounter++
-
 			dx = 0
 			height += float32(fontSize)
 			baseline += float32(fontSize)
@@ -111,15 +109,16 @@ func (f *Font) CalculateTextBounds(text string, scale float32) (width, height fl
 			chars[i] = CombinedCharInfo{
 				Char:  *info,
 				Pos:   utils.Vec2{X: xPos, Y: yPos},
-				Width: float32(info.LeftBearing + info.Width + info.RigthBearing),
+				Width: float32(info.LeftBearing + info.Width + info.RightBearing),
 			}
 		}
 
 		//pos[i] = utils.Vec2{X: xPos, Y: yPos}
 		dx += float32(info.Width) * scale
 		if r != ' ' {
-			dx += float32(info.RigthBearing)
+			dx += float32(info.RightBearing)
 		}
+
 		prevR = r
 		width = dx
 		if linesCounter > 1 {
@@ -201,12 +200,13 @@ func (f *Font) generateBitmap(dpi float32, from, to int) *image.RGBA {
 			SrcX:         dr.Min.X,
 			SrcY:         dr.Max.Y,
 			Width:        dr.Dx(),
-			Heigth:       dr.Dy(),
+			Height:       dr.Dy(),
 			Ascend:       -b.Min.Y.Floor(),
 			Descend:      b.Max.Y.Floor(),
 			LeftBearing:  b.Min.X.Floor(),
-			RigthBearing: a.Floor() - b.Max.X.Floor(),
+			RightBearing: a.Floor() - b.Max.X.Floor(),
 			TexCoords:    [2]math.Vec2{},
+			Advance:      a.Floor(),
 		}
 		ch.calcTexCoords(AtlasWidth, AtlasWidth)
 		f.CharSlice[i] = &ch

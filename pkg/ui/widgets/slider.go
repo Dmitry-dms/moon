@@ -11,7 +11,7 @@ type Slider struct {
 	sliderHeight, btnWidth float32
 	mainSliderPos          [4]float32
 	btnSliderPos           [4]float32
-	currentPos             float32
+	CurrentPos             float32
 	btnCaptured            bool
 }
 
@@ -30,29 +30,43 @@ func NewSlider(id string, x, y, w, h, min, max float32, style *styles.Style) *Sl
 	return &s
 }
 
-func (s *Slider) HandleMouseDrag(delta float32, f utils.CapturedDragBehavior) {
+var dragSpeed float32 = 3
+
+func (s *Slider) HandleMouseDrag(delta float32, i *float32, f utils.CapturedDragBehavior) {
 	f(utils.NewRectS(s.btnSliderPos), &s.btnCaptured)
 	if s.btnCaptured {
-
-		s.currentPos += delta
-		k := (s.Width() - s.btnSliderPos[2]) / s.max
-		if s.currentPos <= s.min {
-			s.currentPos = s.min
-		} else if s.currentPos >= s.max*k {
-			s.currentPos = s.max * k
+		delta *= dragSpeed
+		if *i <= s.min {
+			*i = s.min
+			if delta > 0 {
+				*i += delta
+			}
+		} else if *i > s.max {
+			*i = s.max
+			if delta < 0 {
+				*i -= delta
+			}
+		} else {
+			*i += delta
 		}
 	}
 }
 
 func (s *Slider) CalculateNumber(i *float32) {
 	baseLength := s.Width() - s.btnSliderPos[2]
-	*i = s.max * (s.currentPos / baseLength)
+	if *i <= s.min {
+		s.CurrentPos = 0
+	} else if *i >= s.max {
+		s.CurrentPos = baseLength
+	} else {
+		s.CurrentPos = (*i - s.min) / (s.max - s.min) * baseLength
+	}
 }
 
 func (s *Slider) calculateSliderPos() {
 	v := (s.Height() - s.sliderHeight) / 2
 	s.mainSliderPos = [4]float32{s.base.boundingBox[0], s.base.boundingBox[1] + v, s.Width(), s.sliderHeight}
-	s.btnSliderPos = [4]float32{s.base.boundingBox[0] + s.currentPos, s.base.boundingBox[1], s.btnWidth, s.Height()}
+	s.btnSliderPos = [4]float32{s.base.boundingBox[0] + s.CurrentPos, s.base.boundingBox[1], s.btnWidth, s.Height()}
 }
 
 func (s *Slider) MainSliderPos() [4]float32 {

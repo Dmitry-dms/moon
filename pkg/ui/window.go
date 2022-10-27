@@ -3,6 +3,7 @@ package ui
 import (
 	// "fmt"
 	"fmt"
+	"strings"
 	"time"
 
 	"math/rand"
@@ -261,13 +262,19 @@ func (c *UiContext) Slider(id string, i *float32, min, max float32) {
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 
 	slider = c.getWidget(id, func() widgets.Widget {
-		return widgets.NewSlider(id, x, y, 100, 50, min, max, c.CurrentStyle)
+		return widgets.NewSlider(id, x, y, 200, 50, min, max, c.CurrentStyle)
 	}).(*widgets.Slider)
 
 	// logic
 	{
-		slider.HandleMouseDrag(c.io.MouseDelta.X, c.dragBehaviorInWindow)
+		slider.HandleMouseDrag(c.io.MouseDelta.X, i, c.dragBehaviorInWindow)
 		slider.CalculateNumber(i)
+		// In the first launch if number more or less than borders values, we have to make it equal one of them
+		if *i > max {
+			*i = max
+		} else if *i < min {
+			*i = min
+		}
 	}
 
 	clip := draw.NewClip(slider.BoundingBox(), wnd.currentWidgetSpace.ClipRect)
@@ -283,14 +290,38 @@ func (c *UiContext) Slider(id string, i *float32, min, max float32) {
 		clip)
 }
 
-func (c *UiContext) tHelper(id string, x, y float32, msg string, key GuiKey, input, selectable bool) (txt *widgets.Text, hovered bool) {
+func (c *UiContext) GetTextInfo(x, w float32, msg string) string {
+
+	//splitted := strings.Split(msg, " ")
+	r := []rune(msg)
+	sb := strings.Builder{}
+	sb.Grow(len(r))
+	var dw float32 = 0
+	for _, l := range r {
+		char := c.font.GetCharacter(l)
+		if x+dw+float32(char.Advance) < x+w {
+			dw += float32(char.Advance)
+			sb.Write([]byte(string(l)))
+		} else {
+			dw = 0
+			sb.Write([]byte(string('\n')))
+			sb.Write([]byte(string(l)))
+		}
+	}
+	return sb.String()
+}
+
+func (c *UiContext) tHelper(id string, x, y, w float32, msg string, key GuiKey, flag widgets.TextFlag) (txt *widgets.Text, hovered bool) {
 	wnd := c.windowStack.Peek()
 	txt = c.getWidget(id, func() widgets.Widget {
+		if flag&widgets.FitContent != 0 {
+			msg = c.GetTextInfo(x, w, msg)
+		}
 		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
-		return widgets.NewText(id, msg, x, y, w, h, p, c.CurrentStyle, selectable)
+		return widgets.NewText(id, msg, x, y, w, h, p, c.CurrentStyle, flag)
 	}).(*widgets.Text)
 	if msg != txt.Message && msg != "" {
-		if input {
+		if flag&widgets.Editable != 0 {
 			if key == GuiKey_Backspace {
 				txt.Message = txt.Message[:len(txt.Message)-1]
 			} else {
@@ -300,34 +331,36 @@ func (c *UiContext) tHelper(id string, x, y float32, msg string, key GuiKey, inp
 		} else {
 			txt.Message = msg
 		}
+		if flag&widgets.FitContent != 0 {
+			txt.Message = c.GetTextInfo(x, w, msg)
+		}
 		w, h, p := c.font.CalculateTextBounds(txt.Message, c.CurrentStyle.FontScale)
 		txt.Chars = p
 		txt.SetWH(w, h)
 	}
+
 	hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox()))
-	if hovered && txt.Selectable {
+	if hovered && txt.Flag&widgets.Selectable != 0 {
 		c.SelectableText = txt
 	}
 	if c.SelectableText == txt {
 		c.dragBehavior(wnd.outerRect, &wnd.capturedTextSelection)
-		// TODO: When selectable text loses focus, there are a little blink shows up which have width = 1 char width
 		f, w, msg := txt.FindSelectedString(c.io.dragStarted.X-x, c.io.dragDelta.X)
 		if w != 0 {
 			txt.LastSelectedWidth = w
 			txt.LastSelectedX = f
 			c.SelectedText = msg
 		}
-		//txt.FindSelectedString(c.io.dragStarted.X-x, c.io.dragDelta.X)
 		wnd.buffer.CreateRect(x+txt.LastSelectedX, y, txt.LastSelectedWidth, txt.Height(), 0,
 			draw.StraightCorners, 0, softGreen, wnd.DefaultClip())
 	}
 	return
 }
-func (c *UiContext) inputTextHelper(id string, x, y float32, msg string, key GuiKey, input bool) (txt *widgets.Text, hovered bool) {
-	return c.tHelper(id, x, y, msg, key, true, true)
+func (c *UiContext) inputTextHelper(id string, x, y float32, msg string, key GuiKey, flag widgets.TextFlag) (txt *widgets.Text, hovered bool) {
+	return c.tHelper(id, x, y, 0, msg, key, flag)
 }
-func (c *UiContext) textHelper(id string, x, y float32, msg string) (txt *widgets.Text, hovered bool) {
-	return c.tHelper(id, x, y, msg, GuiKey_None, false, true)
+func (c *UiContext) textHelper(id string, x, y, w float32, msg string, flag widgets.TextFlag) (txt *widgets.Text, hovered bool) {
+	return c.tHelper(id, x, y, w, msg, GuiKey_None, flag)
 }
 
 func (c *UiContext) getTextInput() (string, GuiKey) {
@@ -344,7 +377,7 @@ func (c *UiContext) InputText(id string, size int) {
 	wnd := c.windowStack.Peek()
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
 	msg, key := c.getTextInput()
-	txt, hovered := c.inputTextHelper(id, x, y, msg, key, true)
+	txt, hovered := c.inputTextHelper(id, x, y, msg, key, widgets.Editable)
 	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
 
 	if hovered {
@@ -362,10 +395,29 @@ func (c *UiContext) InputText(id string, size int) {
 	wnd.buffer.CreateText(x, y, txt, *c.font, clip)
 }
 
+func (c *UiContext) TextFitted(id string, w float32, msg string) {
+	wnd := c.windowStack.Peek()
+	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
+	txt, hovered := c.textHelper(id, x, y, w, msg, widgets.FitContent)
+	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
+	wnd.debugDrawS(txt.BoundingBox())
+	//wnd.buffer.RoundedBorderRectangle(x, y, txt.Width(), txt.Height(), 30, 15, red, wnd.DefaultClip())
+	if hovered {
+
+	} else {
+		txt.CurrentColor = whiteColor
+		txt.SetBackGroundColor(transparent)
+	}
+
+	clip := wnd.endWidget(x, y, isRow, txt)
+
+	wnd.buffer.CreateText(x, y, txt, *c.font, clip)
+}
+
 func (c *UiContext) Text(id string, msg string, size int) {
 	wnd := c.windowStack.Peek()
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
-	txt, hovered := c.textHelper(id, x, y, msg)
+	txt, hovered := c.textHelper(id, x, y, 0, msg, widgets.Selectable)
 	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
 	//wnd.buffer.RoundedBorderRectangle(x, y, txt.Width(), txt.Height(), 30, 15, red, wnd.DefaultClip())
 	if hovered {
@@ -616,7 +668,7 @@ func (c *UiContext) Selection(id string, index *int, data []string, tex *gogl.Te
 
 			wnd.endWidget(x2-s.Height(), y2, isRow2, img)
 
-			txt, _ := c.textHelper(data[*index]+"--"+id, x, y, data[*index])
+			txt, _ := c.textHelper(data[*index]+"--"+id, x, y, 0, data[*index], widgets.Default)
 			wnd.buffer.CreateText(x+c.CurrentStyle.Padding, y+(s.Height()-txt.Height())/2, txt,
 				*c.font, draw.NewClip(draw.EmptyClip, [4]float32{x, y, s.Width(), s.Height()}))
 			wnd.buffer.CreateTexturedRect(x2-s.Height(), y2, img.Width(), img.Height(), tex.TextureId, tex.TexCoords, img.Color(), wnd.DefaultClip())

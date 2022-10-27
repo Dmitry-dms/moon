@@ -24,7 +24,7 @@ func main() {
 func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImage *image.RGBA) {
 
 	sort.Slice(f.CharSlice, func(i, j int) bool {
-		return f.CharSlice[i].Heigth > f.CharSlice[j].Heigth
+		return f.CharSlice[i].Height > f.CharSlice[j].Height
 	})
 
 	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
@@ -33,7 +33,7 @@ func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImag
 			if info.Rune == ' ' || info.Rune == '\u00a0' {
 				continue
 			}
-			ret := srcImage.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Heigth)).(*image.RGBA)
+			ret := srcImage.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Height)).(*image.RGBA)
 			pixels := sheet.GetData(ret)
 			if len(pixels) == 0 {
 				continue

@@ -144,6 +144,15 @@ func (c *UiContext) NewFrame(displaySize [2]float32) {
 	c.renderer.NewFrame()
 
 	c.Io().SetDisplaySize(displaySize[0], displaySize[1])
+
+	if c.SelectableText != nil {
+		if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(c.SelectableText.BoundingBox())) {
+			c.SelectableText.LastSelectedWidth = 0
+			c.SelectableText.LastSelectedX = 0
+			c.SelectableText = nil
+			c.SelectedText = ""
+		}
+	}
 }
 func (c *UiContext) pushWindowFront(w *Window) {
 	for i := len(c.sortedWindows) - 1; i >= 0; i-- {
@@ -312,14 +321,6 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	if c.FocusedWidgetSpace != nil {
 		if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(c.FocusedWidgetSpace.ClipRect)) {
 			c.FocusedWidgetSpace = nil
-		}
-	}
-	if c.SelectableText != nil {
-		if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(c.SelectableText.BoundingBox())) {
-			c.SelectableText.LastSelectedWidth = 0
-			c.SelectableText.LastSelectedX = 0
-			c.SelectableText = nil
-			c.SelectedText = ""
 		}
 	}
 
