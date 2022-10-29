@@ -39,8 +39,10 @@ type UiContext struct {
 	ActiveWidgetSpace                *WidgetSpace
 	FocusedWidgetSpace               *WidgetSpace
 
-	SelectableText *widgets.Text
-	SelectedText   string
+	//SelectableText *widgets.Text
+	SelectedText string
+
+	SelectedTexts []*widgets.Text
 
 	PriorWindow       *Window
 	HoveredWindow     *Window
@@ -82,6 +84,7 @@ func NewContext(frontRenderer UiRenderer) *UiContext {
 		windowStack:    utils.NewStack[*Window](),
 		widgSpaceCache: cache.NewRamCache[*WidgetSpace](),
 		CurrentStyle:   &styles.DefaultStyle,
+		SelectedTexts:  []*widgets.Text{},
 	}
 
 	return &c

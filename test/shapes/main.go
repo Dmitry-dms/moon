@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"math"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -32,9 +33,86 @@ func main() {
 	}
 
 	//CreateImage("bezue.png", img)
-	var precise float32 = 20
-	fmt.Println(1 / precise)
+	//str := "Шла Саша по шоссе и сосала сушку"
+	//fmt.Println(strings.LastIndex(str, "С"))
+	//
+	//fmt.Println(strings.LastIndexFunc("go gopher", func(r rune) bool {
+	//	if r == 'h' {
+	//		return true
+	//	} else {
+	//		return false
+	//	}
+	//}))
+	//str := "gopher go"
+	//fmt.Println(last(str[:7], 'g'))
+	//fmt.Println(strings.LastIndex(str[:7], "g"))
+	//fmt.Println(strings.Index(str[3:], "r"))
+	//fmt.Println(RuneIndex(str, 'r', 3))
+	fmt.Println(wrap("the quick brown fox jumps over the lazy dog", 10))
+	//fmt.Println(wrap("the quick brown fox", 10))
+	//str := "the quick brown fox"
+	//
+	//fmt.Println(strings.LastIndex(str[:17], "f"))
+	//fmt.Println(strings.Index(str[10:], "q"))
 }
+func RuneIndex(s string, c rune, fromIndex int) int {
+	r := []rune(s)
+	ind := 0
+	for i := fromIndex; i <= len(r)-1; i++ {
+		if r[i] != c {
+			ind++
+		} else {
+			break
+		}
+	}
+	return ind + fromIndex
+}
+func LastRuneIndex(s string, c rune) int {
+	r := []rune(s)
+	ind := 0
+	for i := len(r) - 1; i >= 0; i-- {
+		if r[i] != c {
+			ind++
+		} else {
+			ind++
+			break
+		}
+	}
+	return len(r) - ind
+}
+func wrap(msg string, wrapLength int) string {
+	str := []rune(msg)
+	inputLineLength := len(str)
+	offset := 0
+	sb := strings.Builder{}
+	sb.Grow(len(str))
+	for inputLineLength-offset > wrapLength {
+		if str[offset] == ' ' {
+			offset++
+			continue
+		}
+		spaceToWrapAt := LastRuneIndex(string(str[:wrapLength+offset+1]), ' ')
+		fmt.Println(spaceToWrapAt)
+		if spaceToWrapAt >= offset {
+			sb.Write([]byte(string(str[offset:spaceToWrapAt])))
+			sb.Write([]byte(string('\n')))
+			offset = spaceToWrapAt + 1
+		} else {
+			spaceToWrapAt = RuneIndex(string(str), ' ', wrapLength+offset)
+			if spaceToWrapAt >= 0 {
+				sb.Write([]byte(string(str[offset:spaceToWrapAt])))
+				sb.Write([]byte(string('\n')))
+				offset = spaceToWrapAt + 1
+			} else {
+				sb.Write([]byte(string(str[offset:])))
+				offset = inputLineLength
+			}
+		}
+	}
+	sb.Write([]byte(string(str[offset:])))
+	return sb.String()
+}
+
 func CreateImage(filename string, img image.Image) {
 	pngFile, _ := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0664)
 

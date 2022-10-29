@@ -3,6 +3,7 @@ package ui
 import (
 	// "fmt"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -290,9 +291,69 @@ func (c *UiContext) Slider(id string, i *float32, min, max float32) {
 		clip)
 }
 
-func (c *UiContext) GetTextInfo(x, w float32, msg string) string {
+func RuneIndex(s string, c rune, fromIndex int) int {
+	r := []rune(s)
+	ind := 0
+	for i := fromIndex; i <= len(r)-1; i++ {
+		if r[i] != c {
+			ind++
+		} else {
+			break
+		}
+	}
+	return ind + fromIndex
+}
+func LastRuneIndex(s string, c rune) int {
+	r := []rune(s)
+	ind := 0
+	for i := len(r) - 1; i >= 0; i-- {
+		if r[i] != c {
+			ind++
+		} else {
+			ind++
+			break
+		}
+	}
+	return len(r) - ind
+}
 
-	//splitted := strings.Split(msg, " ")
+// Taken from https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/text/WordUtils.html
+func wrap(msg string, wrapLength int) string {
+	str := []rune(msg)
+	inputLineLength := len(str)
+	offset := 0
+	sb := strings.Builder{}
+	sb.Grow(len(str))
+	for inputLineLength-offset > wrapLength {
+		if str[offset] == ' ' {
+			offset++
+			continue
+		}
+		spaceToWrapAt := LastRuneIndex(string(str[:wrapLength+offset+1]), ' ')
+		if spaceToWrapAt >= offset {
+			sb.Write([]byte(string(str[offset:spaceToWrapAt])))
+			sb.Write([]byte(string('\n')))
+			offset = spaceToWrapAt + 1
+		} else {
+			spaceToWrapAt = RuneIndex(string(str), ' ', wrapLength+offset)
+			if spaceToWrapAt >= 0 {
+				sb.Write([]byte(string(str[offset:spaceToWrapAt])))
+				sb.Write([]byte(string('\n')))
+				offset = spaceToWrapAt + 1
+			} else {
+				sb.Write([]byte(string(str[offset:])))
+				offset = inputLineLength
+			}
+		}
+	}
+	if offset > len(str) {
+	} else {
+		sb.Write([]byte(string(str[offset:])))
+	}
+	return sb.String()
+}
+
+func (c *UiContext) FitTextToWidth(x, w float32, msg string) string {
 	r := []rune(msg)
 	sb := strings.Builder{}
 	sb.Grow(len(r))
@@ -305,22 +366,52 @@ func (c *UiContext) GetTextInfo(x, w float32, msg string) string {
 		} else {
 			dw = 0
 			sb.Write([]byte(string('\n')))
-			sb.Write([]byte(string(l)))
+			// Do not let to create space at the new line
+			if l != ' ' {
+				sb.Write([]byte(string(l)))
+			}
 		}
 	}
 	return sb.String()
 }
 
+func (c *UiContext) findSelectedText(txt *widgets.Text) bool {
+	for _, text := range c.SelectedTexts {
+		if text == txt {
+			return true
+		}
+	}
+	return false
+}
+func (c *UiContext) addSelectedText(txt *widgets.Text) {
+	c.SelectedTexts = append(c.SelectedTexts, txt)
+}
+func (c *UiContext) removeSelectedText(txt *widgets.Text) {
+	index := 0
+	if len(c.SelectedTexts) == 0 {
+		return
+	}
+	for i, text := range c.SelectedTexts {
+		if text == txt {
+			index = i
+		}
+	}
+	c.SelectedTexts = append(c.SelectedTexts[:index], c.SelectedTexts[index+1:]...)
+}
+
 func (c *UiContext) tHelper(id string, x, y, w float32, msg string, key GuiKey, flag widgets.TextFlag) (txt *widgets.Text, hovered bool) {
 	wnd := c.windowStack.Peek()
 	txt = c.getWidget(id, func() widgets.Widget {
-		if flag&widgets.FitContent != 0 {
-			msg = c.GetTextInfo(x, w, msg)
-		}
+		//if flag&widgets.SplitChars != 0 {
+		//	msg = c.FitTextToWidth(x, w, msg)
+		//} else if flag&widgets.SplitWords != 0 {
+		//	numChars := int(math.Floor(float64(w / c.font.XCharAdvance())))
+		//	msg = wrap(msg, numChars)
+		//}
 		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
 		return widgets.NewText(id, msg, x, y, w, h, p, c.CurrentStyle, flag)
 	}).(*widgets.Text)
-	if msg != txt.Message && msg != "" {
+	if msg != txt.Message && msg != "" || txt.Width() != w {
 		if flag&widgets.Editable != 0 {
 			if key == GuiKey_Backspace {
 				txt.Message = txt.Message[:len(txt.Message)-1]
@@ -331,28 +422,38 @@ func (c *UiContext) tHelper(id string, x, y, w float32, msg string, key GuiKey, 
 		} else {
 			txt.Message = msg
 		}
-		if flag&widgets.FitContent != 0 {
-			txt.Message = c.GetTextInfo(x, w, msg)
+		if flag&widgets.SplitChars != 0 {
+			msg = c.FitTextToWidth(x, w, msg)
+		} else if flag&widgets.SplitWords != 0 {
+			numChars := int(math.Floor(float64(w / c.font.XCharAdvance())))
+			msg = wrap(msg, numChars)
 		}
-		w, h, p := c.font.CalculateTextBounds(txt.Message, c.CurrentStyle.FontScale)
+		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
 		txt.Chars = p
+		txt.Message = msg
 		txt.SetWH(w, h)
 	}
 
 	hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox()))
-	if hovered && txt.Flag&widgets.Selectable != 0 {
+	if hovered && txt.Flag&widgets.Selectable != 0 && c.SelectableText == nil {
 		c.SelectableText = txt
 	}
 	if c.SelectableText == txt {
 		c.dragBehavior(wnd.outerRect, &wnd.capturedTextSelection)
-		f, w, msg := txt.FindSelectedString(c.io.dragStarted.X-x, c.io.dragDelta.X)
-		if w != 0 {
-			txt.LastSelectedWidth = w
-			txt.LastSelectedX = f
-			c.SelectedText = msg
-		}
-		wnd.buffer.CreateRect(x+txt.LastSelectedX, y, txt.LastSelectedWidth, txt.Height(), 0,
+
+		_, _, l, _ := c.font.CalculateTextBoundsv2(msg, c.CurrentStyle.FontScale)
+		r := txt.FindSelectedString2(c.io.dragStarted.X-x, c.io.dragStarted.Y-y, c.io.dragDelta.X, c.io.dragDelta.Y, l, wnd.capturedTextSelection)
+		//fmt.Println(r)
+		wnd.buffer.CreateRect(x+r.Min.X, y+r.Min.Y, r.Width(), r.Height(), 0,
 			draw.StraightCorners, 0, softGreen, wnd.DefaultClip())
+		//f, w, msg := txt.FindSelectedString(c.io.dragStarted.X-x, c.io.dragDelta.X)
+		//if w != 0 {
+		//	txt.LastSelectedWidth = w
+		//	txt.LastSelectedX = f
+		//	c.SelectedText = msg
+		//}
+		//wnd.buffer.CreateRect(x+txt.LastSelectedX, y, txt.LastSelectedWidth, txt.Height(), 0,
+		//	draw.StraightCorners, 0, softGreen, wnd.DefaultClip())
 	}
 	return
 }
@@ -398,10 +499,9 @@ func (c *UiContext) InputText(id string, size int) {
 func (c *UiContext) TextFitted(id string, w float32, msg string) {
 	wnd := c.windowStack.Peek()
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
-	txt, hovered := c.textHelper(id, x, y, w, msg, widgets.FitContent)
+	txt, hovered := c.textHelper(id, x, y, w, msg, widgets.SplitWords|widgets.Selectable)
 	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
 	wnd.debugDrawS(txt.BoundingBox())
-	//wnd.buffer.RoundedBorderRectangle(x, y, txt.Width(), txt.Height(), 30, 15, red, wnd.DefaultClip())
 	if hovered {
 
 	} else {

@@ -181,16 +181,16 @@ func main() {
 }
 
 var ish bool = false
-var tW float32 = 100
+var tW float32 = 400
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
 	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
-	//uiCtx.Text("text-ttp-1", "Обычная картинка и это то-же", 14)
+	uiCtx.Text("text-ttp-1", "Обычная картинка \nи это то-же", 14)
 	//uiCtx.TextFitted("text-ttp-1", tW, "Съешь ещё этих мягких французских булочек")
-	uiCtx.Slider("slds", &tW, -200, 600)
-	fmt.Println(tW)
+	//uiCtx.TextFitted("text-ttваы-1", tW, "Съешь ещё этих мягких французских булочек")
+	//uiCtx.Slider("slds", &tW, 100, 1200)
 	//uiCtx.InputText("inputr23", 14)
 	//uiCtx.Bezier()
 	//uiCtx.Line(200)
