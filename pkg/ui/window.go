@@ -45,6 +45,9 @@ type Window struct {
 	capturedTextSelection bool
 
 	delayedWidgets []func()
+
+	VisibleTexts []*widgets.Text
+	textRegions  []utils.Rect
 }
 
 func genWindowId() string {
@@ -70,6 +73,7 @@ func NewWindow(x, y, w, h float32) *Window {
 		buffer:          draw.NewBuffer(UiCtx.Io().DisplaySize),
 		widgSpaces:      make([]*WidgetSpace, 0),
 		delayedWidgets:  []func(){},
+		VisibleTexts:    []*widgets.Text{},
 	}
 
 	wnd.currentWidgetSpace = wnd.mainWidgetSpace
@@ -136,7 +140,7 @@ func (c *UiContext) BeginWindow(id string) {
 		c.dragBehavior(wnd.outerRect, &wnd.capturedWin)
 		// Изменение положения окна
 		if c.ActiveWindow == wnd && wnd.capturedWin && !c.wantResizeV &&
-			!c.wantResizeH && !wnd.capturedInsideWin && c.SelectableText == nil {
+			!c.wantResizeH && !wnd.capturedInsideWin && !wnd.capturedTextSelection {
 			newX += c.io.MouseDelta.X
 			newY += c.io.MouseDelta.Y
 		}
@@ -183,6 +187,13 @@ func (c *UiContext) BeginWindow(id string) {
 		cl := [4]float32{wnd.x, wnd.y, wnd.w, wnd.h}
 		return draw.NewClip(draw.EmptyClip, cl)
 	})
+
+	for _, region := range wnd.textRegions {
+		b := region.Min
+		wnd.buffer.CreateRect(b.X, b.Y, region.Width(), region.Height(), 0, draw.StraightCorners, 0,
+			softGreen, wnd.DefaultClip())
+	}
+
 	c.windowStack.Push(wnd)
 }
 
@@ -384,7 +395,9 @@ func (c *UiContext) findSelectedText(txt *widgets.Text) bool {
 	return false
 }
 func (c *UiContext) addSelectedText(txt *widgets.Text) {
+	//if c.SelectedTextStart != nil {
 	c.SelectedTexts = append(c.SelectedTexts, txt)
+	//}
 }
 func (c *UiContext) removeSelectedText(txt *widgets.Text) {
 	index := 0
@@ -408,8 +421,9 @@ func (c *UiContext) tHelper(id string, x, y, w float32, msg string, key GuiKey, 
 		//	numChars := int(math.Floor(float64(w / c.font.XCharAdvance())))
 		//	msg = wrap(msg, numChars)
 		//}
+		_, _, l, _ := c.font.CalculateTextBoundsv2(msg, c.CurrentStyle.FontScale)
 		w, h, p := c.font.CalculateTextBounds(msg, c.CurrentStyle.FontScale)
-		return widgets.NewText(id, msg, x, y, w, h, p, c.CurrentStyle, flag)
+		return widgets.NewText(id, msg, x, y, w, h, p, l, c.CurrentStyle, flag)
 	}).(*widgets.Text)
 	if msg != txt.Message && msg != "" || txt.Width() != w {
 		if flag&widgets.Editable != 0 {
@@ -435,26 +449,56 @@ func (c *UiContext) tHelper(id string, x, y, w float32, msg string, key GuiKey, 
 	}
 
 	hovered = c.hoverBehavior(wnd, utils.NewRectS(txt.BoundingBox()))
-	if hovered && txt.Flag&widgets.Selectable != 0 && c.SelectableText == nil {
-		c.SelectableText = txt
-	}
-	if c.SelectableText == txt {
-		c.dragBehavior(wnd.outerRect, &wnd.capturedTextSelection)
+	//c.dragBehavior(wnd.outerRect, &wnd.capturedTextSelection)
+	//if wnd.capturedTextSelection { //&& c.SelectedTextStart == txt
+	//	//fmt.Println("here")
+	//	_, _, l, _ := c.font.CalculateTextBoundsv2(msg, c.CurrentStyle.FontScale)
+	//	txt.FindSelectedString2(c.io.dragStarted.X-x, c.io.dragStarted.Y-y, c.io.dragDelta.X, c.io.dragDelta.Y, l, wnd.capturedTextSelection)
+	//	c.SelectedTextEnd = txt
+	//	//fmt.Println(c.SelectedTextStart.EndInd)
+	//} else {
+	//	if hovered && txt.Flag&widgets.Selectable != 0 && c.io.MouseClicked[0] {
+	//		if c.SelectedTextStart == nil {
+	//			//fmt.Println("clicked")
+	//			c.addSelectedText(txt)
+	//
+	//			_, _, l, _ := c.font.CalculateTextBoundsv2(msg, c.CurrentStyle.FontScale)
+	//			txt.FindSelectedString2(c.io.dragStarted.X-x, c.io.dragStarted.Y-y, c.io.dragDelta.X, c.io.dragDelta.Y, l, wnd.capturedTextSelection)
+	//			c.SelectedTextStart = txt
+	//			fmt.Println(c.SelectedTextStart.StartInd)
+	//		} else if c.SelectedTextStart == txt {
+	//			//c.dragBehavior(wnd.outerRect, &wnd.capturedTextSelection)
+	//
+	//			_, _, l, _ := c.font.CalculateTextBoundsv2(msg, c.CurrentStyle.FontScale)
+	//			txt.FindSelectedString2(c.io.dragStarted.X-x, c.io.dragStarted.Y-y, c.io.dragDelta.X, c.io.dragDelta.Y, l, wnd.capturedTextSelection)
+	//			c.SelectedTextStart = txt
+	//			fmt.Println(c.SelectedTextStart.StartInd)
+	//		}
+	//
+	//	}
+	//}
 
-		_, _, l, _ := c.font.CalculateTextBoundsv2(msg, c.CurrentStyle.FontScale)
-		r := txt.FindSelectedString2(c.io.dragStarted.X-x, c.io.dragStarted.Y-y, c.io.dragDelta.X, c.io.dragDelta.Y, l, wnd.capturedTextSelection)
-		//fmt.Println(r)
-		wnd.buffer.CreateRect(x+r.Min.X, y+r.Min.Y, r.Width(), r.Height(), 0,
-			draw.StraightCorners, 0, softGreen, wnd.DefaultClip())
-		//f, w, msg := txt.FindSelectedString(c.io.dragStarted.X-x, c.io.dragDelta.X)
-		//if w != 0 {
-		//	txt.LastSelectedWidth = w
-		//	txt.LastSelectedX = f
-		//	c.SelectedText = msg
-		//}
-		//wnd.buffer.CreateRect(x+txt.LastSelectedX, y, txt.LastSelectedWidth, txt.Height(), 0,
-		//	draw.StraightCorners, 0, softGreen, wnd.DefaultClip())
-	}
+	//if hovered && txt.Flag&widgets.Selectable != 0 && !c.findSelectedText(txt) {
+	//	//c.SelectableText = txt
+	//	c.addSelectedText(txt)
+	//}
+	//if c.findSelectedText(txt) {
+	//	c.dragBehavior(wnd.outerRect, &wnd.capturedTextSelection)
+	//
+	//	_, _, l, _ := c.font.CalculateTextBoundsv2(msg, c.CurrentStyle.FontScale)
+	//	txt.FindSelectedString2(c.io.dragStarted.X-x, c.io.dragStarted.Y-y, c.io.dragDelta.X, c.io.dragDelta.Y, l, wnd.capturedTextSelection)
+	//	//fmt.Println(r)
+	//	//wnd.buffer.CreateRect(x+r.Min.X, y+r.Min.Y, r.Width(), r.Height(), 0,
+	//	//	draw.StraightCorners, 0, softGreen, wnd.DefaultClip())
+	//	//f, w, msg := txt.FindSelectedString(c.io.dragStarted.X-x, c.io.dragDelta.X)
+	//	//if w != 0 {
+	//	//	txt.LastSelectedWidth = w
+	//	//	txt.LastSelectedX = f
+	//	//	c.SelectedText = msg
+	//	//}
+	//	//wnd.buffer.CreateRect(x+txt.LastSelectedX, y, txt.LastSelectedWidth, txt.Height(), 0,
+	//	//	draw.StraightCorners, 0, softGreen, wnd.DefaultClip())
+	//}
 	return
 }
 func (c *UiContext) inputTextHelper(id string, x, y float32, msg string, key GuiKey, flag widgets.TextFlag) (txt *widgets.Text, hovered bool) {
@@ -514,10 +558,13 @@ func (c *UiContext) TextFitted(id string, w float32, msg string) {
 	wnd.buffer.CreateText(x, y, txt, *c.font, clip)
 }
 
-func (c *UiContext) Text(id string, msg string, size int) {
+func (c *UiContext) Text(id string, msg string, flag widgets.TextFlag) {
 	wnd := c.windowStack.Peek()
 	x, y, isRow := wnd.currentWidgetSpace.getCursorPosition()
-	txt, hovered := c.textHelper(id, x, y, 0, msg, widgets.Selectable)
+	txt, hovered := c.textHelper(id, x, y, 0, msg, flag)
+	if y+txt.Height() > wnd.y && y <= wnd.y+wnd.h {
+		wnd.VisibleTexts = append(wnd.VisibleTexts, txt)
+	}
 	y += wnd.currentWidgetSpace.resolveRowAlign(txt.Height())
 	//wnd.buffer.RoundedBorderRectangle(x, y, txt.Width(), txt.Height(), 30, 15, red, wnd.DefaultClip())
 	if hovered {
@@ -855,8 +902,8 @@ func (c *UiContext) Column(id string, widgFunc func()) {
 func (wnd *Window) debugDrawS(x [4]float32) {
 	wnd.buffer.CreateBorderBox(x[0], x[1], x[2], x[3], 2, red)
 }
-func (wnd *Window) debugDraw(x, y, w, h float32) {
-	wnd.buffer.CreateBorderBox(x, y, w, h, 2, red)
+func (wnd *Window) debugDraw(x, y, w, h float32, clr [4]float32) {
+	wnd.buffer.CreateBorderBox(x, y, w, h, 2, clr)
 }
 
 func (c *UiContext) getWidgetSpace(id string, width, height float32, wnd *Window, flags WidgetSpaceFlag) *WidgetSpace {
@@ -1063,14 +1110,242 @@ func (c *UiContext) Row(id string, widgFunc func()) {
 	hl.W = 0
 }
 
+// solveTextSelection is responsible for finding selected texts on window
+// TODO: improve this algorithm
+func (c *UiContext) solveTextSelection(wnd *Window) {
+	startFounded := false
+	// Iterate through all visible texts on the screen
+	for _, t := range wnd.VisibleTexts {
+		if t.Flag&widgets.Selectable == 0 {
+			continue
+		}
+		if c.hoverBehavior(wnd, utils.NewRectS(t.BoundingBox())) {
+			c.dragBehavior(wnd.outerRect, &wnd.capturedTextSelection)
+			// If we don't have a selected text yet, place a marker to it
+			if c.SelectedTextStart == nil && c.io.MouseClicked[0] {
+				b := t.BoundingBox()
+				x := c.io.dragStarted.X + c.io.dragDelta.X - b[0]
+				y := c.io.dragStarted.Y + c.io.dragDelta.Y - b[1]
+
+				for i := 0; i < len(t.Lines); i++ {
+					for ind, pos := range t.Lines[i].Text {
+						if x >= pos.Pos.X-5 && x <= pos.Pos.X+float32(pos.Char.Width) && !startFounded &&
+							y <= t.Lines[i].StartY+t.Lines[i].Height {
+							t.StartLine = i
+							t.StartInd = ind
+							startFounded = true
+							c.SelectedTextStart = t
+						}
+					}
+				}
+				// If text start was founded, drag delta helps to find boundaries of selected texts
+			} else if c.SelectedTextStart != nil && wnd.capturedTextSelection {
+				b := t.BoundingBox()
+				x := c.io.dragStarted.X + c.io.dragDelta.X - b[0]
+				y := c.io.dragStarted.Y + c.io.dragDelta.Y - b[1]
+
+				endfounded := false // Should use this because we need to find only the first hovered line
+				for i := 0; i < len(t.Lines); i++ {
+					for ind, pos := range t.Lines[i].Text {
+						if x >= pos.Pos.X-5 && x <= pos.Pos.X+float32(pos.Char.Width) && !endfounded &&
+							y <= t.Lines[i].StartY+t.Lines[i].Height {
+							t.EndLine = i
+							t.EndInd = ind
+							c.SelectedTextEnd = t
+							endfounded = true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if c.SelectedTextStart != nil && c.SelectedTextEnd != nil {
+		tmp := []*widgets.Text{} // It's a temporary slice which contains selected text widgets
+		{
+			if c.SelectedTextStart == c.SelectedTextEnd {
+				//c.SelectedTextStart.Selected = true
+				tmp = append(tmp, c.SelectedTextStart)
+			} else { // If selected widgets have more than 1 widget, find the first, and add to tmp in order of creation until the last
+				for _, text := range wnd.VisibleTexts {
+					if text.Flag&widgets.Selectable != 0 {
+						tmp = append(tmp, text)
+					}
+				}
+			}
+		}
+		rects := []utils.Rect{} // Boundaries for each selected line
+		if len(tmp) == 1 {
+			start := c.SelectedTextStart
+			if start.StartLine == start.EndLine {
+				r, msg := c.findOneLineTexRegion(start, start.StartLine, start.StartInd, start.EndInd)
+				rects = append(rects, r...)
+				c.SelectedText = msg
+			} else {
+				selectedText := ""
+				for i := start.StartLine; i <= start.EndLine; i++ {
+					if i == start.StartLine {
+						r, msg := c.findFirstTexRegion(start, start.StartLine, start.StartInd)
+						rects = append(rects, r...)
+						selectedText += msg
+					} else if i == start.EndLine {
+						r, msg := c.findLastTexRegion(start, start.EndLine, start.EndInd)
+						rects = append(rects, r...)
+						selectedText += msg
+					} else {
+						r, msg := c.findAllTexRegion(start, i, i)
+						rects = append(rects, r...)
+						selectedText += msg
+					}
+				}
+				c.SelectedText = selectedText
+			}
+		} else if len(tmp) == 2 {
+			selectedText := ""
+			start := tmp[0]
+			r, msg := c.findFirstTexRegion(start, start.StartLine, start.StartInd)
+			rects = append(rects, r...)
+			selectedText += msg
+			if len(start.Lines) != 1 {
+				r, msg = c.findAllTexRegion(start, start.StartLine+1, len(start.Lines)-1)
+				rects = append(rects, r...)
+				selectedText += msg
+			}
+			end := tmp[1]
+			r, msg = c.findAllTexRegion(end, 0, end.EndLine-1)
+			rects = append(rects, r...)
+			selectedText += msg
+			r, msg = c.findLastTexRegion(end, end.EndLine, end.EndInd)
+			rects = append(rects, r...)
+			selectedText += msg
+			c.SelectedText = selectedText
+		} else {
+			selectedText := ""
+			first := tmp[0]
+			r, msg := c.findFirstTexRegion(first, first.StartLine, first.StartInd)
+			rects = append(rects, r...)
+			selectedText += msg
+			if len(first.Lines) != 1 {
+				r, msg = c.findAllTexRegion(first, first.StartLine+1, len(first.Lines)-1)
+				rects = append(rects, r...)
+				selectedText += msg
+			}
+			for i := 1; i < len(tmp)-1; i++ {
+				txt := tmp[i]
+				r, msg = c.findAllTexRegion(txt, 0, len(txt.Lines)-1)
+				rects = append(rects, r...)
+				selectedText += msg
+			}
+			last := tmp[len(tmp)-1]
+			r, msg = c.findAllTexRegion(last, 0, last.EndLine-1)
+			rects = append(rects, r...)
+			selectedText += msg
+			r, msg = c.findLastTexRegion(last, last.EndLine, last.EndInd)
+			rects = append(rects, r...)
+			selectedText += msg
+			c.SelectedText = selectedText
+		}
+		wnd.textRegions = rects
+	}
+
+}
+
+type selectionFlag uint
+
+const (
+	firstLine selectionFlag = iota
+	lastLine
+	innerLines // lines between the first and the last
+)
+
+// findOneLineTexRegion is used when you have 1 selected line and it's boundaries are placed between 0 and length of the line.
+// For example start at 4 and end at 9 (hell[o wo]rld)
+func (c *UiContext) findOneLineTexRegion(txt *widgets.Text, line, startIdx, endIndex int) ([]utils.Rect, string) {
+	return c.findTextRegion(txt, line, 0, startIdx, endIndex, firstLine)
+}
+func (c *UiContext) findFirstTexRegion(txt *widgets.Text, line, startIdx int) ([]utils.Rect, string) {
+	return c.findTextRegion(txt, line, 0, startIdx, len(txt.Lines[line].Text), firstLine)
+}
+func (c *UiContext) findLastTexRegion(txt *widgets.Text, line, endIdx int) ([]utils.Rect, string) {
+	return c.findTextRegion(txt, line, 0, 0, endIdx, lastLine)
+}
+func (c *UiContext) findInnerTexRegion(txt *widgets.Text) ([]utils.Rect, string) {
+	return c.findTextRegion(txt, txt.StartLine+1, txt.EndLine-1, 0, 0, innerLines)
+}
+func (c *UiContext) findAllTexRegion(txt *widgets.Text, startLine, endLine int) ([]utils.Rect, string) {
+	return c.findTextRegion(txt, startLine, endLine, 0, 0, innerLines)
+}
+
+func (c *UiContext) findTextRegion(txt *widgets.Text, startLine, endLine, startIdx, endIdx int, flag selectionFlag) ([]utils.Rect, string) {
+	var x, y, w, h float32
+	var msg string
+	results := []utils.Rect{}
+	b := txt.BoundingBox()
+	w = 0
+	y = txt.Lines[startLine].StartY + b[1]
+	h = txt.Lines[startLine].Height
+	switch flag {
+	case firstLine:
+		x = txt.Lines[startLine].Text[startIdx].Pos.X + b[0]
+		for i := startIdx; i < endIdx; i++ {
+			w += txt.Lines[startLine].Text[i].Width
+			msg += string(txt.Lines[startLine].Text[i].Char.Rune)
+		}
+		r := utils.NewRect(x, y, w, h)
+		results = append(results, r)
+	case lastLine:
+		x = txt.Lines[startLine].StartX + b[0]
+		for i := startIdx; i <= endIdx; i++ {
+			w += txt.Lines[startLine].Text[i].Width
+			msg += string(txt.Lines[startLine].Text[i].Char.Rune)
+		}
+		r := utils.NewRect(x, y, w, h)
+		results = append(results, r)
+	case innerLines:
+		for i := startLine; i <= endLine; i++ {
+			x = txt.Lines[i].StartX + b[0]
+			y = txt.Lines[i].StartY + b[1]
+			w = txt.Lines[i].Width
+			h = txt.Lines[i].Height
+			msg += txt.Lines[i].Msg
+			r := utils.NewRect(x, y, w, h)
+			results = append(results, r)
+		}
+	}
+	return results, msg
+}
+
 func (c *UiContext) EndWindow() {
 
 	wnd := c.windowStack.Peek()
+
+	c.solveTextSelection(wnd)
+	count := 0
+	if len(wnd.VisibleTexts) != 0 {
+		for _, text := range wnd.VisibleTexts {
+			if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(text.BoundingBox())) {
+				count++
+			}
+		}
+		if count == len(wnd.VisibleTexts) {
+			c.SelectedTextStart = nil
+			c.SelectedTextEnd = nil
+			c.SelectedText = ""
+			wnd.textRegions = []utils.Rect{}
+		}
+	}
 
 	for _, f := range wnd.delayedWidgets {
 		f()
 	}
 	wnd.delayedWidgets = []func(){}
+
+	//if c.io.IsKeyPressed(GuiKey_Space) {
+	//	fmt.Println(len(wnd.VisibleTexts))
+	//}
+
+	wnd.VisibleTexts = []*widgets.Text{}
+
 	wnd = c.windowStack.Pop()
 	wnd.mainWidgetSpace.checkVerScroll()
 	var clip = draw.NewClip(draw.EmptyClip, wnd.mainWidgetSpace.ClipRect)

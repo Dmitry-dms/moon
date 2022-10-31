@@ -60,9 +60,9 @@ type CombinedCharInfo struct {
 }
 
 type TextLine struct {
-	Text                   []CombinedCharInfo
-	StartX, Height, StartY float32
-	Msg                    string
+	Text                          []CombinedCharInfo
+	StartX, Height, StartY, Width float32
+	Msg                           string
 }
 
 func (f *Font) CalculateTextBoundsv2(text string, scale float32) (width, height float32, lines []TextLine, chars []CombinedCharInfo) {
@@ -83,6 +83,7 @@ func (f *Font) CalculateTextBoundsv2(text string, scale float32) (width, height 
 	currentLine.StartX = dx
 	currentLine.StartY = 0
 	currentLine.Height = baseline
+	currentLine.Width = 0
 	for i, r := range tmp {
 		info := f.GetCharacter(r)
 		if info.Width == 0 {
@@ -100,12 +101,13 @@ func (f *Font) CalculateTextBoundsv2(text string, scale float32) (width, height 
 			linesCounter++
 			lines = append(lines, currentLine)
 			dx = 0
-			currentLine.StartY += baseline
-			height += float32(fontSize)
+			currentLine.StartY = baseline
 			baseline += float32(fontSize)
+			height += float32(fontSize)
 			currentLine.Text = []CombinedCharInfo{}
 			currentLine.StartX = 0
-			//currentLine.Height = baseline
+			currentLine.Width = 0
+			currentLine.Msg = ""
 			prevR = rune(-1)
 			continue
 		}
@@ -141,6 +143,7 @@ func (f *Font) CalculateTextBoundsv2(text string, scale float32) (width, height 
 
 		prevR = r
 		width = dx
+		currentLine.Width = width
 		if linesCounter > 1 {
 			if width > maxWidth {
 				maxWidth = width

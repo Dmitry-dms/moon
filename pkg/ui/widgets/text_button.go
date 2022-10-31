@@ -30,7 +30,7 @@ func NewTextButton(id string, x, y, w, h float32,
 		style: style,
 		pad:   pad,
 	}
-	txt := NewText("", text, x, y, w, h, tPos, style, Default)
+	txt := NewText("", text, x, y, w, h, tPos, nil, style, Default)
 	//var btnW, btnH float32
 	//switch pad {
 	//case LeftPadding | RightPadding:

@@ -42,7 +42,9 @@ type UiContext struct {
 	//SelectableText *widgets.Text
 	SelectedText string
 
-	SelectedTexts []*widgets.Text
+	SelectedTexts     []*widgets.Text
+	SelectedTextStart *widgets.Text
+	SelectedTextEnd   *widgets.Text
 
 	PriorWindow       *Window
 	HoveredWindow     *Window
@@ -71,6 +73,15 @@ type UiContext struct {
 	//fonts
 	font *fonts.Font
 }
+
+const (
+	Selectable      = widgets.Selectable
+	SplitWords      = widgets.SplitWords
+	SplitChars      = widgets.SplitChars
+	FitContent      = widgets.FitContent
+	Editable        = widgets.Editable
+	DefaultTextFlag = widgets.Default
+)
 
 func NewContext(frontRenderer UiRenderer) *UiContext {
 	c := UiContext{
@@ -148,14 +159,6 @@ func (c *UiContext) NewFrame(displaySize [2]float32) {
 
 	c.Io().SetDisplaySize(displaySize[0], displaySize[1])
 
-	if c.SelectableText != nil {
-		if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(c.SelectableText.BoundingBox())) {
-			c.SelectableText.LastSelectedWidth = 0
-			c.SelectableText.LastSelectedX = 0
-			c.SelectableText = nil
-			c.SelectedText = ""
-		}
-	}
 }
 func (c *UiContext) pushWindowFront(w *Window) {
 	for i := len(c.sortedWindows) - 1; i >= 0; i-- {

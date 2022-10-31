@@ -158,6 +158,13 @@ func main() {
 			//	fmt.Println("nil")
 			//}
 			fmt.Println(uiCtx.SelectedText)
+			//fmt.Println(string(uiCtx.SelectedTextStart.Chars[uiCtx.SelectedTextStart.StartInd].Char.Rune),
+			//	string(uiCtx.SelectedTextEnd.Chars[uiCtx.SelectedTextStart.EndInd].Char.Rune))
+			//fmt.Println(uiCtx.SelectedTextStart.WidgetId(), uiCtx.SelectedTextEnd.WidgetId())
+			//fmt.Println()
+			//for _, text := range uiCtx.SelectedTexts {
+			//	fmt.Print(text.WidgetId() + " ")
+			//}
 		}
 
 		//secondWindow()
@@ -187,7 +194,11 @@ func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
 	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
-	uiCtx.Text("text-ttp-1", "Обычная картинка \nи это то-же", 14)
+	uiCtx.Text("text-ttp-2", "Обычная картинка \nи это то-же 1", ui.Selectable)
+	uiCtx.Text("text-ttp-3", "Обычная картинка и \nэто то-же 2", ui.Editable)
+	uiCtx.Image("#im4kjdg464tht", 100, 100, tex)
+	uiCtx.Text("text-ttp-4", "Обычная картинка и это то-же 3", ui.Selectable)
+	uiCtx.Text("tlorem", "Lorem Ipsum - это текст-\"рыба\", часто \nиспользуемый в печати и вэб-дизайне. Lorem Ipsum является \nстандартной \"рыбой\" для текстов на \nлатинице с начала XVI века.", ui.Selectable)
 	//uiCtx.TextFitted("text-ttp-1", tW, "Съешь ещё этих мягких французских булочек")
 	//uiCtx.TextFitted("text-ttваы-1", tW, "Съешь ещё этих мягких французских булочек")
 	//uiCtx.Slider("slds", &tW, 100, 1200)
