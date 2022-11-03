@@ -46,6 +46,8 @@ type UiContext struct {
 	SelectedTextStart *widgets.Text
 	SelectedTextEnd   *widgets.Text
 
+	FocusedTextInput *widgets.Text
+
 	PriorWindow       *Window
 	HoveredWindow     *Window
 	LastHoveredWindow *Window
@@ -327,6 +329,12 @@ func (c *UiContext) EndFrame(size [2]float32) {
 	if c.FocusedWidgetSpace != nil {
 		if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(c.FocusedWidgetSpace.ClipRect)) {
 			c.FocusedWidgetSpace = nil
+		}
+	}
+
+	if c.FocusedTextInput != nil {
+		if utils.PointOutsideRect(c.io.MouseClickedPos[0], utils.NewRectS(c.FocusedTextInput.BoundingBox())) {
+			c.FocusedTextInput = nil
 		}
 	}
 

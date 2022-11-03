@@ -157,15 +157,16 @@ func main() {
 			//} else {
 			//	fmt.Println("nil")
 			//}
-			fmt.Println(uiCtx.SelectedText)
+			//fmt.Println(uiCtx.SelectedText)
+			fmt.Println(uiCtx.FocusedTextInput)
 			//fmt.Println(string(uiCtx.SelectedTextStart.Chars[uiCtx.SelectedTextStart.StartInd].Char.Rune),
 			//	string(uiCtx.SelectedTextEnd.Chars[uiCtx.SelectedTextStart.EndInd].Char.Rune))
 			//fmt.Println(uiCtx.SelectedTextStart.WidgetId(), uiCtx.SelectedTextEnd.WidgetId())
 			//fmt.Println()
 			//for _, text := range uiCtx.SelectedTexts {
 			//	fmt.Print(text.WidgetId() + " ")
-			//}
 		}
+		//}
 
 		//secondWindow()
 
@@ -189,20 +190,25 @@ func main() {
 
 var ish bool = false
 var tW float32 = 400
+var message = "hello \nworld"
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
 	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
 	//uiCtx.Selection("sel-1", &selection, sle, arrowDown)
-	uiCtx.Text("text-ttp-2", "Обычная картинка \nи это то-же 1", ui.Selectable)
-	uiCtx.Text("text-ttp-3", "Обычная картинка и \nэто то-же 2", ui.Editable)
+	//uiCtx.Text("text-ttp-2", "Обычная картинка \nи это то-же 1", ui.Selectable)
+	//uiCtx.Text("text-ttp-3", "Обычная картинка и \nэто то-же 2", ui.Editable)
 	uiCtx.Image("#im4kjdg464tht", 100, 100, tex)
-	uiCtx.Text("text-ttp-4", "Обычная картинка и это то-же 3", ui.Selectable)
-	uiCtx.Text("tlorem", "Lorem Ipsum - это текст-\"рыба\", часто \nиспользуемый в печати и вэб-дизайне. Lorem Ipsum является \nстандартной \"рыбой\" для текстов на \nлатинице с начала XVI века.", ui.Selectable)
-	//uiCtx.TextFitted("text-ttp-1", tW, "Съешь ещё этих мягких французских булочек")
+	uiCtx.Text("text-ttp-4", "Обычная", ui.Selectable)
+	//uiCtx.Text("tlorem", "Lorem Ipsum - это текст-\"рыба\", часто \nиспользуемый в печати и вэб-дизайне. Lorem Ipsum является \nстандартной \"рыбой\" для текстов на \nлатинице с начала XVI века.", ui.Selectable)
+	//uiCtx.TextFitted("text-ttp-1", tW, "Lorem Ipsum - это текст-\"рыба\", часто используемый в печати и вэб-дизайне. Lorem Ipsum является стандартной \"рыбой\" для текстов на латинице с начала XVI века.")
 	//uiCtx.TextFitted("text-ttваы-1", tW, "Съешь ещё этих мягких французских булочек")
-	//uiCtx.Slider("slds", &tW, 100, 1200)
-	//uiCtx.InputText("inputr23", 14)
+	uiCtx.Row("slider-row", func() {
+		uiCtx.Slider("slds", &tW, 100, 1200)
+		uiCtx.Text("sl-tex", fmt.Sprint(tW), ui.DefaultTextFlag)
+	})
+	uiCtx.InputText("inputr23", &message)
+	uiCtx.Text("text-ttp-43", "Обычная картинка и это то-же 123", ui.Selectable)
 	//uiCtx.Bezier()
 	//uiCtx.Line(200)
 	//uiCtx.Line(400)
@@ -233,11 +239,11 @@ func firstWindow() {
 	//////}
 	////
 	//uiCtx.TreeNode("tree1", "Configuration", func() {
-	//	uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
-	//	uiCtx.Text("#t3j", "hello world!", 14)
+	//	uiCtx.Text("text-ttp-1", "Обычная картинка, которая  ничего не делает", ui.DefaultTextFlag)
+	//	uiCtx.Text("#t3j", "hello world!", ui.DefaultTextFlag)
 	//	uiCtx.TreeNode("tree1yuy2", "Настройки", func() {
-	//		uiCtx.Text("texiyt-ttp-1", "Обычная картинка, которая  ничего не делает", 14)
-	//		uiCtx.Text("#tiy3j", "hello world!", 14)
+	//		uiCtx.Text("texiyt-ttp-1", "Обычная картинка, которая  ничего не делает", ui.DefaultTextFlag)
+	//		uiCtx.Text("#tiy3j", "hello world!", ui.DefaultTextFlag)
 	//	})
 	//})
 	//////
@@ -266,9 +272,9 @@ func firstWindow() {
 	//	})
 	//}
 	//uiCtx.SubWidgetSpace("widhspdf-1", 100, 200, ui.NotResizable|ui.Scrollable|ui.ShowScrollbar, func() {
-	//	uiCtx.Image("#im4kjdg464tht", tex2)
-	//	uiCtx.Image("#im76erewr", tex)
-	//	uiCtx.Text("#t3d79f", "world!", 24)
+	//	uiCtx.Image("#im4kjdg464tht", 100, 100, tex2)
+	//	uiCtx.Image("#im76erewr", 100, 100, tex)
+	//	uiCtx.Text("#t3d79f", "world!", ui.DefaultTextFlag)
 	//})
 	//uiCtx.VSpace("#hhvs1")
 	//uiCtx.Image("#imgj4", tex2)

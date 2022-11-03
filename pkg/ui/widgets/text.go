@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"fmt"
 	"github.com/Dmitry-dms/moon/pkg/fonts"
 	"github.com/Dmitry-dms/moon/pkg/ui/styles"
 )
@@ -19,6 +20,10 @@ type Text struct {
 
 	StartInd, StartLine int
 	EndInd, EndLine     int
+
+	//InputText
+	LastWidth             float32
+	CursorInd, CursorLine int
 }
 
 type TextFlag uint
@@ -54,6 +59,49 @@ func NewText(id, text string, x, y, w, h float32, chars []fonts.CombinedCharInfo
 	return &t
 }
 
+func (t *Text) CursorHelper(dx int) {
+	if dx > 0 {
+		if t.CursorInd+dx <= len(t.Lines[t.CursorLine].Text) {
+			t.CursorInd += dx
+		} else {
+			if t.CursorLine < len(t.Lines)-1 {
+				t.CursorLine++
+				t.CursorInd = 0
+			}
+		}
+	} else {
+		if t.CursorLine != 0 {
+			if t.CursorInd == 0 {
+				t.CursorInd = len(t.Lines[t.CursorLine-1].Text)
+				t.CursorLine--
+			} else {
+				t.CursorInd--
+			}
+		} else {
+			if t.CursorInd != 0 {
+				t.CursorInd--
+			}
+		}
+	}
+	fmt.Println(t.CursorLine, t.CursorInd)
+}
+
+func (t *Text) CalculateCursorPos() (x, y, w, h float32) {
+	line := t.Lines[t.CursorLine]
+	x = line.StartX
+	y = line.StartY
+	if t.CursorInd >= len(line.Text) {
+		x += line.Width
+	} else {
+		char := line.Text[t.CursorInd]
+		x += char.Pos.X - float32(char.Char.LeftBearing)
+	}
+
+	h = line.Height
+	w = 5
+	return
+}
+
 func (t *Text) UpdatePosition(pos [4]float32) {
 	t.base.boundingBox = pos
 }
@@ -67,25 +115,25 @@ func (t *Text) SetBackGroundColor(clr [4]float32) {
 	t.base.backgroundColor = clr
 }
 
-func (i *Text) BoundingBox() [4]float32 {
-	return i.base.boundingBox
+func (t *Text) BoundingBox() [4]float32 {
+	return t.base.boundingBox
 }
-func (i *Text) BackgroundColor() [4]float32 {
-	return i.base.backgroundColor
+func (t *Text) BackgroundColor() [4]float32 {
+	return t.base.backgroundColor
 }
-func (i *Text) Color() [4]float32 {
-	return i.CurrentColor
+func (t *Text) Color() [4]float32 {
+	return t.CurrentColor
 }
-func (i *Text) WidgetId() string {
-	return i.base.id
+func (t *Text) WidgetId() string {
+	return t.base.id
 }
 
-func (i *Text) Height() float32 {
-	return i.base.height()
+func (t *Text) Height() float32 {
+	return t.base.height()
 }
-func (i *Text) Visible() bool {
+func (t *Text) Visible() bool {
 	return true
 }
-func (i *Text) Width() float32 {
-	return i.base.width()
+func (t *Text) Width() float32 {
+	return t.base.width()
 }

@@ -16,6 +16,7 @@ const (
 	Scrollable
 	IgnoreClipping
 	FitWidth
+	FillBackground
 
 	Default = Resizable | ShowScrollbar | Scrollable
 )

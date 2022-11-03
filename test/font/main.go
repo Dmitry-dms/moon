@@ -11,14 +11,14 @@ import (
 
 func main() {
 	//sheet := sprite_packer.NewSpriteSheet(128, "test")
-	//f, d := fonts.NewFont("C:/Windows/Fonts/arial.ttf", 18)
-	//CreateImage("fonts-standalone.png", d)
+	_, d := fonts.NewFont("C:/Windows/Fonts/arial.ttf", 400, 127, 33, 126)
+	CreateImage("fonts-standalone.png", d)
 	//ConvertFontToAtlas(f, sheet, d)
 	//CreateImage("fonts-in-atlas.png", sheet.Image())
-	_, err := sprite_packer.GetSpriteSheetFromFile("atlas.json")
-	if err != nil {
-		panic(err)
-	}
+	//_, err := sprite_packer.GetSpriteSheetFromFile("atlas.json")
+	//if err != nil {
+	//	panic(err)
+	//}
 }
 
 func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImage *image.RGBA) {
