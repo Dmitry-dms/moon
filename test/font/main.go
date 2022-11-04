@@ -10,11 +10,13 @@ import (
 )
 
 func main() {
-	//sheet := sprite_packer.NewSpriteSheet(128, "test")
-	_, d := fonts.NewFont("C:/Windows/Fonts/arial.ttf", 400, 127, 33, 126)
-	CreateImage("fonts-standalone.png", d)
-	//ConvertFontToAtlas(f, sheet, d)
-	//CreateImage("fonts-in-atlas.png", sheet.Image())
+	sheet := sprite_packer.NewSpriteSheet(128, "test")
+	f, d := fonts.NewFont("C:/Windows/Fonts/arial.ttf", 28, 127, 33, 126)
+	f2, d2 := fonts.NewFont("C:/Windows/Fonts/times.ttf", 36, 127, 33, 126)
+	//CreateImage("fonts-standalone.png", d)
+	ConvertFontToAtlas(f2, sheet, d2)
+	ConvertFontToAtlas(f, sheet, d)
+	CreateImage("fonts-in-atlas.png", sheet.Image())
 	//_, err := sprite_packer.GetSpriteSheetFromFile("atlas.json")
 	//if err != nil {
 	//	panic(err)
@@ -27,9 +29,10 @@ func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImag
 		return f.CharSlice[i].Height > f.CharSlice[j].Height
 	})
 
-	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
-		spriteInfo := make([]*sprite_packer.SpriteInfo, len(f.CharSlice))
-		for i, info := range f.CharSlice {
+	sheet.BeginGroup(f.Filepath, func() map[string]*sprite_packer.SpriteInfo {
+		spriteInfo := make(map[string]*sprite_packer.SpriteInfo, len(f.CharSlice))
+		//gr := sprite_packer.NewGroup(f.Filepath)
+		for _, info := range f.CharSlice {
 			if info.Rune == ' ' || info.Rune == '\u00a0' {
 				continue
 			}
@@ -38,14 +41,14 @@ func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImag
 			if len(pixels) == 0 {
 				continue
 			}
-			spriteInfo[i] = sheet.AddToSheet(string(info.Rune), pixels)
+			spriteInfo[string(info.Rune)] = sheet.AddToSheet(string(info.Rune), pixels)
 		}
 		return spriteInfo
 	})
 
 	//rr, _ := sheet.GetGroup(f.Filepath)
-
-	//for _, info := range rr {
+	//
+	//for _, info := range rr.Contents {
 	//	if info != nil {
 	//		ll := []rune(info.Id)
 	//		char := f.GetCharacter(ll[0])

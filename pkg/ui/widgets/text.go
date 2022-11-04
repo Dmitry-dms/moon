@@ -21,7 +21,7 @@ type Text struct {
 	StartInd, StartLine int
 	EndInd, EndLine     int
 
-	//InputText
+	//MultiLineTextInput
 	LastWidth             float32
 	CursorInd, CursorLine int
 }
@@ -36,8 +36,8 @@ const (
 	Editable
 	Default
 
-	//FitWords = FitContent | SplitWords
-	//FitChars = FitContent | SplitChars
+	// MultiLineTextInput flags
+	MultiLine
 )
 
 func NewText(id, text string, x, y, w, h float32, chars []fonts.CombinedCharInfo, l []fonts.TextLine, style *styles.Style, flag TextFlag) *Text {

@@ -6,15 +6,16 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"image/png"
 	"math"
 	"os"
 )
 
 type SpriteSheet struct {
-	Width             int                      `json:"atlas_width"`
-	Height            int                      `json:"atlas_height"`
-	Filename          string                   `json:"filename"`
-	Group             map[string][]*SpriteInfo `json:"groups"`
+	Width             int               `json:"atlas_width"`
+	Height            int               `json:"atlas_height"`
+	Filename          string            `json:"filename"`
+	Groups            map[string]*Group `json:"groups"`
 	image             *image.RGBA
 	SrcX              int `json:"src_x"`
 	SrcY              int `json:"src_y"`
@@ -26,12 +27,24 @@ type SpriteSheet struct {
 	currentSeparators []separator
 }
 
+type Group struct {
+	Id       string                 `json:"group_id"`
+	Contents map[string]*SpriteInfo `json:"sprites"`
+}
+
+func NewGroup(id string, initCap int) *Group {
+	return &Group{
+		Id:       id,
+		Contents: make(map[string]*SpriteInfo, initCap),
+	}
+}
+
 func NewSpriteSheet(initWidth int, filename string) *SpriteSheet {
 	s := SpriteSheet{
 		Width:    initWidth,
 		Height:   initWidth,
 		Filename: filename,
-		Group:    make(map[string][]*SpriteInfo, 5),
+		Groups:   make(map[string]*Group),
 	}
 	im := image.NewRGBA(image.Rect(0, 0, initWidth, initWidth))
 	s.image = im
@@ -42,22 +55,20 @@ func (s *SpriteSheet) Image() *image.RGBA {
 	return s.image
 }
 
-func (s *SpriteSheet) GetGroup(id string) ([]*SpriteInfo, bool) {
-	g, ok := s.Group[id]
-	if !ok {
-		s.Group[id] = []*SpriteInfo{}
-		return s.Group[id], false
-	}
-	return g, true
+func (s *SpriteSheet) GetGroup(id string) (*Group, bool) {
+	g, ok := s.Groups[id]
+	return g, ok
 }
 
 func (s *SpriteSheet) AddSprite(groupId, spriteId string, data image.Image) *SpriteInfo {
 	var spr *SpriteInfo
-	s.BeginGroup(groupId, func() []*SpriteInfo {
+	s.BeginGroup(groupId, func() map[string]*SpriteInfo {
+		spriteInfo := map[string]*SpriteInfo{}
 		d := s.GetData(data)
 		info := s.AddToSheet(spriteId, d)
 		spr = info
-		return []*SpriteInfo{info}
+		spriteInfo[spriteId] = spr
+		return spriteInfo
 	})
 	return spr
 }
@@ -115,18 +126,25 @@ func (s *SpriteSheet) findEmptySpace(srcX, srcY, width int) int {
 	return tmpH
 }
 
-func (s *SpriteSheet) BeginGroup(id string, f func() []*SpriteInfo) {
+func (s *SpriteSheet) BeginGroup(id string, f func() map[string]*SpriteInfo) {
 	s.currentGroup = id
 	s.currentSeparators = []separator{}
 
-	gr, _ := s.GetGroup(id)
-	updgr := append(gr, f()...)
-	s.Group[id] = updgr
+	gr, exists := s.GetGroup(id)
+	if !exists {
+		gr = NewGroup(id, 1)
+		gr.Contents = f()
+		s.Groups[id] = gr
+	} else {
+		for _, info := range f() {
+			gr.Contents[info.Id] = info
+		}
+	}
 	s.cleanSeparators()
 	s.currentGroup = ""
 	if s.wasResized {
-		for _, infos := range s.Group {
-			for _, info := range infos {
+		for _, infos := range s.Groups {
+			for _, info := range infos.Contents {
 				if info != nil {
 					info.calcTexCoords(s.Width, s.Height)
 				}
@@ -230,7 +248,7 @@ func (s *SpriteSheet) SaveSpriteSheetInfo(filename string) error {
 	enc := json.NewEncoder(fil)
 	return enc.Encode(s)
 }
-func GetSpriteSheetFromFile(filename string) (*SpriteSheet, error) {
+func GetSpriteSheetFromFile(filename, imageName string) (*SpriteSheet, error) {
 	fil, err := os.OpenFile(filename, os.O_RDONLY, 0664)
 	if err != nil {
 		return nil, err
@@ -241,7 +259,30 @@ func GetSpriteSheetFromFile(filename string) (*SpriteSheet, error) {
 	if err != nil {
 		return nil, err
 	}
+	ss.image = openImage(imageName)
 	return &ss, nil
+}
+func openImage(filepath string) *image.RGBA {
+	infile, err := os.Open(filepath)
+	if err != nil {
+		return nil
+	}
+	defer infile.Close()
+
+	img, err := png.Decode(infile)
+	if err != nil {
+		return nil
+	}
+
+	rgba := image.NewRGBA(img.Bounds())
+	for y := 0; y < img.Bounds().Dy(); y++ {
+		for x := 0; x < img.Bounds().Dx(); x++ {
+			clr := img.At(x, y)
+			rgba.Set(x, y, clr)
+		}
+	}
+
+	return rgba
 }
 
 type SpriteInfo struct {

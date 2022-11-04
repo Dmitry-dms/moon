@@ -81,42 +81,83 @@ func main() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	sheet := sprite_packer.NewSpriteSheet(128, "mgui")
-
-	//ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 14)
+	//sheet := sprite_packer.NewSpriteSheet(512, "mgui")
+	////ui.UiCtx.UploadFont("C:/Windows/Fonts/times.ttf", 14)
 	fontName := "C:/Windows/Fonts/arial.ttf"
 	fontName2 := "C:/Windows/Fonts/times.ttf"
-	f2, data2 := ui.UiCtx.UploadFont(fontName2, 24, 157.0, 32, 256)
-	f, data := ui.UiCtx.UploadFont(fontName, 18, 157.0, 32, 256)
+	f, _ := ui.UiCtx.UploadFont(fontName2, 24, 157.0, 32, 256)
+	f2, _ := ui.UiCtx.UploadFont(fontName, 18, 157.0, 32, 256)
+	//ConvertFontToAtlas(f, sheet, data)
+	//ConvertFontToAtlas(f2, sheet, data2)
 
-	ConvertFontToAtlas(f2, sheet, data2)
-	ConvertFontToAtlas(f, sheet, data)
+	////ui.UiCtx.UploadFont("assets/fonts/rany.otf", 14)
+	////ui.UiCtx.UploadFont("assets/fonts/sans.ttf", 18)
+	////ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 14)
+	//mario := openImage("assets/images/mario.png")
+	//goomba := openImage("assets/images/goomba.png")
+	//windowCustom := openImage("assets/images/window_wooden.png")
+	//arrow := openImage("assets/images/arrow-down-filled.png")
+	//ms := sheet.AddSprite("sprites", "mario", mario)
+	//gs := sheet.AddSprite("sprites", "goomba", goomba)
+	//ard := sheet.AddSprite("sprites", "arrow-down", arrow)
+	//sheet.AddSprite("sprites", "window", windowCustom)
 
-	//ui.UiCtx.UploadFont("assets/fonts/rany.otf", 14)
-	//ui.UiCtx.UploadFont("assets/fonts/sans.ttf", 18)
-	//ui.UiCtx.UploadFont("assets/fonts/mono.ttf", 14)
+	//t2 := gogl.UploadRGBATextureFromMemory(sheet.Image())
+	//f2.TextureId = t2.GetId()
+	//CreateImage("debug.png", sheet.Image())
 
-	mario := openImage("assets/images/mario.png")
-	goomba := openImage("assets/images/goomba.png")
-	ms := sheet.AddSprite("sprites", "mario", mario)
-	gs := sheet.AddSprite("sprites", "goomba", goomba)
-
-	arrow := openImage("assets/images/arrow-down-filled.png")
-	ard := sheet.AddSprite("sprites", "arrow-down", arrow)
-
+	sheet, err := sprite_packer.GetSpriteSheetFromFile("atlas.json", "debug.png")
+	if err != nil {
+		panic(err)
+	}
 	t2 := gogl.UploadRGBATextureFromMemory(sheet.Image())
-	f.TextureId = t2.GetId()
-	CreateImage("debug.png", sheet.Image())
-
+	f.TextureId = t2.TextureId
+	f2.TextureId = t2.TextureId
 	arrowDown = &gogl.Texture{}
 	tex = &gogl.Texture{}
 	tex2 = &gogl.Texture{}
-	tex.TextureId = t2.TextureId
-	tex.TexCoords = ms.TextCoords
-	tex2.TextureId = t2.TextureId
-	tex2.TexCoords = gs.TextCoords
-	arrowDown.TextureId = t2.TextureId
-	arrowDown.TexCoords = ard.TextCoords
+	//tex.TexCoords = ms.TextCoords
+	//tex2.TextureId = t2.TextureId
+	//tex.TextureId = t2.TextureId
+	//tex2.TexCoords = gs.TextCoords
+	//arrowDown.TextureId = t2.TextureId
+	//arrowDown.TexCoords = ard.TextCoords
+	//custWnd.TextureId = t2.TextureId
+	//custWnd.TexCoords = ws.TextCoords
+
+	s, ok := sheet.GetGroup("sprites")
+	if !ok {
+		panic("Could not find sprites group")
+	}
+	for _, info := range s.Contents {
+		if info.Id == "mario" {
+			tex.TexCoords = info.TextCoords
+			tex2.TextureId = t2.TextureId
+		}
+		if info.Id == "goomba" {
+			tex.TextureId = t2.TextureId
+			tex2.TexCoords = info.TextCoords
+		}
+		if info.Id == "arrow-down" {
+			arrowDown.TextureId = t2.TextureId
+			arrowDown.TexCoords = info.TextCoords
+		}
+		if info.Id == "window" {
+			custWnd.TextureId = t2.TextureId
+			custWnd.TexCoords = info.TextCoords
+		}
+	}
+	//
+	rr, _ := sheet.GetGroup(f2.Filepath)
+
+	for _, info := range rr.Contents {
+		if info != nil {
+			ll := []rune(info.Id)
+			char := f2.GetCharacter(ll[0])
+			char.TexCoords = [2]math.Vec2{{info.TextCoords[0], info.TextCoords[1]},
+				{info.TextCoords[2], info.TextCoords[3]}}
+		}
+	}
 
 	beginTime := float32(glfw.GetTime())
 	var endTime float32
@@ -125,10 +166,10 @@ func main() {
 
 	var time float32 = 0
 
-	err = sheet.SaveSpriteSheetInfo("atlas.json")
-	if err != nil {
-		panic(err)
-	}
+	//err = sheet.SaveSpriteSheetInfo("atlas.json")
+	//if err != nil {
+	//	panic(err)
+	//}
 	//tex, _ = tex.Init("assets/images/mario.png")
 	//tex2, _ = tex2.Init("assets/images/goomba.png")
 
@@ -150,6 +191,7 @@ func main() {
 		uiCtx.NewFrame([2]float32{float32(Width), float32(Height)})
 
 		firstWindow()
+		//customWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 			//if uiCtx.SelectableText != nil {
@@ -191,6 +233,16 @@ func main() {
 var ish bool = false
 var tW float32 = 400
 var message = "hello \nworld"
+var msg1 = "hello"
+
+func customWindow() {
+	uiCtx.BeginCustomWindow("cstm wnd", 500, 500, 650, 650,
+		100, 160, 400, 480,
+		custWnd.TextureId, custWnd.TexCoords, func() {
+			uiCtx.Image("#im4kjdg464tht", 100, 100, tex)
+			uiCtx.Text("text-ttp-4", "Обычная", ui.Selectable)
+		})
+}
 
 func firstWindow() {
 	uiCtx.BeginWindow("first wnd")
@@ -202,13 +254,14 @@ func firstWindow() {
 	uiCtx.Text("text-ttp-4", "Обычная", ui.Selectable)
 	//uiCtx.Text("tlorem", "Lorem Ipsum - это текст-\"рыба\", часто \nиспользуемый в печати и вэб-дизайне. Lorem Ipsum является \nстандартной \"рыбой\" для текстов на \nлатинице с начала XVI века.", ui.Selectable)
 	//uiCtx.TextFitted("text-ttp-1", tW, "Lorem Ipsum - это текст-\"рыба\", часто используемый в печати и вэб-дизайне. Lorem Ipsum является стандартной \"рыбой\" для текстов на латинице с начала XVI века.")
-	//uiCtx.TextFitted("text-ttваы-1", tW, "Съешь ещё этих мягких французских булочек")
+	uiCtx.TextFitted("text-ttваы-1", tW, "Съешь ещё этих мягких французских булочек")
 	uiCtx.Row("slider-row", func() {
 		uiCtx.Slider("slds", &tW, 100, 1200)
 		uiCtx.Text("sl-tex", fmt.Sprint(tW), ui.DefaultTextFlag)
 	})
-	uiCtx.InputText("inputr23", &message)
+	uiCtx.MultiLineTextInput("inputr23", &message)
 	uiCtx.Text("text-ttp-43", "Обычная картинка и это то-же 123", ui.Selectable)
+	uiCtx.TextInput("tinp-121", 300, 50, &msg1)
 	//uiCtx.Bezier()
 	//uiCtx.Line(200)
 	//uiCtx.Line(400)
@@ -407,22 +460,26 @@ func ConvertFontToAtlas(f *fonts.Font, sheet *sprite_packer.SpriteSheet, srcImag
 		return chars[i].Width > chars[j].Width
 	})
 
-	sheet.BeginGroup(f.Filepath, func() []*sprite_packer.SpriteInfo {
-		spriteInfo := make([]*sprite_packer.SpriteInfo, len(chars))
-		for i, info := range chars {
+	sheet.BeginGroup(f.Filepath, func() map[string]*sprite_packer.SpriteInfo {
+		spriteInfo := make(map[string]*sprite_packer.SpriteInfo, len(chars))
+		//spriteInfo := make([]*sprite_packer.SpriteInfo, len(chars))
+		for _, info := range chars {
 			if info.Rune == ' ' || info.Rune == '\u00a0' {
 				continue
 			}
 			ret := srcImage.SubImage(image.Rect(info.SrcX, info.SrcY, info.SrcX+info.Width, info.SrcY-info.Height)).(*image.RGBA)
 			pixels := sheet.GetData(ret)
-			spriteInfo[i] = sheet.AddToSheet(string(info.Rune), pixels)
+			spriteInfo[string(info.Rune)] = sheet.AddToSheet(string(info.Rune), pixels)
 		}
 		return spriteInfo
 	})
 
-	rr, _ := sheet.GetGroup(f.Filepath)
+	rr, ok := sheet.GetGroup(f.Filepath)
+	if !ok {
+		panic("doesnt exist")
+	}
 
-	for _, info := range rr {
+	for _, info := range rr.Contents {
 		if info != nil {
 			ll := []rune(info.Id)
 			char := f.GetCharacter(ll[0])
@@ -440,6 +497,7 @@ func setCursor(c ui.CursorType) {
 var tex *gogl.Texture
 var tex2 *gogl.Texture
 var arrowDown *gogl.Texture
+var custWnd gogl.Texture
 
 func getImageFromFilePath(filePath string) (image.Image, error) {
 	f, err := os.Open(filePath)

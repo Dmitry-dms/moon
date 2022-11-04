@@ -17,7 +17,6 @@ import (
 	"github.com/go-gl/gl/v4.2-core/gl"
 )
 
-
 type shaderInfo struct {
 	pathVert string
 	pathFrag string
@@ -164,7 +163,6 @@ func BindVertexArray(vaoId uint32) {
 	gl.BindVertexArray(vaoId)
 }
 
-
 func InitGLdebug() {
 	var flags int32
 	gl.GetIntegerv(gl.CONTEXT_FLAGS, &flags)
@@ -172,7 +170,6 @@ func InitGLdebug() {
 	gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)
 	gl.DebugMessageCallback(glDebug, nil)
 	gl.DebugMessageControl(gl.DONT_CARE, gl.DONT_CARE, gl.DONT_CARE, 0, nil, true)
-
 
 	var sizeTex int32
 	gl.GetIntegerv(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS, &sizeTex)
@@ -214,9 +211,9 @@ func glDebug(source uint32, gltype uint32, id uint32, severity uint32, length in
 	case gl.DEBUG_TYPE_MARKER:
 		fmt.Println("Type: Marker")
 	case gl.DEBUG_TYPE_PUSH_GROUP:
-		fmt.Println("Type: Push Group")
+		fmt.Println("Type: Push Groups")
 	case gl.DEBUG_TYPE_POP_GROUP:
-		fmt.Println("Type: Pop Group")
+		fmt.Println("Type: Pop Groups")
 	case gl.DEBUG_TYPE_OTHER:
 		fmt.Println("Type: Other")
 	}

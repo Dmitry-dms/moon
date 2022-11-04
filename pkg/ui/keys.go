@@ -116,6 +116,13 @@ const (
 
 type ModKey int
 
+func IsCommandKey(key GuiKey) bool {
+	if key >= 514 && key <= 537 || key >= 574 && key <= 601 {
+		return true
+	}
+	return false
+}
+
 const (
 	ModShift ModKey = iota
 	ModCtrl
