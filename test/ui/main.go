@@ -190,8 +190,8 @@ func main() {
 
 		uiCtx.NewFrame([2]float32{float32(Width), float32(Height)})
 
-		firstWindow()
-		//customWindow()
+		//firstWindow()
+		customWindow()
 
 		if uiCtx.Io().IsKeyPressed(ui.GuiKey_Space) {
 			//if uiCtx.SelectableText != nil {
